@@ -43237,6 +43237,8 @@ const fs_1 = __importDefault(__webpack_require__(747));
 const path_1 = __importDefault(__webpack_require__(622));
 const constants_1 = __webpack_require__(196);
 const utils = __importStar(__webpack_require__(443));
+// TODO: fix logic for save and restore with key and restore-keys
+// NOTE: current logic works but not very good.
 // Catch and log any unhandled exceptions.  These exceptions can leak out of the uploadChunk method in
 // @actions/toolkit when a failed upload closes the file descriptor causing any in-process reads to
 // throw an uncaught exception.  Instead of failing this action, just warn.
@@ -43308,7 +43310,7 @@ function run() {
                 fs_1.default.writeFileSync("uuids.json", JSON.stringify(uuids));
             }
             try {
-                yield cache.saveCache(cachePaths, primaryKey, {
+                yield cache.saveCache(["uuids.json"], primaryKey, {
                     uploadChunkSize: utils.getInputAsInt(constants_1.Inputs.UploadChunkSize)
                 });
                 core.info(`Cache saved with key: ${primaryKey}`);
