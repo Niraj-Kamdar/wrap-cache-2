@@ -1063,7 +1063,7 @@ const fs = __importStar(__webpack_require__(747));
 const path = __importStar(__webpack_require__(622));
 const semver = __importStar(__webpack_require__(280));
 const util = __importStar(__webpack_require__(669));
-const uuid_1 = __webpack_require__(898);
+const uuid_1 = __webpack_require__(777);
 const constants_1 = __webpack_require__(931);
 // From https://github.com/actions/toolkit/blob/main/packages/tool-cache/src/tool-cache.ts#L23
 function createTempDirectory() {
@@ -1230,7 +1230,7 @@ eval("require")("encoding");
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   NodeType = __webpack_require__(683);
 
@@ -1280,8 +1280,7 @@ eval("require")("encoding");
 
 /***/ }),
 /* 20 */,
-/* 21 */,
-/* 22 */
+/* 21 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
@@ -1378,9 +1377,8 @@ exports.PropagationAPI = PropagationAPI;
 //# sourceMappingURL=propagation.js.map
 
 /***/ }),
-/* 23 */,
-/* 24 */
-/***/ (function(__unusedmodule, exports) {
+/* 22 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
 
@@ -1389,10 +1387,49 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-var _default = '00000000-0000-0000-0000-000000000000';
+
+var _validate = _interopRequireDefault(__webpack_require__(78));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function parse(uuid) {
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Invalid UUID');
+  }
+
+  let v;
+  const arr = new Uint8Array(16); // Parse ########-....-....-....-............
+
+  arr[0] = (v = parseInt(uuid.slice(0, 8), 16)) >>> 24;
+  arr[1] = v >>> 16 & 0xff;
+  arr[2] = v >>> 8 & 0xff;
+  arr[3] = v & 0xff; // Parse ........-####-....-....-............
+
+  arr[4] = (v = parseInt(uuid.slice(9, 13), 16)) >>> 8;
+  arr[5] = v & 0xff; // Parse ........-....-####-....-............
+
+  arr[6] = (v = parseInt(uuid.slice(14, 18), 16)) >>> 8;
+  arr[7] = v & 0xff; // Parse ........-....-....-####-............
+
+  arr[8] = (v = parseInt(uuid.slice(19, 23), 16)) >>> 8;
+  arr[9] = v & 0xff; // Parse ........-....-....-....-############
+  // (Use "/" to avoid 32-bit truncation when bit-shifting high-order bytes)
+
+  arr[10] = (v = parseInt(uuid.slice(24, 36), 16)) / 0x10000000000 & 0xff;
+  arr[11] = v / 0x100000000 & 0xff;
+  arr[12] = v >>> 24 & 0xff;
+  arr[13] = v >>> 16 & 0xff;
+  arr[14] = v >>> 8 & 0xff;
+  arr[15] = v & 0xff;
+  return arr;
+}
+
+var _default = parse;
 exports.default = _default;
 
 /***/ }),
+/* 23 */,
+/* 24 */,
 /* 25 */,
 /* 26 */,
 /* 27 */,
@@ -1427,7 +1464,74 @@ module.exports = ["ac","com.ac","edu.ac","gov.ac","net.ac","mil.ac","org.ac","ad
 /* 51 */,
 /* 52 */,
 /* 53 */,
-/* 54 */,
+/* 54 */
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+/*!
+ * Copyright (c) 2015, Salesforce.com, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of Salesforce.com nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * "A request-path path-matches a given cookie-path if at least one of the
+ * following conditions holds:"
+ */
+function pathMatch(reqPath, cookiePath) {
+  // "o  The cookie-path and the request-path are identical."
+  if (cookiePath === reqPath) {
+    return true;
+  }
+
+  const idx = reqPath.indexOf(cookiePath);
+  if (idx === 0) {
+    // "o  The cookie-path is a prefix of the request-path, and the last
+    // character of the cookie-path is %x2F ("/")."
+    if (cookiePath.substr(-1) === "/") {
+      return true;
+    }
+
+    // " o  The cookie-path is a prefix of the request-path, and the first
+    // character of the request-path that is not included in the cookie- path
+    // is a %x2F ("/") character."
+    if (reqPath.substr(cookiePath.length, 1) === "/") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+exports.pathMatch = pathMatch;
+
+
+/***/ }),
 /* 55 */,
 /* 56 */,
 /* 57 */,
@@ -1435,7 +1539,91 @@ module.exports = ["ac","com.ac","edu.ac","gov.ac","net.ac","mil.ac","org.ac","ad
 /* 59 */,
 /* 60 */,
 /* 61 */,
-/* 62 */,
+/* 62 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+Object.defineProperty(exports, "v1", {
+  enumerable: true,
+  get: function () {
+    return _v.default;
+  }
+});
+Object.defineProperty(exports, "v3", {
+  enumerable: true,
+  get: function () {
+    return _v2.default;
+  }
+});
+Object.defineProperty(exports, "v4", {
+  enumerable: true,
+  get: function () {
+    return _v3.default;
+  }
+});
+Object.defineProperty(exports, "v5", {
+  enumerable: true,
+  get: function () {
+    return _v4.default;
+  }
+});
+Object.defineProperty(exports, "NIL", {
+  enumerable: true,
+  get: function () {
+    return _nil.default;
+  }
+});
+Object.defineProperty(exports, "version", {
+  enumerable: true,
+  get: function () {
+    return _version.default;
+  }
+});
+Object.defineProperty(exports, "validate", {
+  enumerable: true,
+  get: function () {
+    return _validate.default;
+  }
+});
+Object.defineProperty(exports, "stringify", {
+  enumerable: true,
+  get: function () {
+    return _stringify.default;
+  }
+});
+Object.defineProperty(exports, "parse", {
+  enumerable: true,
+  get: function () {
+    return _parse.default;
+  }
+});
+
+var _v = _interopRequireDefault(__webpack_require__(893));
+
+var _v2 = _interopRequireDefault(__webpack_require__(209));
+
+var _v3 = _interopRequireDefault(__webpack_require__(733));
+
+var _v4 = _interopRequireDefault(__webpack_require__(384));
+
+var _nil = _interopRequireDefault(__webpack_require__(871));
+
+var _version = _interopRequireDefault(__webpack_require__(695));
+
+var _validate = _interopRequireDefault(__webpack_require__(78));
+
+var _stringify = _interopRequireDefault(__webpack_require__(411));
+
+var _parse = _interopRequireDefault(__webpack_require__(22));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/***/ }),
 /* 63 */,
 /* 64 */,
 /* 65 */
@@ -1485,10 +1673,66 @@ exports.parseURL = __webpack_require__(936).parseURL;
 /* 75 */,
 /* 76 */,
 /* 77 */,
-/* 78 */,
+/* 78 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _regex = _interopRequireDefault(__webpack_require__(456));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function validate(uuid) {
+  return typeof uuid === 'string' && _regex.default.test(uuid);
+}
+
+var _default = validate;
+exports.default = _default;
+
+/***/ }),
 /* 79 */,
 /* 80 */,
-/* 81 */,
+/* 81 */
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+var rng = __webpack_require__(489);
+var bytesToUuid = __webpack_require__(538);
+
+function v4(options, buf, offset) {
+  var i = buf && offset || 0;
+
+  if (typeof(options) == 'string') {
+    buf = options === 'binary' ? new Array(16) : null;
+    options = null;
+  }
+  options = options || {};
+
+  var rnds = options.random || (options.rng || rng)();
+
+  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+  rnds[6] = (rnds[6] & 0x0f) | 0x40;
+  rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+  // Copy bytes to buffer, if provided
+  if (buf) {
+    for (var ii = 0; ii < 16; ++ii) {
+      buf[i + ii] = rnds[ii];
+    }
+  }
+
+  return buf || bytesToUuid(rnds);
+}
+
+module.exports = v4;
+
+
+/***/ }),
 /* 82 */
 /***/ (function(__unusedmodule, exports) {
 
@@ -1538,121 +1782,7 @@ exports.toCommandProperties = toCommandProperties;
 /* 83 */,
 /* 84 */,
 /* 85 */,
-/* 86 */
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-var rng = __webpack_require__(139);
-var bytesToUuid = __webpack_require__(722);
-
-// **`v1()` - Generate time-based UUID**
-//
-// Inspired by https://github.com/LiosK/UUID.js
-// and http://docs.python.org/library/uuid.html
-
-var _nodeId;
-var _clockseq;
-
-// Previous uuid creation time
-var _lastMSecs = 0;
-var _lastNSecs = 0;
-
-// See https://github.com/uuidjs/uuid for API details
-function v1(options, buf, offset) {
-  var i = buf && offset || 0;
-  var b = buf || [];
-
-  options = options || {};
-  var node = options.node || _nodeId;
-  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
-
-  // node and clockseq need to be initialized to random values if they're not
-  // specified.  We do this lazily to minimize issues related to insufficient
-  // system entropy.  See #189
-  if (node == null || clockseq == null) {
-    var seedBytes = rng();
-    if (node == null) {
-      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
-      node = _nodeId = [
-        seedBytes[0] | 0x01,
-        seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]
-      ];
-    }
-    if (clockseq == null) {
-      // Per 4.2.2, randomize (14 bit) clockseq
-      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
-    }
-  }
-
-  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
-  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
-  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
-  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
-  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
-
-  // Per 4.2.1.2, use count of uuid's generated during the current clock
-  // cycle to simulate higher resolution clock
-  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
-
-  // Time since last uuid creation (in msecs)
-  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
-
-  // Per 4.2.1.2, Bump clockseq on clock regression
-  if (dt < 0 && options.clockseq === undefined) {
-    clockseq = clockseq + 1 & 0x3fff;
-  }
-
-  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
-  // time interval
-  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
-    nsecs = 0;
-  }
-
-  // Per 4.2.1.2 Throw error if too many uuids are requested
-  if (nsecs >= 10000) {
-    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
-  }
-
-  _lastMSecs = msecs;
-  _lastNSecs = nsecs;
-  _clockseq = clockseq;
-
-  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
-  msecs += 12219292800000;
-
-  // `time_low`
-  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
-  b[i++] = tl >>> 24 & 0xff;
-  b[i++] = tl >>> 16 & 0xff;
-  b[i++] = tl >>> 8 & 0xff;
-  b[i++] = tl & 0xff;
-
-  // `time_mid`
-  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
-  b[i++] = tmh >>> 8 & 0xff;
-  b[i++] = tmh & 0xff;
-
-  // `time_high_and_version`
-  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
-  b[i++] = tmh >>> 16 & 0xff;
-
-  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
-  b[i++] = clockseq >>> 8 | 0x80;
-
-  // `clock_seq_low`
-  b[i++] = clockseq & 0xff;
-
-  // `node`
-  for (var n = 0; n < 6; ++n) {
-    b[i + n] = node[n];
-  }
-
-  return buf ? buf : bytesToUuid(b);
-}
-
-module.exports = v1;
-
-
-/***/ }),
+/* 86 */,
 /* 87 */
 /***/ (function(module) {
 
@@ -1660,105 +1790,8 @@ module.exports = require("os");
 
 /***/ }),
 /* 88 */,
-/* 89 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-/*!
- * Copyright (c) 2015, Salesforce.com, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of Salesforce.com nor the names of its contributors may
- * be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-const pubsuffix = __webpack_require__(562);
-
-// Gives the permutation of all possible domainMatch()es of a given domain. The
-// array is in shortest-to-longest order.  Handy for indexing.
-const SPECIAL_USE_DOMAINS = ["local"]; // RFC 6761
-function permuteDomain(domain, allowSpecialUseDomain) {
-  let pubSuf = null;
-  if (allowSpecialUseDomain) {
-    const domainParts = domain.split(".");
-    if (SPECIAL_USE_DOMAINS.includes(domainParts[domainParts.length - 1])) {
-      pubSuf = `${domainParts[domainParts.length - 2]}.${
-        domainParts[domainParts.length - 1]
-      }`;
-    } else {
-      pubSuf = pubsuffix.getPublicSuffix(domain);
-    }
-  } else {
-    pubSuf = pubsuffix.getPublicSuffix(domain);
-  }
-
-  if (!pubSuf) {
-    return null;
-  }
-  if (pubSuf == domain) {
-    return [domain];
-  }
-
-  const prefix = domain.slice(0, -(pubSuf.length + 1)); // ".example.com"
-  const parts = prefix.split(".").reverse();
-  let cur = pubSuf;
-  const permutations = [cur];
-  while (parts.length) {
-    cur = `${parts.shift()}.${cur}`;
-    permutations.push(cur);
-  }
-  return permutations;
-}
-
-exports.permuteDomain = permuteDomain;
-
-
-/***/ }),
-/* 90 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _v = _interopRequireDefault(__webpack_require__(241));
-
-var _sha = _interopRequireDefault(__webpack_require__(616));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const v5 = (0, _v.default)('v5', 0x50, _sha.default);
-var _default = v5;
-exports.default = _default;
-
-/***/ }),
+/* 89 */,
+/* 90 */,
 /* 91 */
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -1789,10 +1822,10 @@ function serial(list, iterator, callback)
 module.exports = minimatch
 minimatch.Minimatch = Minimatch
 
-var path = { sep: '/' }
-try {
-  path = __webpack_require__(622)
-} catch (er) {}
+var path = (function () { try { return __webpack_require__(622) } catch (e) {}}()) || {
+  sep: '/'
+}
+minimatch.sep = path.sep
 
 var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
 var expand = __webpack_require__(306)
@@ -1844,43 +1877,64 @@ function filter (pattern, options) {
 }
 
 function ext (a, b) {
-  a = a || {}
   b = b || {}
   var t = {}
-  Object.keys(b).forEach(function (k) {
-    t[k] = b[k]
-  })
   Object.keys(a).forEach(function (k) {
     t[k] = a[k]
+  })
+  Object.keys(b).forEach(function (k) {
+    t[k] = b[k]
   })
   return t
 }
 
 minimatch.defaults = function (def) {
-  if (!def || !Object.keys(def).length) return minimatch
+  if (!def || typeof def !== 'object' || !Object.keys(def).length) {
+    return minimatch
+  }
 
   var orig = minimatch
 
   var m = function minimatch (p, pattern, options) {
-    return orig.minimatch(p, pattern, ext(def, options))
+    return orig(p, pattern, ext(def, options))
   }
 
   m.Minimatch = function Minimatch (pattern, options) {
     return new orig.Minimatch(pattern, ext(def, options))
+  }
+  m.Minimatch.defaults = function defaults (options) {
+    return orig.defaults(ext(def, options)).Minimatch
+  }
+
+  m.filter = function filter (pattern, options) {
+    return orig.filter(pattern, ext(def, options))
+  }
+
+  m.defaults = function defaults (options) {
+    return orig.defaults(ext(def, options))
+  }
+
+  m.makeRe = function makeRe (pattern, options) {
+    return orig.makeRe(pattern, ext(def, options))
+  }
+
+  m.braceExpand = function braceExpand (pattern, options) {
+    return orig.braceExpand(pattern, ext(def, options))
+  }
+
+  m.match = function (list, pattern, options) {
+    return orig.match(list, pattern, ext(def, options))
   }
 
   return m
 }
 
 Minimatch.defaults = function (def) {
-  if (!def || !Object.keys(def).length) return Minimatch
   return minimatch.defaults(def).Minimatch
 }
 
 function minimatch (p, pattern, options) {
-  if (typeof pattern !== 'string') {
-    throw new TypeError('glob pattern string required')
-  }
+  assertValidPattern(pattern)
 
   if (!options) options = {}
 
@@ -1888,9 +1942,6 @@ function minimatch (p, pattern, options) {
   if (!options.nocomment && pattern.charAt(0) === '#') {
     return false
   }
-
-  // "" only matches ""
-  if (pattern.trim() === '') return p === ''
 
   return new Minimatch(pattern, options).match(p)
 }
@@ -1900,15 +1951,14 @@ function Minimatch (pattern, options) {
     return new Minimatch(pattern, options)
   }
 
-  if (typeof pattern !== 'string') {
-    throw new TypeError('glob pattern string required')
-  }
+  assertValidPattern(pattern)
 
   if (!options) options = {}
+
   pattern = pattern.trim()
 
   // windows support: need to use /, not \
-  if (path.sep !== '/') {
+  if (!options.allowWindowsEscape && path.sep !== '/') {
     pattern = pattern.split(path.sep).join('/')
   }
 
@@ -1919,6 +1969,7 @@ function Minimatch (pattern, options) {
   this.negate = false
   this.comment = false
   this.empty = false
+  this.partial = !!options.partial
 
   // make the set of regexps etc.
   this.make()
@@ -1928,9 +1979,6 @@ Minimatch.prototype.debug = function () {}
 
 Minimatch.prototype.make = make
 function make () {
-  // don't do it more than once.
-  if (this._made) return
-
   var pattern = this.pattern
   var options = this.options
 
@@ -1950,7 +1998,7 @@ function make () {
   // step 2: expand braces
   var set = this.globSet = this.braceExpand()
 
-  if (options.debug) this.debug = console.error
+  if (options.debug) this.debug = function debug() { console.error.apply(console, arguments) }
 
   this.debug(this.pattern, set)
 
@@ -2030,17 +2078,27 @@ function braceExpand (pattern, options) {
   pattern = typeof pattern === 'undefined'
     ? this.pattern : pattern
 
-  if (typeof pattern === 'undefined') {
-    throw new TypeError('undefined pattern')
-  }
+  assertValidPattern(pattern)
 
-  if (options.nobrace ||
-    !pattern.match(/\{.*\}/)) {
+  // Thanks to Yeting Li <https://github.com/yetingli> for
+  // improving this regexp to avoid a ReDOS vulnerability.
+  if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) {
     // shortcut. no need to expand.
     return [pattern]
   }
 
   return expand(pattern)
+}
+
+var MAX_PATTERN_LENGTH = 1024 * 64
+var assertValidPattern = function (pattern) {
+  if (typeof pattern !== 'string') {
+    throw new TypeError('invalid pattern')
+  }
+
+  if (pattern.length > MAX_PATTERN_LENGTH) {
+    throw new TypeError('pattern is too long')
+  }
 }
 
 // parse a component of the expanded set.
@@ -2057,14 +2115,17 @@ function braceExpand (pattern, options) {
 Minimatch.prototype.parse = parse
 var SUBPARSE = {}
 function parse (pattern, isSub) {
-  if (pattern.length > 1024 * 64) {
-    throw new TypeError('pattern is too long')
-  }
+  assertValidPattern(pattern)
 
   var options = this.options
 
   // shortcuts
-  if (!options.noglobstar && pattern === '**') return GLOBSTAR
+  if (pattern === '**') {
+    if (!options.noglobstar)
+      return GLOBSTAR
+    else
+      pattern = '*'
+  }
   if (pattern === '') return ''
 
   var re = ''
@@ -2120,10 +2181,12 @@ function parse (pattern, isSub) {
     }
 
     switch (c) {
-      case '/':
+      /* istanbul ignore next */
+      case '/': {
         // completely not allowed, even escaped.
         // Should already be path-split by now.
         return false
+      }
 
       case '\\':
         clearStateChar()
@@ -2242,25 +2305,23 @@ function parse (pattern, isSub) {
 
         // handle the case where we left a class open.
         // "[z-a]" is valid, equivalent to "\[z-a\]"
-        if (inClass) {
-          // split where the last [ was, make sure we don't have
-          // an invalid re. if so, re-walk the contents of the
-          // would-be class to re-translate any characters that
-          // were passed through as-is
-          // TODO: It would probably be faster to determine this
-          // without a try/catch and a new RegExp, but it's tricky
-          // to do safely.  For now, this is safe and works.
-          var cs = pattern.substring(classStart + 1, i)
-          try {
-            RegExp('[' + cs + ']')
-          } catch (er) {
-            // not a valid class!
-            var sp = this.parse(cs, SUBPARSE)
-            re = re.substr(0, reClassStart) + '\\[' + sp[0] + '\\]'
-            hasMagic = hasMagic || sp[1]
-            inClass = false
-            continue
-          }
+        // split where the last [ was, make sure we don't have
+        // an invalid re. if so, re-walk the contents of the
+        // would-be class to re-translate any characters that
+        // were passed through as-is
+        // TODO: It would probably be faster to determine this
+        // without a try/catch and a new RegExp, but it's tricky
+        // to do safely.  For now, this is safe and works.
+        var cs = pattern.substring(classStart + 1, i)
+        try {
+          RegExp('[' + cs + ']')
+        } catch (er) {
+          // not a valid class!
+          var sp = this.parse(cs, SUBPARSE)
+          re = re.substr(0, reClassStart) + '\\[' + sp[0] + '\\]'
+          hasMagic = hasMagic || sp[1]
+          inClass = false
+          continue
         }
 
         // finish up the class.
@@ -2344,9 +2405,7 @@ function parse (pattern, isSub) {
   // something that could conceivably capture a dot
   var addPatternStart = false
   switch (re.charAt(0)) {
-    case '.':
-    case '[':
-    case '(': addPatternStart = true
+    case '[': case '.': case '(': addPatternStart = true
   }
 
   // Hack to work around lack of negative lookbehind in JS
@@ -2408,7 +2467,7 @@ function parse (pattern, isSub) {
   var flags = options.nocase ? 'i' : ''
   try {
     var regExp = new RegExp('^' + re + '$', flags)
-  } catch (er) {
+  } catch (er) /* istanbul ignore next - should be impossible */ {
     // If it was an invalid regular expression, then it can't match
     // anything.  This trick looks for a character after the end of
     // the string, which is of course impossible, except in multi-line
@@ -2466,7 +2525,7 @@ function makeRe () {
 
   try {
     this.regexp = new RegExp(re, flags)
-  } catch (ex) {
+  } catch (ex) /* istanbul ignore next - should be impossible */ {
     this.regexp = false
   }
   return this.regexp
@@ -2484,8 +2543,8 @@ minimatch.match = function (list, pattern, options) {
   return list
 }
 
-Minimatch.prototype.match = match
-function match (f, partial) {
+Minimatch.prototype.match = function match (f, partial) {
+  if (typeof partial === 'undefined') partial = this.partial
   this.debug('match', f, this.pattern)
   // short-circuit in the case of busted things.
   // comments, etc.
@@ -2567,6 +2626,7 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
 
     // should be impossible.
     // some invalid regexp stuff in the set.
+    /* istanbul ignore if */
     if (p === false) return false
 
     if (p === GLOBSTAR) {
@@ -2640,6 +2700,7 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
       // no match was found.
       // However, in partial mode, we can't say this is necessarily over.
       // If there's more *pattern* left, then
+      /* istanbul ignore if */
       if (partial) {
         // ran out of file
         this.debug('\n>>> no match, partial?', file, fr, pattern, pr)
@@ -2653,11 +2714,7 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
     // patterns with magic have been turned into regexps.
     var hit
     if (typeof p === 'string') {
-      if (options.nocase) {
-        hit = f.toLowerCase() === p.toLowerCase()
-      } else {
-        hit = f === p
-      }
+      hit = f === p
       this.debug('string match', p, f, hit)
     } else {
       hit = f.match(p)
@@ -2688,16 +2745,16 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
     // this is ok if we're doing the match as part of
     // a glob fs traversal.
     return partial
-  } else if (pi === pl) {
+  } else /* istanbul ignore else */ if (pi === pl) {
     // ran out of pattern, still have file left.
     // this is only acceptable if we're on the very last
     // empty segment of a file with a trailing slash.
     // a/* should match a/b/
-    var emptyFileEnd = (fi === fl - 1) && (file[fi] === '')
-    return emptyFileEnd
+    return (fi === fl - 1) && (file[fi] === '')
   }
 
   // should be unreachable.
+  /* istanbul ignore next */
   throw new Error('wtf?')
 }
 
@@ -2804,33 +2861,7 @@ exports.issueCommand = issueCommand;
 
 /***/ }),
 /* 103 */,
-/* 104 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _validate = _interopRequireDefault(__webpack_require__(676));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function version(uuid) {
-  if (!(0, _validate.default)(uuid)) {
-    throw TypeError('Invalid UUID');
-  }
-
-  return parseInt(uuid.substr(14, 1), 16);
-}
-
-var _default = version;
-exports.default = _default;
-
-/***/ }),
+/* 104 */,
 /* 105 */,
 /* 106 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
@@ -2840,7 +2871,7 @@ exports.default = _default;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var tslib = __webpack_require__(640);
+var tslib = __webpack_require__(422);
 
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
@@ -3193,8 +3224,8 @@ const url_1 = __webpack_require__(835);
 const utils = __importStar(__webpack_require__(15));
 const constants_1 = __webpack_require__(931);
 const downloadUtils_1 = __webpack_require__(251);
-const options_1 = __webpack_require__(538);
-const requestUtils_1 = __webpack_require__(899);
+const options_1 = __webpack_require__(161);
+const requestUtils_1 = __webpack_require__(826);
 const versionSalt = '1.0';
 function getCacheApiUrl(resource) {
     const baseUrl = process.env['ACTIONS_CACHE_URL'] || '';
@@ -3569,20 +3600,7 @@ exports.ROOT_CONTEXT = new BaseContext();
 /* 136 */,
 /* 137 */,
 /* 138 */,
-/* 139 */
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-// Unique ID creation requires a high quality random # generator.  In node.js
-// this is pretty straight-forward - we use the crypto API.
-
-var crypto = __webpack_require__(417);
-
-module.exports = function nodeRNG() {
-  return crypto.randomBytes(16);
-};
-
-
-/***/ }),
+/* 139 */,
 /* 140 */,
 /* 141 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
@@ -3888,33 +3906,44 @@ exports._globalThis = typeof globalThis === 'object' ? globalThis : global;
 /***/ }),
 /* 146 */,
 /* 147 */
-/***/ (function(__unusedmodule, exports) {
+/***/ (function(module) {
 
-"use strict";
+// API
+module.exports = state;
 
-
-exports.fromCallback = function (fn) {
-  return Object.defineProperty(function () {
-    if (typeof arguments[arguments.length - 1] === 'function') fn.apply(this, arguments)
-    else {
-      return new Promise((resolve, reject) => {
-        arguments[arguments.length] = (err, res) => {
-          if (err) return reject(err)
-          resolve(res)
-        }
-        arguments.length++
-        fn.apply(this, arguments)
-      })
+/**
+ * Creates initial state object
+ * for iteration over list
+ *
+ * @param   {array|object} list - list to iterate over
+ * @param   {function|null} sortMethod - function to use for keys sort,
+ *                                     or `null` to keep them as is
+ * @returns {object} - initial state object
+ */
+function state(list, sortMethod)
+{
+  var isNamedList = !Array.isArray(list)
+    , initState =
+    {
+      index    : 0,
+      keyedList: isNamedList || sortMethod ? Object.keys(list) : null,
+      jobs     : {},
+      results  : isNamedList ? {} : [],
+      size     : isNamedList ? Object.keys(list).length : list.length
     }
-  }, 'name', { value: fn.name })
-}
+    ;
 
-exports.fromPromise = function (fn) {
-  return Object.defineProperty(function () {
-    const cb = arguments[arguments.length - 1]
-    if (typeof cb !== 'function') return fn.apply(this, arguments)
-    else fn.apply(this, arguments).then(r => cb(null, r), cb)
-  }, 'name', { value: fn.name })
+  if (sortMethod)
+  {
+    // sort array keys based on it's values
+    // sort object's keys just on own merit
+    initState.keyedList.sort(isNamedList ? sortMethod : function(a, b)
+    {
+      return sortMethod(list[a], list[b]);
+    });
+  }
+
+  return initState;
 }
 
 
@@ -4140,7 +4169,7 @@ conversions["RegExp"] = function (V, opts) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NoopTracer = void 0;
 var context_1 = __webpack_require__(492);
-var context_utils_1 = __webpack_require__(720);
+var context_utils_1 = __webpack_require__(865);
 var NonRecordingSpan_1 = __webpack_require__(437);
 var spancontext_utils_1 = __webpack_require__(629);
 var context = context_1.ContextAPI.getInstance();
@@ -4410,7 +4439,74 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /***/ }),
 /* 159 */,
 /* 160 */,
-/* 161 */,
+/* 161 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core = __importStar(__webpack_require__(470));
+/**
+ * Returns a copy of the upload options with defaults filled in.
+ *
+ * @param copy the original upload options
+ */
+function getUploadOptions(copy) {
+    const result = {
+        uploadConcurrency: 4,
+        uploadChunkSize: 32 * 1024 * 1024
+    };
+    if (copy) {
+        if (typeof copy.uploadConcurrency === 'number') {
+            result.uploadConcurrency = copy.uploadConcurrency;
+        }
+        if (typeof copy.uploadChunkSize === 'number') {
+            result.uploadChunkSize = copy.uploadChunkSize;
+        }
+    }
+    core.debug(`Upload concurrency: ${result.uploadConcurrency}`);
+    core.debug(`Upload chunk size: ${result.uploadChunkSize}`);
+    return result;
+}
+exports.getUploadOptions = getUploadOptions;
+/**
+ * Returns a copy of the download options with defaults filled in.
+ *
+ * @param copy the original download options
+ */
+function getDownloadOptions(copy) {
+    const result = {
+        useAzureSdk: true,
+        downloadConcurrency: 8,
+        timeoutInMs: 30000
+    };
+    if (copy) {
+        if (typeof copy.useAzureSdk === 'boolean') {
+            result.useAzureSdk = copy.useAzureSdk;
+        }
+        if (typeof copy.downloadConcurrency === 'number') {
+            result.downloadConcurrency = copy.downloadConcurrency;
+        }
+        if (typeof copy.timeoutInMs === 'number') {
+            result.timeoutInMs = copy.timeoutInMs;
+        }
+    }
+    core.debug(`Use Azure SDK: ${result.useAzureSdk}`);
+    core.debug(`Download concurrency: ${result.downloadConcurrency}`);
+    core.debug(`Request timeout (ms): ${result.timeoutInMs}`);
+    return result;
+}
+exports.getDownloadOptions = getDownloadOptions;
+//# sourceMappingURL=options.js.map
+
+/***/ }),
 /* 162 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -4462,119 +4558,7 @@ exports.NoopTracerProvider = NoopTracerProvider;
 /* 170 */,
 /* 171 */,
 /* 172 */,
-/* 173 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _rng = _interopRequireDefault(__webpack_require__(733));
-
-var _stringify = _interopRequireDefault(__webpack_require__(855));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// **`v1()` - Generate time-based UUID**
-//
-// Inspired by https://github.com/LiosK/UUID.js
-// and http://docs.python.org/library/uuid.html
-let _nodeId;
-
-let _clockseq; // Previous uuid creation time
-
-
-let _lastMSecs = 0;
-let _lastNSecs = 0; // See https://github.com/uuidjs/uuid for API details
-
-function v1(options, buf, offset) {
-  let i = buf && offset || 0;
-  const b = buf || new Array(16);
-  options = options || {};
-  let node = options.node || _nodeId;
-  let clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq; // node and clockseq need to be initialized to random values if they're not
-  // specified.  We do this lazily to minimize issues related to insufficient
-  // system entropy.  See #189
-
-  if (node == null || clockseq == null) {
-    const seedBytes = options.random || (options.rng || _rng.default)();
-
-    if (node == null) {
-      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
-      node = _nodeId = [seedBytes[0] | 0x01, seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]];
-    }
-
-    if (clockseq == null) {
-      // Per 4.2.2, randomize (14 bit) clockseq
-      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
-    }
-  } // UUID timestamps are 100 nano-second units since the Gregorian epoch,
-  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
-  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
-  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
-
-
-  let msecs = options.msecs !== undefined ? options.msecs : Date.now(); // Per 4.2.1.2, use count of uuid's generated during the current clock
-  // cycle to simulate higher resolution clock
-
-  let nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1; // Time since last uuid creation (in msecs)
-
-  const dt = msecs - _lastMSecs + (nsecs - _lastNSecs) / 10000; // Per 4.2.1.2, Bump clockseq on clock regression
-
-  if (dt < 0 && options.clockseq === undefined) {
-    clockseq = clockseq + 1 & 0x3fff;
-  } // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
-  // time interval
-
-
-  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
-    nsecs = 0;
-  } // Per 4.2.1.2 Throw error if too many uuids are requested
-
-
-  if (nsecs >= 10000) {
-    throw new Error("uuid.v1(): Can't create more than 10M uuids/sec");
-  }
-
-  _lastMSecs = msecs;
-  _lastNSecs = nsecs;
-  _clockseq = clockseq; // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
-
-  msecs += 12219292800000; // `time_low`
-
-  const tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
-  b[i++] = tl >>> 24 & 0xff;
-  b[i++] = tl >>> 16 & 0xff;
-  b[i++] = tl >>> 8 & 0xff;
-  b[i++] = tl & 0xff; // `time_mid`
-
-  const tmh = msecs / 0x100000000 * 10000 & 0xfffffff;
-  b[i++] = tmh >>> 8 & 0xff;
-  b[i++] = tmh & 0xff; // `time_high_and_version`
-
-  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
-
-  b[i++] = tmh >>> 16 & 0xff; // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
-
-  b[i++] = clockseq >>> 8 | 0x80; // `clock_seq_low`
-
-  b[i++] = clockseq & 0xff; // `node`
-
-  for (let n = 0; n < 6; ++n) {
-    b[i + n] = node[n];
-  }
-
-  return buf || (0, _stringify.default)(b);
-}
-
-var _default = v1;
-exports.default = _default;
-
-/***/ }),
+/* 173 */,
 /* 174 */,
 /* 175 */,
 /* 176 */,
@@ -4590,7 +4574,121 @@ exports.default = _default;
 /* 186 */,
 /* 187 */,
 /* 188 */,
-/* 189 */,
+/* 189 */
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+var rng = __webpack_require__(489);
+var bytesToUuid = __webpack_require__(538);
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+
+var _nodeId;
+var _clockseq;
+
+// Previous uuid creation time
+var _lastMSecs = 0;
+var _lastNSecs = 0;
+
+// See https://github.com/uuidjs/uuid for API details
+function v1(options, buf, offset) {
+  var i = buf && offset || 0;
+  var b = buf || [];
+
+  options = options || {};
+  var node = options.node || _nodeId;
+  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
+
+  // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+  if (node == null || clockseq == null) {
+    var seedBytes = rng();
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [
+        seedBytes[0] | 0x01,
+        seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]
+      ];
+    }
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  }
+
+  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
+
+  // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
+
+  // Time since last uuid creation (in msecs)
+  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
+
+  // Per 4.2.1.2, Bump clockseq on clock regression
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  }
+
+  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  }
+
+  // Per 4.2.1.2 Throw error if too many uuids are requested
+  if (nsecs >= 10000) {
+    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq;
+
+  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+  msecs += 12219292800000;
+
+  // `time_low`
+  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff;
+
+  // `time_mid`
+  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff;
+
+  // `time_high_and_version`
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+  b[i++] = tmh >>> 16 & 0xff;
+
+  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+  b[i++] = clockseq >>> 8 | 0x80;
+
+  // `clock_seq_low`
+  b[i++] = clockseq & 0xff;
+
+  // `node`
+  for (var n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf ? buf : bytesToUuid(b);
+}
+
+module.exports = v1;
+
+
+/***/ }),
 /* 190 */,
 /* 191 */,
 /* 192 */,
@@ -4630,57 +4728,7 @@ exports.RefKey = "GITHUB_REF";
 
 
 /***/ }),
-/* 197 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _validate = _interopRequireDefault(__webpack_require__(676));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function parse(uuid) {
-  if (!(0, _validate.default)(uuid)) {
-    throw TypeError('Invalid UUID');
-  }
-
-  let v;
-  const arr = new Uint8Array(16); // Parse ########-....-....-....-............
-
-  arr[0] = (v = parseInt(uuid.slice(0, 8), 16)) >>> 24;
-  arr[1] = v >>> 16 & 0xff;
-  arr[2] = v >>> 8 & 0xff;
-  arr[3] = v & 0xff; // Parse ........-####-....-....-............
-
-  arr[4] = (v = parseInt(uuid.slice(9, 13), 16)) >>> 8;
-  arr[5] = v & 0xff; // Parse ........-....-####-....-............
-
-  arr[6] = (v = parseInt(uuid.slice(14, 18), 16)) >>> 8;
-  arr[7] = v & 0xff; // Parse ........-....-....-####-............
-
-  arr[8] = (v = parseInt(uuid.slice(19, 23), 16)) >>> 8;
-  arr[9] = v & 0xff; // Parse ........-....-....-....-############
-  // (Use "/" to avoid 32-bit truncation when bit-shifting high-order bytes)
-
-  arr[10] = (v = parseInt(uuid.slice(24, 36), 16)) / 0x10000000000 & 0xff;
-  arr[11] = v / 0x100000000 & 0xff;
-  arr[12] = v >>> 24 & 0xff;
-  arr[13] = v >>> 16 & 0xff;
-  arr[14] = v >>> 8 & 0xff;
-  arr[15] = v & 0xff;
-  return arr;
-}
-
-var _default = parse;
-exports.default = _default;
-
-/***/ }),
+/* 197 */,
 /* 198 */,
 /* 199 */,
 /* 200 */,
@@ -4715,7 +4763,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 /***/ }),
 /* 208 */,
-/* 209 */,
+/* 209 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _v = _interopRequireDefault(__webpack_require__(212));
+
+var _md = _interopRequireDefault(__webpack_require__(803));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const v3 = (0, _v.default)('v3', 0x30, _md.default);
+var _default = v3;
+exports.default = _default;
+
+/***/ }),
 /* 210 */
 /***/ (function(__unusedmodule, exports) {
 
@@ -4740,7 +4809,90 @@ Object.defineProperty(exports, "__esModule", { value: true });
 module.exports = require("https");
 
 /***/ }),
-/* 212 */,
+/* 212 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = _default;
+exports.URL = exports.DNS = void 0;
+
+var _stringify = _interopRequireDefault(__webpack_require__(411));
+
+var _parse = _interopRequireDefault(__webpack_require__(22));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function stringToBytes(str) {
+  str = unescape(encodeURIComponent(str)); // UTF8 escape
+
+  const bytes = [];
+
+  for (let i = 0; i < str.length; ++i) {
+    bytes.push(str.charCodeAt(i));
+  }
+
+  return bytes;
+}
+
+const DNS = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+exports.DNS = DNS;
+const URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+exports.URL = URL;
+
+function _default(name, version, hashfunc) {
+  function generateUUID(value, namespace, buf, offset) {
+    if (typeof value === 'string') {
+      value = stringToBytes(value);
+    }
+
+    if (typeof namespace === 'string') {
+      namespace = (0, _parse.default)(namespace);
+    }
+
+    if (namespace.length !== 16) {
+      throw TypeError('Namespace must be array-like (16 iterable integer values, 0-255)');
+    } // Compute hash of namespace and value, Per 4.3
+    // Future: Use spread syntax when supported on all platforms, e.g. `bytes =
+    // hashfunc([...namespace, ... value])`
+
+
+    let bytes = new Uint8Array(16 + value.length);
+    bytes.set(namespace);
+    bytes.set(value, namespace.length);
+    bytes = hashfunc(bytes);
+    bytes[6] = bytes[6] & 0x0f | version;
+    bytes[8] = bytes[8] & 0x3f | 0x80;
+
+    if (buf) {
+      offset = offset || 0;
+
+      for (let i = 0; i < 16; ++i) {
+        buf[offset + i] = bytes[i];
+      }
+
+      return buf;
+    }
+
+    return (0, _stringify.default)(bytes);
+  } // Function#name is not settable on some platforms (#270)
+
+
+  try {
+    generateUUID.name = name; // eslint-disable-next-line no-empty
+  } catch (err) {} // For CommonJS default export support
+
+
+  generateUUID.DNS = DNS;
+  generateUUID.URL = URL;
+  return generateUUID;
+}
+
+/***/ }),
 /* 213 */
 /***/ (function(module) {
 
@@ -5146,141 +5298,52 @@ exports.DiagConsoleLogger = DiagConsoleLogger;
 //# sourceMappingURL=consoleLogger.js.map
 
 /***/ }),
-/* 238 */
-/***/ (function(__unusedmodule, exports) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-var _default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
-exports.default = _default;
-
-/***/ }),
+/* 238 */,
 /* 239 */,
 /* 240 */,
-/* 241 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = _default;
-exports.URL = exports.DNS = void 0;
-
-var _stringify = _interopRequireDefault(__webpack_require__(855));
-
-var _parse = _interopRequireDefault(__webpack_require__(197));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function stringToBytes(str) {
-  str = unescape(encodeURIComponent(str)); // UTF8 escape
-
-  const bytes = [];
-
-  for (let i = 0; i < str.length; ++i) {
-    bytes.push(str.charCodeAt(i));
-  }
-
-  return bytes;
-}
-
-const DNS = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
-exports.DNS = DNS;
-const URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
-exports.URL = URL;
-
-function _default(name, version, hashfunc) {
-  function generateUUID(value, namespace, buf, offset) {
-    if (typeof value === 'string') {
-      value = stringToBytes(value);
-    }
-
-    if (typeof namespace === 'string') {
-      namespace = (0, _parse.default)(namespace);
-    }
-
-    if (namespace.length !== 16) {
-      throw TypeError('Namespace must be array-like (16 iterable integer values, 0-255)');
-    } // Compute hash of namespace and value, Per 4.3
-    // Future: Use spread syntax when supported on all platforms, e.g. `bytes =
-    // hashfunc([...namespace, ... value])`
-
-
-    let bytes = new Uint8Array(16 + value.length);
-    bytes.set(namespace);
-    bytes.set(value, namespace.length);
-    bytes = hashfunc(bytes);
-    bytes[6] = bytes[6] & 0x0f | version;
-    bytes[8] = bytes[8] & 0x3f | 0x80;
-
-    if (buf) {
-      offset = offset || 0;
-
-      for (let i = 0; i < 16; ++i) {
-        buf[offset + i] = bytes[i];
-      }
-
-      return buf;
-    }
-
-    return (0, _stringify.default)(bytes);
-  } // Function#name is not settable on some platforms (#270)
-
-
-  try {
-    generateUUID.name = name; // eslint-disable-next-line no-empty
-  } catch (err) {} // For CommonJS default export support
-
-
-  generateUUID.DNS = DNS;
-  generateUUID.URL = URL;
-  return generateUUID;
-}
-
-/***/ }),
+/* 241 */,
 /* 242 */,
 /* 243 */,
 /* 244 */,
-/* 245 */
+/* 245 */,
+/* 246 */,
+/* 247 */,
+/* 248 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
 
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _crypto = _interopRequireDefault(__webpack_require__(417));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function md5(bytes) {
-  if (Array.isArray(bytes)) {
-    bytes = Buffer.from(bytes);
-  } else if (typeof bytes === 'string') {
-    bytes = Buffer.from(bytes, 'utf8');
-  }
-
-  return _crypto.default.createHash('md5').update(bytes).digest();
-}
-
-var _default = md5;
-exports.default = _default;
+/*
+ * Copyright The OpenTelemetry Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+__exportStar(__webpack_require__(237), exports);
+__exportStar(__webpack_require__(545), exports);
+//# sourceMappingURL=index.js.map
 
 /***/ }),
-/* 246 */,
-/* 247 */,
-/* 248 */,
 /* 249 */,
 /* 250 */,
 /* 251 */
@@ -5314,7 +5377,7 @@ const stream = __importStar(__webpack_require__(794));
 const util = __importStar(__webpack_require__(669));
 const utils = __importStar(__webpack_require__(15));
 const constants_1 = __webpack_require__(931);
-const requestUtils_1 = __webpack_require__(899);
+const requestUtils_1 = __webpack_require__(826);
 /**
  * Pipes the body of a HTTP response to a stream
  *
@@ -5731,798 +5794,84 @@ exports.implementation = class URLImpl {
 
 
 /***/ }),
-/* 257 */
-/***/ (function(module, __unusedexports, __webpack_require__) {
+/* 257 */,
+/* 258 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
-// Generated by CoffeeScript 1.12.7
-(function() {
-  var DocumentPosition, NodeType, XMLCData, XMLComment, XMLDeclaration, XMLDocType, XMLDummy, XMLElement, XMLNamedNodeMap, XMLNode, XMLNodeList, XMLProcessingInstruction, XMLRaw, XMLText, getValue, isEmpty, isFunction, isObject, ref1,
-    hasProp = {}.hasOwnProperty;
+"use strict";
+/*!
+ * Copyright (c) 2015, Salesforce.com, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of Salesforce.com nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
-  ref1 = __webpack_require__(582), isObject = ref1.isObject, isFunction = ref1.isFunction, isEmpty = ref1.isEmpty, getValue = ref1.getValue;
+const pubsuffix = __webpack_require__(519);
 
-  XMLElement = null;
-
-  XMLCData = null;
-
-  XMLComment = null;
-
-  XMLDeclaration = null;
-
-  XMLDocType = null;
-
-  XMLRaw = null;
-
-  XMLText = null;
-
-  XMLProcessingInstruction = null;
-
-  XMLDummy = null;
-
-  NodeType = null;
-
-  XMLNodeList = null;
-
-  XMLNamedNodeMap = null;
-
-  DocumentPosition = null;
-
-  module.exports = XMLNode = (function() {
-    function XMLNode(parent1) {
-      this.parent = parent1;
-      if (this.parent) {
-        this.options = this.parent.options;
-        this.stringify = this.parent.stringify;
-      }
-      this.value = null;
-      this.children = [];
-      this.baseURI = null;
-      if (!XMLElement) {
-        XMLElement = __webpack_require__(796);
-        XMLCData = __webpack_require__(657);
-        XMLComment = __webpack_require__(919);
-        XMLDeclaration = __webpack_require__(738);
-        XMLDocType = __webpack_require__(735);
-        XMLRaw = __webpack_require__(660);
-        XMLText = __webpack_require__(708);
-        XMLProcessingInstruction = __webpack_require__(491);
-        XMLDummy = __webpack_require__(956);
-        NodeType = __webpack_require__(683);
-        XMLNodeList = __webpack_require__(265);
-        XMLNamedNodeMap = __webpack_require__(451);
-        DocumentPosition = __webpack_require__(65);
-      }
+// Gives the permutation of all possible domainMatch()es of a given domain. The
+// array is in shortest-to-longest order.  Handy for indexing.
+const SPECIAL_USE_DOMAINS = ["local"]; // RFC 6761
+function permuteDomain(domain, allowSpecialUseDomain) {
+  let pubSuf = null;
+  if (allowSpecialUseDomain) {
+    const domainParts = domain.split(".");
+    if (SPECIAL_USE_DOMAINS.includes(domainParts[domainParts.length - 1])) {
+      pubSuf = `${domainParts[domainParts.length - 2]}.${
+        domainParts[domainParts.length - 1]
+      }`;
+    } else {
+      pubSuf = pubsuffix.getPublicSuffix(domain);
     }
-
-    Object.defineProperty(XMLNode.prototype, 'nodeName', {
-      get: function() {
-        return this.name;
-      }
-    });
-
-    Object.defineProperty(XMLNode.prototype, 'nodeType', {
-      get: function() {
-        return this.type;
-      }
-    });
-
-    Object.defineProperty(XMLNode.prototype, 'nodeValue', {
-      get: function() {
-        return this.value;
-      }
-    });
-
-    Object.defineProperty(XMLNode.prototype, 'parentNode', {
-      get: function() {
-        return this.parent;
-      }
-    });
-
-    Object.defineProperty(XMLNode.prototype, 'childNodes', {
-      get: function() {
-        if (!this.childNodeList || !this.childNodeList.nodes) {
-          this.childNodeList = new XMLNodeList(this.children);
-        }
-        return this.childNodeList;
-      }
-    });
-
-    Object.defineProperty(XMLNode.prototype, 'firstChild', {
-      get: function() {
-        return this.children[0] || null;
-      }
-    });
-
-    Object.defineProperty(XMLNode.prototype, 'lastChild', {
-      get: function() {
-        return this.children[this.children.length - 1] || null;
-      }
-    });
-
-    Object.defineProperty(XMLNode.prototype, 'previousSibling', {
-      get: function() {
-        var i;
-        i = this.parent.children.indexOf(this);
-        return this.parent.children[i - 1] || null;
-      }
-    });
-
-    Object.defineProperty(XMLNode.prototype, 'nextSibling', {
-      get: function() {
-        var i;
-        i = this.parent.children.indexOf(this);
-        return this.parent.children[i + 1] || null;
-      }
-    });
-
-    Object.defineProperty(XMLNode.prototype, 'ownerDocument', {
-      get: function() {
-        return this.document() || null;
-      }
-    });
-
-    Object.defineProperty(XMLNode.prototype, 'textContent', {
-      get: function() {
-        var child, j, len, ref2, str;
-        if (this.nodeType === NodeType.Element || this.nodeType === NodeType.DocumentFragment) {
-          str = '';
-          ref2 = this.children;
-          for (j = 0, len = ref2.length; j < len; j++) {
-            child = ref2[j];
-            if (child.textContent) {
-              str += child.textContent;
-            }
-          }
-          return str;
-        } else {
-          return null;
-        }
-      },
-      set: function(value) {
-        throw new Error("This DOM method is not implemented." + this.debugInfo());
-      }
-    });
-
-    XMLNode.prototype.setParent = function(parent) {
-      var child, j, len, ref2, results;
-      this.parent = parent;
-      if (parent) {
-        this.options = parent.options;
-        this.stringify = parent.stringify;
-      }
-      ref2 = this.children;
-      results = [];
-      for (j = 0, len = ref2.length; j < len; j++) {
-        child = ref2[j];
-        results.push(child.setParent(this));
-      }
-      return results;
-    };
-
-    XMLNode.prototype.element = function(name, attributes, text) {
-      var childNode, item, j, k, key, lastChild, len, len1, ref2, ref3, val;
-      lastChild = null;
-      if (attributes === null && (text == null)) {
-        ref2 = [{}, null], attributes = ref2[0], text = ref2[1];
-      }
-      if (attributes == null) {
-        attributes = {};
-      }
-      attributes = getValue(attributes);
-      if (!isObject(attributes)) {
-        ref3 = [attributes, text], text = ref3[0], attributes = ref3[1];
-      }
-      if (name != null) {
-        name = getValue(name);
-      }
-      if (Array.isArray(name)) {
-        for (j = 0, len = name.length; j < len; j++) {
-          item = name[j];
-          lastChild = this.element(item);
-        }
-      } else if (isFunction(name)) {
-        lastChild = this.element(name.apply());
-      } else if (isObject(name)) {
-        for (key in name) {
-          if (!hasProp.call(name, key)) continue;
-          val = name[key];
-          if (isFunction(val)) {
-            val = val.apply();
-          }
-          if (!this.options.ignoreDecorators && this.stringify.convertAttKey && key.indexOf(this.stringify.convertAttKey) === 0) {
-            lastChild = this.attribute(key.substr(this.stringify.convertAttKey.length), val);
-          } else if (!this.options.separateArrayItems && Array.isArray(val) && isEmpty(val)) {
-            lastChild = this.dummy();
-          } else if (isObject(val) && isEmpty(val)) {
-            lastChild = this.element(key);
-          } else if (!this.options.keepNullNodes && (val == null)) {
-            lastChild = this.dummy();
-          } else if (!this.options.separateArrayItems && Array.isArray(val)) {
-            for (k = 0, len1 = val.length; k < len1; k++) {
-              item = val[k];
-              childNode = {};
-              childNode[key] = item;
-              lastChild = this.element(childNode);
-            }
-          } else if (isObject(val)) {
-            if (!this.options.ignoreDecorators && this.stringify.convertTextKey && key.indexOf(this.stringify.convertTextKey) === 0) {
-              lastChild = this.element(val);
-            } else {
-              lastChild = this.element(key);
-              lastChild.element(val);
-            }
-          } else {
-            lastChild = this.element(key, val);
-          }
-        }
-      } else if (!this.options.keepNullNodes && text === null) {
-        lastChild = this.dummy();
-      } else {
-        if (!this.options.ignoreDecorators && this.stringify.convertTextKey && name.indexOf(this.stringify.convertTextKey) === 0) {
-          lastChild = this.text(text);
-        } else if (!this.options.ignoreDecorators && this.stringify.convertCDataKey && name.indexOf(this.stringify.convertCDataKey) === 0) {
-          lastChild = this.cdata(text);
-        } else if (!this.options.ignoreDecorators && this.stringify.convertCommentKey && name.indexOf(this.stringify.convertCommentKey) === 0) {
-          lastChild = this.comment(text);
-        } else if (!this.options.ignoreDecorators && this.stringify.convertRawKey && name.indexOf(this.stringify.convertRawKey) === 0) {
-          lastChild = this.raw(text);
-        } else if (!this.options.ignoreDecorators && this.stringify.convertPIKey && name.indexOf(this.stringify.convertPIKey) === 0) {
-          lastChild = this.instruction(name.substr(this.stringify.convertPIKey.length), text);
-        } else {
-          lastChild = this.node(name, attributes, text);
-        }
-      }
-      if (lastChild == null) {
-        throw new Error("Could not create any elements with: " + name + ". " + this.debugInfo());
-      }
-      return lastChild;
-    };
-
-    XMLNode.prototype.insertBefore = function(name, attributes, text) {
-      var child, i, newChild, refChild, removed;
-      if (name != null ? name.type : void 0) {
-        newChild = name;
-        refChild = attributes;
-        newChild.setParent(this);
-        if (refChild) {
-          i = children.indexOf(refChild);
-          removed = children.splice(i);
-          children.push(newChild);
-          Array.prototype.push.apply(children, removed);
-        } else {
-          children.push(newChild);
-        }
-        return newChild;
-      } else {
-        if (this.isRoot) {
-          throw new Error("Cannot insert elements at root level. " + this.debugInfo(name));
-        }
-        i = this.parent.children.indexOf(this);
-        removed = this.parent.children.splice(i);
-        child = this.parent.element(name, attributes, text);
-        Array.prototype.push.apply(this.parent.children, removed);
-        return child;
-      }
-    };
-
-    XMLNode.prototype.insertAfter = function(name, attributes, text) {
-      var child, i, removed;
-      if (this.isRoot) {
-        throw new Error("Cannot insert elements at root level. " + this.debugInfo(name));
-      }
-      i = this.parent.children.indexOf(this);
-      removed = this.parent.children.splice(i + 1);
-      child = this.parent.element(name, attributes, text);
-      Array.prototype.push.apply(this.parent.children, removed);
-      return child;
-    };
-
-    XMLNode.prototype.remove = function() {
-      var i, ref2;
-      if (this.isRoot) {
-        throw new Error("Cannot remove the root element. " + this.debugInfo());
-      }
-      i = this.parent.children.indexOf(this);
-      [].splice.apply(this.parent.children, [i, i - i + 1].concat(ref2 = [])), ref2;
-      return this.parent;
-    };
-
-    XMLNode.prototype.node = function(name, attributes, text) {
-      var child, ref2;
-      if (name != null) {
-        name = getValue(name);
-      }
-      attributes || (attributes = {});
-      attributes = getValue(attributes);
-      if (!isObject(attributes)) {
-        ref2 = [attributes, text], text = ref2[0], attributes = ref2[1];
-      }
-      child = new XMLElement(this, name, attributes);
-      if (text != null) {
-        child.text(text);
-      }
-      this.children.push(child);
-      return child;
-    };
-
-    XMLNode.prototype.text = function(value) {
-      var child;
-      if (isObject(value)) {
-        this.element(value);
-      }
-      child = new XMLText(this, value);
-      this.children.push(child);
-      return this;
-    };
-
-    XMLNode.prototype.cdata = function(value) {
-      var child;
-      child = new XMLCData(this, value);
-      this.children.push(child);
-      return this;
-    };
-
-    XMLNode.prototype.comment = function(value) {
-      var child;
-      child = new XMLComment(this, value);
-      this.children.push(child);
-      return this;
-    };
-
-    XMLNode.prototype.commentBefore = function(value) {
-      var child, i, removed;
-      i = this.parent.children.indexOf(this);
-      removed = this.parent.children.splice(i);
-      child = this.parent.comment(value);
-      Array.prototype.push.apply(this.parent.children, removed);
-      return this;
-    };
-
-    XMLNode.prototype.commentAfter = function(value) {
-      var child, i, removed;
-      i = this.parent.children.indexOf(this);
-      removed = this.parent.children.splice(i + 1);
-      child = this.parent.comment(value);
-      Array.prototype.push.apply(this.parent.children, removed);
-      return this;
-    };
-
-    XMLNode.prototype.raw = function(value) {
-      var child;
-      child = new XMLRaw(this, value);
-      this.children.push(child);
-      return this;
-    };
-
-    XMLNode.prototype.dummy = function() {
-      var child;
-      child = new XMLDummy(this);
-      return child;
-    };
-
-    XMLNode.prototype.instruction = function(target, value) {
-      var insTarget, insValue, instruction, j, len;
-      if (target != null) {
-        target = getValue(target);
-      }
-      if (value != null) {
-        value = getValue(value);
-      }
-      if (Array.isArray(target)) {
-        for (j = 0, len = target.length; j < len; j++) {
-          insTarget = target[j];
-          this.instruction(insTarget);
-        }
-      } else if (isObject(target)) {
-        for (insTarget in target) {
-          if (!hasProp.call(target, insTarget)) continue;
-          insValue = target[insTarget];
-          this.instruction(insTarget, insValue);
-        }
-      } else {
-        if (isFunction(value)) {
-          value = value.apply();
-        }
-        instruction = new XMLProcessingInstruction(this, target, value);
-        this.children.push(instruction);
-      }
-      return this;
-    };
-
-    XMLNode.prototype.instructionBefore = function(target, value) {
-      var child, i, removed;
-      i = this.parent.children.indexOf(this);
-      removed = this.parent.children.splice(i);
-      child = this.parent.instruction(target, value);
-      Array.prototype.push.apply(this.parent.children, removed);
-      return this;
-    };
-
-    XMLNode.prototype.instructionAfter = function(target, value) {
-      var child, i, removed;
-      i = this.parent.children.indexOf(this);
-      removed = this.parent.children.splice(i + 1);
-      child = this.parent.instruction(target, value);
-      Array.prototype.push.apply(this.parent.children, removed);
-      return this;
-    };
-
-    XMLNode.prototype.declaration = function(version, encoding, standalone) {
-      var doc, xmldec;
-      doc = this.document();
-      xmldec = new XMLDeclaration(doc, version, encoding, standalone);
-      if (doc.children.length === 0) {
-        doc.children.unshift(xmldec);
-      } else if (doc.children[0].type === NodeType.Declaration) {
-        doc.children[0] = xmldec;
-      } else {
-        doc.children.unshift(xmldec);
-      }
-      return doc.root() || doc;
-    };
-
-    XMLNode.prototype.dtd = function(pubID, sysID) {
-      var child, doc, doctype, i, j, k, len, len1, ref2, ref3;
-      doc = this.document();
-      doctype = new XMLDocType(doc, pubID, sysID);
-      ref2 = doc.children;
-      for (i = j = 0, len = ref2.length; j < len; i = ++j) {
-        child = ref2[i];
-        if (child.type === NodeType.DocType) {
-          doc.children[i] = doctype;
-          return doctype;
-        }
-      }
-      ref3 = doc.children;
-      for (i = k = 0, len1 = ref3.length; k < len1; i = ++k) {
-        child = ref3[i];
-        if (child.isRoot) {
-          doc.children.splice(i, 0, doctype);
-          return doctype;
-        }
-      }
-      doc.children.push(doctype);
-      return doctype;
-    };
-
-    XMLNode.prototype.up = function() {
-      if (this.isRoot) {
-        throw new Error("The root node has no parent. Use doc() if you need to get the document object.");
-      }
-      return this.parent;
-    };
-
-    XMLNode.prototype.root = function() {
-      var node;
-      node = this;
-      while (node) {
-        if (node.type === NodeType.Document) {
-          return node.rootObject;
-        } else if (node.isRoot) {
-          return node;
-        } else {
-          node = node.parent;
-        }
-      }
-    };
-
-    XMLNode.prototype.document = function() {
-      var node;
-      node = this;
-      while (node) {
-        if (node.type === NodeType.Document) {
-          return node;
-        } else {
-          node = node.parent;
-        }
-      }
-    };
-
-    XMLNode.prototype.end = function(options) {
-      return this.document().end(options);
-    };
-
-    XMLNode.prototype.prev = function() {
-      var i;
-      i = this.parent.children.indexOf(this);
-      if (i < 1) {
-        throw new Error("Already at the first node. " + this.debugInfo());
-      }
-      return this.parent.children[i - 1];
-    };
-
-    XMLNode.prototype.next = function() {
-      var i;
-      i = this.parent.children.indexOf(this);
-      if (i === -1 || i === this.parent.children.length - 1) {
-        throw new Error("Already at the last node. " + this.debugInfo());
-      }
-      return this.parent.children[i + 1];
-    };
-
-    XMLNode.prototype.importDocument = function(doc) {
-      var clonedRoot;
-      clonedRoot = doc.root().clone();
-      clonedRoot.parent = this;
-      clonedRoot.isRoot = false;
-      this.children.push(clonedRoot);
-      return this;
-    };
-
-    XMLNode.prototype.debugInfo = function(name) {
-      var ref2, ref3;
-      name = name || this.name;
-      if ((name == null) && !((ref2 = this.parent) != null ? ref2.name : void 0)) {
-        return "";
-      } else if (name == null) {
-        return "parent: <" + this.parent.name + ">";
-      } else if (!((ref3 = this.parent) != null ? ref3.name : void 0)) {
-        return "node: <" + name + ">";
-      } else {
-        return "node: <" + name + ">, parent: <" + this.parent.name + ">";
-      }
-    };
-
-    XMLNode.prototype.ele = function(name, attributes, text) {
-      return this.element(name, attributes, text);
-    };
-
-    XMLNode.prototype.nod = function(name, attributes, text) {
-      return this.node(name, attributes, text);
-    };
-
-    XMLNode.prototype.txt = function(value) {
-      return this.text(value);
-    };
-
-    XMLNode.prototype.dat = function(value) {
-      return this.cdata(value);
-    };
-
-    XMLNode.prototype.com = function(value) {
-      return this.comment(value);
-    };
-
-    XMLNode.prototype.ins = function(target, value) {
-      return this.instruction(target, value);
-    };
-
-    XMLNode.prototype.doc = function() {
-      return this.document();
-    };
-
-    XMLNode.prototype.dec = function(version, encoding, standalone) {
-      return this.declaration(version, encoding, standalone);
-    };
-
-    XMLNode.prototype.e = function(name, attributes, text) {
-      return this.element(name, attributes, text);
-    };
-
-    XMLNode.prototype.n = function(name, attributes, text) {
-      return this.node(name, attributes, text);
-    };
-
-    XMLNode.prototype.t = function(value) {
-      return this.text(value);
-    };
-
-    XMLNode.prototype.d = function(value) {
-      return this.cdata(value);
-    };
-
-    XMLNode.prototype.c = function(value) {
-      return this.comment(value);
-    };
-
-    XMLNode.prototype.r = function(value) {
-      return this.raw(value);
-    };
-
-    XMLNode.prototype.i = function(target, value) {
-      return this.instruction(target, value);
-    };
-
-    XMLNode.prototype.u = function() {
-      return this.up();
-    };
-
-    XMLNode.prototype.importXMLBuilder = function(doc) {
-      return this.importDocument(doc);
-    };
-
-    XMLNode.prototype.replaceChild = function(newChild, oldChild) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.removeChild = function(oldChild) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.appendChild = function(newChild) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.hasChildNodes = function() {
-      return this.children.length !== 0;
-    };
-
-    XMLNode.prototype.cloneNode = function(deep) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.normalize = function() {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.isSupported = function(feature, version) {
-      return true;
-    };
-
-    XMLNode.prototype.hasAttributes = function() {
-      return this.attribs.length !== 0;
-    };
-
-    XMLNode.prototype.compareDocumentPosition = function(other) {
-      var ref, res;
-      ref = this;
-      if (ref === other) {
-        return 0;
-      } else if (this.document() !== other.document()) {
-        res = DocumentPosition.Disconnected | DocumentPosition.ImplementationSpecific;
-        if (Math.random() < 0.5) {
-          res |= DocumentPosition.Preceding;
-        } else {
-          res |= DocumentPosition.Following;
-        }
-        return res;
-      } else if (ref.isAncestor(other)) {
-        return DocumentPosition.Contains | DocumentPosition.Preceding;
-      } else if (ref.isDescendant(other)) {
-        return DocumentPosition.Contains | DocumentPosition.Following;
-      } else if (ref.isPreceding(other)) {
-        return DocumentPosition.Preceding;
-      } else {
-        return DocumentPosition.Following;
-      }
-    };
-
-    XMLNode.prototype.isSameNode = function(other) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.lookupPrefix = function(namespaceURI) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.isDefaultNamespace = function(namespaceURI) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.lookupNamespaceURI = function(prefix) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.isEqualNode = function(node) {
-      var i, j, ref2;
-      if (node.nodeType !== this.nodeType) {
-        return false;
-      }
-      if (node.children.length !== this.children.length) {
-        return false;
-      }
-      for (i = j = 0, ref2 = this.children.length - 1; 0 <= ref2 ? j <= ref2 : j >= ref2; i = 0 <= ref2 ? ++j : --j) {
-        if (!this.children[i].isEqualNode(node.children[i])) {
-          return false;
-        }
-      }
-      return true;
-    };
-
-    XMLNode.prototype.getFeature = function(feature, version) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.setUserData = function(key, data, handler) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.getUserData = function(key) {
-      throw new Error("This DOM method is not implemented." + this.debugInfo());
-    };
-
-    XMLNode.prototype.contains = function(other) {
-      if (!other) {
-        return false;
-      }
-      return other === this || this.isDescendant(other);
-    };
-
-    XMLNode.prototype.isDescendant = function(node) {
-      var child, isDescendantChild, j, len, ref2;
-      ref2 = this.children;
-      for (j = 0, len = ref2.length; j < len; j++) {
-        child = ref2[j];
-        if (node === child) {
-          return true;
-        }
-        isDescendantChild = child.isDescendant(node);
-        if (isDescendantChild) {
-          return true;
-        }
-      }
-      return false;
-    };
-
-    XMLNode.prototype.isAncestor = function(node) {
-      return node.isDescendant(this);
-    };
-
-    XMLNode.prototype.isPreceding = function(node) {
-      var nodePos, thisPos;
-      nodePos = this.treePosition(node);
-      thisPos = this.treePosition(this);
-      if (nodePos === -1 || thisPos === -1) {
-        return false;
-      } else {
-        return nodePos < thisPos;
-      }
-    };
-
-    XMLNode.prototype.isFollowing = function(node) {
-      var nodePos, thisPos;
-      nodePos = this.treePosition(node);
-      thisPos = this.treePosition(this);
-      if (nodePos === -1 || thisPos === -1) {
-        return false;
-      } else {
-        return nodePos > thisPos;
-      }
-    };
-
-    XMLNode.prototype.treePosition = function(node) {
-      var found, pos;
-      pos = 0;
-      found = false;
-      this.foreachTreeNode(this.document(), function(childNode) {
-        pos++;
-        if (!found && childNode === node) {
-          return found = true;
-        }
-      });
-      if (found) {
-        return pos;
-      } else {
-        return -1;
-      }
-    };
-
-    XMLNode.prototype.foreachTreeNode = function(node, func) {
-      var child, j, len, ref2, res;
-      node || (node = this.document());
-      ref2 = node.children;
-      for (j = 0, len = ref2.length; j < len; j++) {
-        child = ref2[j];
-        if (res = func(child)) {
-          return res;
-        } else {
-          res = this.foreachTreeNode(child, func);
-          if (res) {
-            return res;
-          }
-        }
-      }
-    };
-
-    return XMLNode;
-
-  })();
-
-}).call(this);
+  } else {
+    pubSuf = pubsuffix.getPublicSuffix(domain);
+  }
+
+  if (!pubSuf) {
+    return null;
+  }
+  if (pubSuf == domain) {
+    return [domain];
+  }
+
+  const prefix = domain.slice(0, -(pubSuf.length + 1)); // ".example.com"
+  const parts = prefix.split(".").reverse();
+  let cur = pubSuf;
+  const permutations = [cur];
+  while (parts.length) {
+    cur = `${parts.shift()}.${cur}`;
+    permutations.push(cur);
+  }
+  return permutations;
+}
+
+exports.permuteDomain = permuteDomain;
 
 
 /***/ }),
-/* 258 */,
 /* 259 */,
 /* 260 */,
 /* 261 */,
@@ -8697,28 +8046,7 @@ exports.DefaultGlobber = DefaultGlobber;
 //# sourceMappingURL=internal-globber.js.map
 
 /***/ }),
-/* 298 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _v = _interopRequireDefault(__webpack_require__(241));
-
-var _md = _interopRequireDefault(__webpack_require__(245));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const v3 = (0, _v.default)('v3', 0x30, _md.default);
-var _default = v3;
-exports.default = _default;
-
-/***/ }),
+/* 298 */,
 /* 299 */,
 /* 300 */,
 /* 301 */,
@@ -9056,7 +8384,81 @@ var MatchKind;
 /* 329 */,
 /* 330 */,
 /* 331 */,
-/* 332 */
+/* 332 */,
+/* 333 */,
+/* 334 */
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+module.exports =
+{
+  parallel      : __webpack_require__(424),
+  serial        : __webpack_require__(91),
+  serialOrdered : __webpack_require__(892)
+};
+
+
+/***/ }),
+/* 335 */,
+/* 336 */,
+/* 337 */,
+/* 338 */,
+/* 339 */,
+/* 340 */
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+/*
+ * Copyright The OpenTelemetry Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SamplingDecision = void 0;
+/**
+ * A sampling decision that determines how a {@link Span} will be recorded
+ * and collected.
+ */
+var SamplingDecision;
+(function (SamplingDecision) {
+    /**
+     * `Span.isRecording() === false`, span will not be recorded and all events
+     * and attributes will be dropped.
+     */
+    SamplingDecision[SamplingDecision["NOT_RECORD"] = 0] = "NOT_RECORD";
+    /**
+     * `Span.isRecording() === true`, but `Sampled` flag in {@link TraceFlags}
+     * MUST NOT be set.
+     */
+    SamplingDecision[SamplingDecision["RECORD"] = 1] = "RECORD";
+    /**
+     * `Span.isRecording() === true` AND `Sampled` flag in {@link TraceFlags}
+     * MUST be set.
+     */
+    SamplingDecision[SamplingDecision["RECORD_AND_SAMPLED"] = 2] = "RECORD_AND_SAMPLED";
+})(SamplingDecision = exports.SamplingDecision || (exports.SamplingDecision = {}));
+//# sourceMappingURL=SamplingResult.js.map
+
+/***/ }),
+/* 341 */,
+/* 342 */,
+/* 343 */,
+/* 344 */,
+/* 345 */,
+/* 346 */,
+/* 347 */,
+/* 348 */,
+/* 349 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
@@ -9091,10 +8493,10 @@ var MatchKind;
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-const { fromCallback } = __webpack_require__(147);
-const Store = __webpack_require__(338).Store;
-const permuteDomain = __webpack_require__(89).permuteDomain;
-const pathMatch = __webpack_require__(348).pathMatch;
+const { fromCallback } = __webpack_require__(676);
+const Store = __webpack_require__(627).Store;
+const permuteDomain = __webpack_require__(258).permuteDomain;
+const pathMatch = __webpack_require__(54).pathMatch;
 const util = __webpack_require__(669);
 
 class MemoryCookieStore extends Store {
@@ -9253,229 +8655,6 @@ exports.MemoryCookieStore = MemoryCookieStore;
 
 
 /***/ }),
-/* 333 */,
-/* 334 */
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-module.exports =
-{
-  parallel      : __webpack_require__(424),
-  serial        : __webpack_require__(91),
-  serialOrdered : __webpack_require__(892)
-};
-
-
-/***/ }),
-/* 335 */,
-/* 336 */,
-/* 337 */,
-/* 338 */
-/***/ (function(__unusedmodule, exports) {
-
-"use strict";
-/*!
- * Copyright (c) 2015, Salesforce.com, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of Salesforce.com nor the names of its contributors may
- * be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*jshint unused:false */
-
-class Store {
-  constructor() {
-    this.synchronous = false;
-  }
-
-  findCookie(domain, path, key, cb) {
-    throw new Error("findCookie is not implemented");
-  }
-
-  findCookies(domain, path, allowSpecialUseDomain, cb) {
-    throw new Error("findCookies is not implemented");
-  }
-
-  putCookie(cookie, cb) {
-    throw new Error("putCookie is not implemented");
-  }
-
-  updateCookie(oldCookie, newCookie, cb) {
-    // recommended default implementation:
-    // return this.putCookie(newCookie, cb);
-    throw new Error("updateCookie is not implemented");
-  }
-
-  removeCookie(domain, path, key, cb) {
-    throw new Error("removeCookie is not implemented");
-  }
-
-  removeCookies(domain, path, cb) {
-    throw new Error("removeCookies is not implemented");
-  }
-
-  removeAllCookies(cb) {
-    throw new Error("removeAllCookies is not implemented");
-  }
-
-  getAllCookies(cb) {
-    throw new Error(
-      "getAllCookies is not implemented (therefore jar cannot be serialized)"
-    );
-  }
-}
-
-exports.Store = Store;
-
-
-/***/ }),
-/* 339 */,
-/* 340 */
-/***/ (function(__unusedmodule, exports) {
-
-"use strict";
-
-/*
- * Copyright The OpenTelemetry Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SamplingDecision = void 0;
-/**
- * A sampling decision that determines how a {@link Span} will be recorded
- * and collected.
- */
-var SamplingDecision;
-(function (SamplingDecision) {
-    /**
-     * `Span.isRecording() === false`, span will not be recorded and all events
-     * and attributes will be dropped.
-     */
-    SamplingDecision[SamplingDecision["NOT_RECORD"] = 0] = "NOT_RECORD";
-    /**
-     * `Span.isRecording() === true`, but `Sampled` flag in {@link TraceFlags}
-     * MUST NOT be set.
-     */
-    SamplingDecision[SamplingDecision["RECORD"] = 1] = "RECORD";
-    /**
-     * `Span.isRecording() === true` AND `Sampled` flag in {@link TraceFlags}
-     * MUST be set.
-     */
-    SamplingDecision[SamplingDecision["RECORD_AND_SAMPLED"] = 2] = "RECORD_AND_SAMPLED";
-})(SamplingDecision = exports.SamplingDecision || (exports.SamplingDecision = {}));
-//# sourceMappingURL=SamplingResult.js.map
-
-/***/ }),
-/* 341 */,
-/* 342 */,
-/* 343 */,
-/* 344 */,
-/* 345 */,
-/* 346 */,
-/* 347 */,
-/* 348 */
-/***/ (function(__unusedmodule, exports) {
-
-"use strict";
-/*!
- * Copyright (c) 2015, Salesforce.com, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of Salesforce.com nor the names of its contributors may
- * be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * "A request-path path-matches a given cookie-path if at least one of the
- * following conditions holds:"
- */
-function pathMatch(reqPath, cookiePath) {
-  // "o  The cookie-path and the request-path are identical."
-  if (cookiePath === reqPath) {
-    return true;
-  }
-
-  const idx = reqPath.indexOf(cookiePath);
-  if (idx === 0) {
-    // "o  The cookie-path is a prefix of the request-path, and the last
-    // character of the cookie-path is %x2F ("/")."
-    if (cookiePath.substr(-1) === "/") {
-      return true;
-    }
-
-    // " o  The cookie-path is a prefix of the request-path, and the first
-    // character of the request-path that is not included in the cookie- path
-    // is a %x2F ("/") character."
-    if (reqPath.substr(cookiePath.length, 1) === "/") {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-exports.pathMatch = pathMatch;
-
-
-/***/ }),
-/* 349 */,
 /* 350 */
 /***/ (function(__unusedmodule, exports) {
 
@@ -9637,7 +8816,7 @@ function logProxy(funcName, namespace, args) {
 Object.defineProperty(exports, '__esModule', { value: true });
 
 var coreHttp = __webpack_require__(999);
-var tslib = __webpack_require__(608);
+var tslib = __webpack_require__(422);
 var coreTracing = __webpack_require__(263);
 var logger$1 = __webpack_require__(928);
 var abortController = __webpack_require__(106);
@@ -34541,7 +33720,28 @@ exports.Path = Path;
 //# sourceMappingURL=internal-path.js.map
 
 /***/ }),
-/* 384 */,
+/* 384 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _v = _interopRequireDefault(__webpack_require__(212));
+
+var _sha = _interopRequireDefault(__webpack_require__(498));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const v5 = (0, _v.default)('v5', 0x50, _sha.default);
+var _default = v5;
+exports.default = _default;
+
+/***/ }),
 /* 385 */,
 /* 386 */,
 /* 387 */,
@@ -34550,1684 +33750,7 @@ exports.Path = Path;
 /* 390 */,
 /* 391 */,
 /* 392 */,
-/* 393 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-/*!
- * Copyright (c) 2015, Salesforce.com, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of Salesforce.com nor the names of its contributors may
- * be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-const punycode = __webpack_require__(815);
-const urlParse = __webpack_require__(835).parse;
-const util = __webpack_require__(669);
-const pubsuffix = __webpack_require__(562);
-const Store = __webpack_require__(338).Store;
-const MemoryCookieStore = __webpack_require__(332).MemoryCookieStore;
-const pathMatch = __webpack_require__(348).pathMatch;
-const VERSION = __webpack_require__(460);
-const { fromCallback } = __webpack_require__(147);
-
-// From RFC6265 S4.1.1
-// note that it excludes \x3B ";"
-const COOKIE_OCTETS = /^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]+$/;
-
-const CONTROL_CHARS = /[\x00-\x1F]/;
-
-// From Chromium // '\r', '\n' and '\0' should be treated as a terminator in
-// the "relaxed" mode, see:
-// https://github.com/ChromiumWebApps/chromium/blob/b3d3b4da8bb94c1b2e061600df106d590fda3620/net/cookies/parsed_cookie.cc#L60
-const TERMINATORS = ["\n", "\r", "\0"];
-
-// RFC6265 S4.1.1 defines path value as 'any CHAR except CTLs or ";"'
-// Note ';' is \x3B
-const PATH_VALUE = /[\x20-\x3A\x3C-\x7E]+/;
-
-// date-time parsing constants (RFC6265 S5.1.1)
-
-const DATE_DELIM = /[\x09\x20-\x2F\x3B-\x40\x5B-\x60\x7B-\x7E]/;
-
-const MONTH_TO_NUM = {
-  jan: 0,
-  feb: 1,
-  mar: 2,
-  apr: 3,
-  may: 4,
-  jun: 5,
-  jul: 6,
-  aug: 7,
-  sep: 8,
-  oct: 9,
-  nov: 10,
-  dec: 11
-};
-
-const MAX_TIME = 2147483647000; // 31-bit max
-const MIN_TIME = 0; // 31-bit min
-const SAME_SITE_CONTEXT_VAL_ERR =
-  'Invalid sameSiteContext option for getCookies(); expected one of "strict", "lax", or "none"';
-
-function checkSameSiteContext(value) {
-  const context = String(value).toLowerCase();
-  if (context === "none" || context === "lax" || context === "strict") {
-    return context;
-  } else {
-    return null;
-  }
-}
-
-const PrefixSecurityEnum = Object.freeze({
-  SILENT: "silent",
-  STRICT: "strict",
-  DISABLED: "unsafe-disabled"
-});
-
-// Dumped from ip-regex@4.0.0, with the following changes:
-// * all capturing groups converted to non-capturing -- "(?:)"
-// * support for IPv6 Scoped Literal ("%eth1") removed
-// * lowercase hexadecimal only
-var IP_REGEX_LOWERCASE =/(?:^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$)|(?:^(?:(?:[a-f\d]{1,4}:){7}(?:[a-f\d]{1,4}|:)|(?:[a-f\d]{1,4}:){6}(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|:[a-f\d]{1,4}|:)|(?:[a-f\d]{1,4}:){5}(?::(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,2}|:)|(?:[a-f\d]{1,4}:){4}(?:(?::[a-f\d]{1,4}){0,1}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,3}|:)|(?:[a-f\d]{1,4}:){3}(?:(?::[a-f\d]{1,4}){0,2}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,4}|:)|(?:[a-f\d]{1,4}:){2}(?:(?::[a-f\d]{1,4}){0,3}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,5}|:)|(?:[a-f\d]{1,4}:){1}(?:(?::[a-f\d]{1,4}){0,4}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,6}|:)|(?::(?:(?::[a-f\d]{1,4}){0,5}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,7}|:)))$)/;
-
-/*
- * Parses a Natural number (i.e., non-negative integer) with either the
- *    <min>*<max>DIGIT ( non-digit *OCTET )
- * or
- *    <min>*<max>DIGIT
- * grammar (RFC6265 S5.1.1).
- *
- * The "trailingOK" boolean controls if the grammar accepts a
- * "( non-digit *OCTET )" trailer.
- */
-function parseDigits(token, minDigits, maxDigits, trailingOK) {
-  let count = 0;
-  while (count < token.length) {
-    const c = token.charCodeAt(count);
-    // "non-digit = %x00-2F / %x3A-FF"
-    if (c <= 0x2f || c >= 0x3a) {
-      break;
-    }
-    count++;
-  }
-
-  // constrain to a minimum and maximum number of digits.
-  if (count < minDigits || count > maxDigits) {
-    return null;
-  }
-
-  if (!trailingOK && count != token.length) {
-    return null;
-  }
-
-  return parseInt(token.substr(0, count), 10);
-}
-
-function parseTime(token) {
-  const parts = token.split(":");
-  const result = [0, 0, 0];
-
-  /* RF6256 S5.1.1:
-   *      time            = hms-time ( non-digit *OCTET )
-   *      hms-time        = time-field ":" time-field ":" time-field
-   *      time-field      = 1*2DIGIT
-   */
-
-  if (parts.length !== 3) {
-    return null;
-  }
-
-  for (let i = 0; i < 3; i++) {
-    // "time-field" must be strictly "1*2DIGIT", HOWEVER, "hms-time" can be
-    // followed by "( non-digit *OCTET )" so therefore the last time-field can
-    // have a trailer
-    const trailingOK = i == 2;
-    const num = parseDigits(parts[i], 1, 2, trailingOK);
-    if (num === null) {
-      return null;
-    }
-    result[i] = num;
-  }
-
-  return result;
-}
-
-function parseMonth(token) {
-  token = String(token)
-    .substr(0, 3)
-    .toLowerCase();
-  const num = MONTH_TO_NUM[token];
-  return num >= 0 ? num : null;
-}
-
-/*
- * RFC6265 S5.1.1 date parser (see RFC for full grammar)
- */
-function parseDate(str) {
-  if (!str) {
-    return;
-  }
-
-  /* RFC6265 S5.1.1:
-   * 2. Process each date-token sequentially in the order the date-tokens
-   * appear in the cookie-date
-   */
-  const tokens = str.split(DATE_DELIM);
-  if (!tokens) {
-    return;
-  }
-
-  let hour = null;
-  let minute = null;
-  let second = null;
-  let dayOfMonth = null;
-  let month = null;
-  let year = null;
-
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i].trim();
-    if (!token.length) {
-      continue;
-    }
-
-    let result;
-
-    /* 2.1. If the found-time flag is not set and the token matches the time
-     * production, set the found-time flag and set the hour- value,
-     * minute-value, and second-value to the numbers denoted by the digits in
-     * the date-token, respectively.  Skip the remaining sub-steps and continue
-     * to the next date-token.
-     */
-    if (second === null) {
-      result = parseTime(token);
-      if (result) {
-        hour = result[0];
-        minute = result[1];
-        second = result[2];
-        continue;
-      }
-    }
-
-    /* 2.2. If the found-day-of-month flag is not set and the date-token matches
-     * the day-of-month production, set the found-day-of- month flag and set
-     * the day-of-month-value to the number denoted by the date-token.  Skip
-     * the remaining sub-steps and continue to the next date-token.
-     */
-    if (dayOfMonth === null) {
-      // "day-of-month = 1*2DIGIT ( non-digit *OCTET )"
-      result = parseDigits(token, 1, 2, true);
-      if (result !== null) {
-        dayOfMonth = result;
-        continue;
-      }
-    }
-
-    /* 2.3. If the found-month flag is not set and the date-token matches the
-     * month production, set the found-month flag and set the month-value to
-     * the month denoted by the date-token.  Skip the remaining sub-steps and
-     * continue to the next date-token.
-     */
-    if (month === null) {
-      result = parseMonth(token);
-      if (result !== null) {
-        month = result;
-        continue;
-      }
-    }
-
-    /* 2.4. If the found-year flag is not set and the date-token matches the
-     * year production, set the found-year flag and set the year-value to the
-     * number denoted by the date-token.  Skip the remaining sub-steps and
-     * continue to the next date-token.
-     */
-    if (year === null) {
-      // "year = 2*4DIGIT ( non-digit *OCTET )"
-      result = parseDigits(token, 2, 4, true);
-      if (result !== null) {
-        year = result;
-        /* From S5.1.1:
-         * 3.  If the year-value is greater than or equal to 70 and less
-         * than or equal to 99, increment the year-value by 1900.
-         * 4.  If the year-value is greater than or equal to 0 and less
-         * than or equal to 69, increment the year-value by 2000.
-         */
-        if (year >= 70 && year <= 99) {
-          year += 1900;
-        } else if (year >= 0 && year <= 69) {
-          year += 2000;
-        }
-      }
-    }
-  }
-
-  /* RFC 6265 S5.1.1
-   * "5. Abort these steps and fail to parse the cookie-date if:
-   *     *  at least one of the found-day-of-month, found-month, found-
-   *        year, or found-time flags is not set,
-   *     *  the day-of-month-value is less than 1 or greater than 31,
-   *     *  the year-value is less than 1601,
-   *     *  the hour-value is greater than 23,
-   *     *  the minute-value is greater than 59, or
-   *     *  the second-value is greater than 59.
-   *     (Note that leap seconds cannot be represented in this syntax.)"
-   *
-   * So, in order as above:
-   */
-  if (
-    dayOfMonth === null ||
-    month === null ||
-    year === null ||
-    second === null ||
-    dayOfMonth < 1 ||
-    dayOfMonth > 31 ||
-    year < 1601 ||
-    hour > 23 ||
-    minute > 59 ||
-    second > 59
-  ) {
-    return;
-  }
-
-  return new Date(Date.UTC(year, month, dayOfMonth, hour, minute, second));
-}
-
-function formatDate(date) {
-  return date.toUTCString();
-}
-
-// S5.1.2 Canonicalized Host Names
-function canonicalDomain(str) {
-  if (str == null) {
-    return null;
-  }
-  str = str.trim().replace(/^\./, ""); // S4.1.2.3 & S5.2.3: ignore leading .
-
-  // convert to IDN if any non-ASCII characters
-  if (punycode && /[^\u0001-\u007f]/.test(str)) {
-    str = punycode.toASCII(str);
-  }
-
-  return str.toLowerCase();
-}
-
-// S5.1.3 Domain Matching
-function domainMatch(str, domStr, canonicalize) {
-  if (str == null || domStr == null) {
-    return null;
-  }
-  if (canonicalize !== false) {
-    str = canonicalDomain(str);
-    domStr = canonicalDomain(domStr);
-  }
-
-  /*
-   * S5.1.3:
-   * "A string domain-matches a given domain string if at least one of the
-   * following conditions hold:"
-   *
-   * " o The domain string and the string are identical. (Note that both the
-   * domain string and the string will have been canonicalized to lower case at
-   * this point)"
-   */
-  if (str == domStr) {
-    return true;
-  }
-
-  /* " o All of the following [three] conditions hold:" */
-
-  /* "* The domain string is a suffix of the string" */
-  const idx = str.indexOf(domStr);
-  if (idx <= 0) {
-    return false; // it's a non-match (-1) or prefix (0)
-  }
-
-  // next, check it's a proper suffix
-  // e.g., "a.b.c".indexOf("b.c") === 2
-  // 5 === 3+2
-  if (str.length !== domStr.length + idx) {
-    return false; // it's not a suffix
-  }
-
-  /* "  * The last character of the string that is not included in the
-   * domain string is a %x2E (".") character." */
-  if (str.substr(idx-1,1) !== '.') {
-    return false; // doesn't align on "."
-  }
-
-  /* "  * The string is a host name (i.e., not an IP address)." */
-  if (IP_REGEX_LOWERCASE.test(str)) {
-    return false; // it's an IP address
-  }
-
-  return true;
-}
-
-// RFC6265 S5.1.4 Paths and Path-Match
-
-/*
- * "The user agent MUST use an algorithm equivalent to the following algorithm
- * to compute the default-path of a cookie:"
- *
- * Assumption: the path (and not query part or absolute uri) is passed in.
- */
-function defaultPath(path) {
-  // "2. If the uri-path is empty or if the first character of the uri-path is not
-  // a %x2F ("/") character, output %x2F ("/") and skip the remaining steps.
-  if (!path || path.substr(0, 1) !== "/") {
-    return "/";
-  }
-
-  // "3. If the uri-path contains no more than one %x2F ("/") character, output
-  // %x2F ("/") and skip the remaining step."
-  if (path === "/") {
-    return path;
-  }
-
-  const rightSlash = path.lastIndexOf("/");
-  if (rightSlash === 0) {
-    return "/";
-  }
-
-  // "4. Output the characters of the uri-path from the first character up to,
-  // but not including, the right-most %x2F ("/")."
-  return path.slice(0, rightSlash);
-}
-
-function trimTerminator(str) {
-  for (let t = 0; t < TERMINATORS.length; t++) {
-    const terminatorIdx = str.indexOf(TERMINATORS[t]);
-    if (terminatorIdx !== -1) {
-      str = str.substr(0, terminatorIdx);
-    }
-  }
-
-  return str;
-}
-
-function parseCookiePair(cookiePair, looseMode) {
-  cookiePair = trimTerminator(cookiePair);
-
-  let firstEq = cookiePair.indexOf("=");
-  if (looseMode) {
-    if (firstEq === 0) {
-      // '=' is immediately at start
-      cookiePair = cookiePair.substr(1);
-      firstEq = cookiePair.indexOf("="); // might still need to split on '='
-    }
-  } else {
-    // non-loose mode
-    if (firstEq <= 0) {
-      // no '=' or is at start
-      return; // needs to have non-empty "cookie-name"
-    }
-  }
-
-  let cookieName, cookieValue;
-  if (firstEq <= 0) {
-    cookieName = "";
-    cookieValue = cookiePair.trim();
-  } else {
-    cookieName = cookiePair.substr(0, firstEq).trim();
-    cookieValue = cookiePair.substr(firstEq + 1).trim();
-  }
-
-  if (CONTROL_CHARS.test(cookieName) || CONTROL_CHARS.test(cookieValue)) {
-    return;
-  }
-
-  const c = new Cookie();
-  c.key = cookieName;
-  c.value = cookieValue;
-  return c;
-}
-
-function parse(str, options) {
-  if (!options || typeof options !== "object") {
-    options = {};
-  }
-  str = str.trim();
-
-  // We use a regex to parse the "name-value-pair" part of S5.2
-  const firstSemi = str.indexOf(";"); // S5.2 step 1
-  const cookiePair = firstSemi === -1 ? str : str.substr(0, firstSemi);
-  const c = parseCookiePair(cookiePair, !!options.loose);
-  if (!c) {
-    return;
-  }
-
-  if (firstSemi === -1) {
-    return c;
-  }
-
-  // S5.2.3 "unparsed-attributes consist of the remainder of the set-cookie-string
-  // (including the %x3B (";") in question)." plus later on in the same section
-  // "discard the first ";" and trim".
-  const unparsed = str.slice(firstSemi + 1).trim();
-
-  // "If the unparsed-attributes string is empty, skip the rest of these
-  // steps."
-  if (unparsed.length === 0) {
-    return c;
-  }
-
-  /*
-   * S5.2 says that when looping over the items "[p]rocess the attribute-name
-   * and attribute-value according to the requirements in the following
-   * subsections" for every item.  Plus, for many of the individual attributes
-   * in S5.3 it says to use the "attribute-value of the last attribute in the
-   * cookie-attribute-list".  Therefore, in this implementation, we overwrite
-   * the previous value.
-   */
-  const cookie_avs = unparsed.split(";");
-  while (cookie_avs.length) {
-    const av = cookie_avs.shift().trim();
-    if (av.length === 0) {
-      // happens if ";;" appears
-      continue;
-    }
-    const av_sep = av.indexOf("=");
-    let av_key, av_value;
-
-    if (av_sep === -1) {
-      av_key = av;
-      av_value = null;
-    } else {
-      av_key = av.substr(0, av_sep);
-      av_value = av.substr(av_sep + 1);
-    }
-
-    av_key = av_key.trim().toLowerCase();
-
-    if (av_value) {
-      av_value = av_value.trim();
-    }
-
-    switch (av_key) {
-      case "expires": // S5.2.1
-        if (av_value) {
-          const exp = parseDate(av_value);
-          // "If the attribute-value failed to parse as a cookie date, ignore the
-          // cookie-av."
-          if (exp) {
-            // over and underflow not realistically a concern: V8's getTime() seems to
-            // store something larger than a 32-bit time_t (even with 32-bit node)
-            c.expires = exp;
-          }
-        }
-        break;
-
-      case "max-age": // S5.2.2
-        if (av_value) {
-          // "If the first character of the attribute-value is not a DIGIT or a "-"
-          // character ...[or]... If the remainder of attribute-value contains a
-          // non-DIGIT character, ignore the cookie-av."
-          if (/^-?[0-9]+$/.test(av_value)) {
-            const delta = parseInt(av_value, 10);
-            // "If delta-seconds is less than or equal to zero (0), let expiry-time
-            // be the earliest representable date and time."
-            c.setMaxAge(delta);
-          }
-        }
-        break;
-
-      case "domain": // S5.2.3
-        // "If the attribute-value is empty, the behavior is undefined.  However,
-        // the user agent SHOULD ignore the cookie-av entirely."
-        if (av_value) {
-          // S5.2.3 "Let cookie-domain be the attribute-value without the leading %x2E
-          // (".") character."
-          const domain = av_value.trim().replace(/^\./, "");
-          if (domain) {
-            // "Convert the cookie-domain to lower case."
-            c.domain = domain.toLowerCase();
-          }
-        }
-        break;
-
-      case "path": // S5.2.4
-        /*
-         * "If the attribute-value is empty or if the first character of the
-         * attribute-value is not %x2F ("/"):
-         *   Let cookie-path be the default-path.
-         * Otherwise:
-         *   Let cookie-path be the attribute-value."
-         *
-         * We'll represent the default-path as null since it depends on the
-         * context of the parsing.
-         */
-        c.path = av_value && av_value[0] === "/" ? av_value : null;
-        break;
-
-      case "secure": // S5.2.5
-        /*
-         * "If the attribute-name case-insensitively matches the string "Secure",
-         * the user agent MUST append an attribute to the cookie-attribute-list
-         * with an attribute-name of Secure and an empty attribute-value."
-         */
-        c.secure = true;
-        break;
-
-      case "httponly": // S5.2.6 -- effectively the same as 'secure'
-        c.httpOnly = true;
-        break;
-
-      case "samesite": // RFC6265bis-02 S5.3.7
-        const enforcement = av_value ? av_value.toLowerCase() : "";
-        switch (enforcement) {
-          case "strict":
-            c.sameSite = "strict";
-            break;
-          case "lax":
-            c.sameSite = "lax";
-            break;
-          default:
-            // RFC6265bis-02 S5.3.7 step 1:
-            // "If cookie-av's attribute-value is not a case-insensitive match
-            //  for "Strict" or "Lax", ignore the "cookie-av"."
-            // This effectively sets it to 'none' from the prototype.
-            break;
-        }
-        break;
-
-      default:
-        c.extensions = c.extensions || [];
-        c.extensions.push(av);
-        break;
-    }
-  }
-
-  return c;
-}
-
-/**
- *  If the cookie-name begins with a case-sensitive match for the
- *  string "__Secure-", abort these steps and ignore the cookie
- *  entirely unless the cookie's secure-only-flag is true.
- * @param cookie
- * @returns boolean
- */
-function isSecurePrefixConditionMet(cookie) {
-  return !cookie.key.startsWith("__Secure-") || cookie.secure;
-}
-
-/**
- *  If the cookie-name begins with a case-sensitive match for the
- *  string "__Host-", abort these steps and ignore the cookie
- *  entirely unless the cookie meets all the following criteria:
- *    1.  The cookie's secure-only-flag is true.
- *    2.  The cookie's host-only-flag is true.
- *    3.  The cookie-attribute-list contains an attribute with an
- *        attribute-name of "Path", and the cookie's path is "/".
- * @param cookie
- * @returns boolean
- */
-function isHostPrefixConditionMet(cookie) {
-  return (
-    !cookie.key.startsWith("__Host-") ||
-    (cookie.secure &&
-      cookie.hostOnly &&
-      cookie.path != null &&
-      cookie.path === "/")
-  );
-}
-
-// avoid the V8 deoptimization monster!
-function jsonParse(str) {
-  let obj;
-  try {
-    obj = JSON.parse(str);
-  } catch (e) {
-    return e;
-  }
-  return obj;
-}
-
-function fromJSON(str) {
-  if (!str) {
-    return null;
-  }
-
-  let obj;
-  if (typeof str === "string") {
-    obj = jsonParse(str);
-    if (obj instanceof Error) {
-      return null;
-    }
-  } else {
-    // assume it's an Object
-    obj = str;
-  }
-
-  const c = new Cookie();
-  for (let i = 0; i < Cookie.serializableProperties.length; i++) {
-    const prop = Cookie.serializableProperties[i];
-    if (obj[prop] === undefined || obj[prop] === cookieDefaults[prop]) {
-      continue; // leave as prototype default
-    }
-
-    if (prop === "expires" || prop === "creation" || prop === "lastAccessed") {
-      if (obj[prop] === null) {
-        c[prop] = null;
-      } else {
-        c[prop] = obj[prop] == "Infinity" ? "Infinity" : new Date(obj[prop]);
-      }
-    } else {
-      c[prop] = obj[prop];
-    }
-  }
-
-  return c;
-}
-
-/* Section 5.4 part 2:
- * "*  Cookies with longer paths are listed before cookies with
- *     shorter paths.
- *
- *  *  Among cookies that have equal-length path fields, cookies with
- *     earlier creation-times are listed before cookies with later
- *     creation-times."
- */
-
-function cookieCompare(a, b) {
-  let cmp = 0;
-
-  // descending for length: b CMP a
-  const aPathLen = a.path ? a.path.length : 0;
-  const bPathLen = b.path ? b.path.length : 0;
-  cmp = bPathLen - aPathLen;
-  if (cmp !== 0) {
-    return cmp;
-  }
-
-  // ascending for time: a CMP b
-  const aTime = a.creation ? a.creation.getTime() : MAX_TIME;
-  const bTime = b.creation ? b.creation.getTime() : MAX_TIME;
-  cmp = aTime - bTime;
-  if (cmp !== 0) {
-    return cmp;
-  }
-
-  // break ties for the same millisecond (precision of JavaScript's clock)
-  cmp = a.creationIndex - b.creationIndex;
-
-  return cmp;
-}
-
-// Gives the permutation of all possible pathMatch()es of a given path. The
-// array is in longest-to-shortest order.  Handy for indexing.
-function permutePath(path) {
-  if (path === "/") {
-    return ["/"];
-  }
-  const permutations = [path];
-  while (path.length > 1) {
-    const lindex = path.lastIndexOf("/");
-    if (lindex === 0) {
-      break;
-    }
-    path = path.substr(0, lindex);
-    permutations.push(path);
-  }
-  permutations.push("/");
-  return permutations;
-}
-
-function getCookieContext(url) {
-  if (url instanceof Object) {
-    return url;
-  }
-  // NOTE: decodeURI will throw on malformed URIs (see GH-32).
-  // Therefore, we will just skip decoding for such URIs.
-  try {
-    url = decodeURI(url);
-  } catch (err) {
-    // Silently swallow error
-  }
-
-  return urlParse(url);
-}
-
-const cookieDefaults = {
-  // the order in which the RFC has them:
-  key: "",
-  value: "",
-  expires: "Infinity",
-  maxAge: null,
-  domain: null,
-  path: null,
-  secure: false,
-  httpOnly: false,
-  extensions: null,
-  // set by the CookieJar:
-  hostOnly: null,
-  pathIsDefault: null,
-  creation: null,
-  lastAccessed: null,
-  sameSite: "none"
-};
-
-class Cookie {
-  constructor(options = {}) {
-    if (util.inspect.custom) {
-      this[util.inspect.custom] = this.inspect;
-    }
-
-    Object.assign(this, cookieDefaults, options);
-    this.creation = this.creation || new Date();
-
-    // used to break creation ties in cookieCompare():
-    Object.defineProperty(this, "creationIndex", {
-      configurable: false,
-      enumerable: false, // important for assert.deepEqual checks
-      writable: true,
-      value: ++Cookie.cookiesCreated
-    });
-  }
-
-  inspect() {
-    const now = Date.now();
-    const hostOnly = this.hostOnly != null ? this.hostOnly : "?";
-    const createAge = this.creation
-      ? `${now - this.creation.getTime()}ms`
-      : "?";
-    const accessAge = this.lastAccessed
-      ? `${now - this.lastAccessed.getTime()}ms`
-      : "?";
-    return `Cookie="${this.toString()}; hostOnly=${hostOnly}; aAge=${accessAge}; cAge=${createAge}"`;
-  }
-
-  toJSON() {
-    const obj = {};
-
-    for (const prop of Cookie.serializableProperties) {
-      if (this[prop] === cookieDefaults[prop]) {
-        continue; // leave as prototype default
-      }
-
-      if (
-        prop === "expires" ||
-        prop === "creation" ||
-        prop === "lastAccessed"
-      ) {
-        if (this[prop] === null) {
-          obj[prop] = null;
-        } else {
-          obj[prop] =
-            this[prop] == "Infinity" // intentionally not ===
-              ? "Infinity"
-              : this[prop].toISOString();
-        }
-      } else if (prop === "maxAge") {
-        if (this[prop] !== null) {
-          // again, intentionally not ===
-          obj[prop] =
-            this[prop] == Infinity || this[prop] == -Infinity
-              ? this[prop].toString()
-              : this[prop];
-        }
-      } else {
-        if (this[prop] !== cookieDefaults[prop]) {
-          obj[prop] = this[prop];
-        }
-      }
-    }
-
-    return obj;
-  }
-
-  clone() {
-    return fromJSON(this.toJSON());
-  }
-
-  validate() {
-    if (!COOKIE_OCTETS.test(this.value)) {
-      return false;
-    }
-    if (
-      this.expires != Infinity &&
-      !(this.expires instanceof Date) &&
-      !parseDate(this.expires)
-    ) {
-      return false;
-    }
-    if (this.maxAge != null && this.maxAge <= 0) {
-      return false; // "Max-Age=" non-zero-digit *DIGIT
-    }
-    if (this.path != null && !PATH_VALUE.test(this.path)) {
-      return false;
-    }
-
-    const cdomain = this.cdomain();
-    if (cdomain) {
-      if (cdomain.match(/\.$/)) {
-        return false; // S4.1.2.3 suggests that this is bad. domainMatch() tests confirm this
-      }
-      const suffix = pubsuffix.getPublicSuffix(cdomain);
-      if (suffix == null) {
-        // it's a public suffix
-        return false;
-      }
-    }
-    return true;
-  }
-
-  setExpires(exp) {
-    if (exp instanceof Date) {
-      this.expires = exp;
-    } else {
-      this.expires = parseDate(exp) || "Infinity";
-    }
-  }
-
-  setMaxAge(age) {
-    if (age === Infinity || age === -Infinity) {
-      this.maxAge = age.toString(); // so JSON.stringify() works
-    } else {
-      this.maxAge = age;
-    }
-  }
-
-  cookieString() {
-    let val = this.value;
-    if (val == null) {
-      val = "";
-    }
-    if (this.key === "") {
-      return val;
-    }
-    return `${this.key}=${val}`;
-  }
-
-  // gives Set-Cookie header format
-  toString() {
-    let str = this.cookieString();
-
-    if (this.expires != Infinity) {
-      if (this.expires instanceof Date) {
-        str += `; Expires=${formatDate(this.expires)}`;
-      } else {
-        str += `; Expires=${this.expires}`;
-      }
-    }
-
-    if (this.maxAge != null && this.maxAge != Infinity) {
-      str += `; Max-Age=${this.maxAge}`;
-    }
-
-    if (this.domain && !this.hostOnly) {
-      str += `; Domain=${this.domain}`;
-    }
-    if (this.path) {
-      str += `; Path=${this.path}`;
-    }
-
-    if (this.secure) {
-      str += "; Secure";
-    }
-    if (this.httpOnly) {
-      str += "; HttpOnly";
-    }
-    if (this.sameSite && this.sameSite !== "none") {
-      const ssCanon = Cookie.sameSiteCanonical[this.sameSite.toLowerCase()];
-      str += `; SameSite=${ssCanon ? ssCanon : this.sameSite}`;
-    }
-    if (this.extensions) {
-      this.extensions.forEach(ext => {
-        str += `; ${ext}`;
-      });
-    }
-
-    return str;
-  }
-
-  // TTL() partially replaces the "expiry-time" parts of S5.3 step 3 (setCookie()
-  // elsewhere)
-  // S5.3 says to give the "latest representable date" for which we use Infinity
-  // For "expired" we use 0
-  TTL(now) {
-    /* RFC6265 S4.1.2.2 If a cookie has both the Max-Age and the Expires
-     * attribute, the Max-Age attribute has precedence and controls the
-     * expiration date of the cookie.
-     * (Concurs with S5.3 step 3)
-     */
-    if (this.maxAge != null) {
-      return this.maxAge <= 0 ? 0 : this.maxAge * 1000;
-    }
-
-    let expires = this.expires;
-    if (expires != Infinity) {
-      if (!(expires instanceof Date)) {
-        expires = parseDate(expires) || Infinity;
-      }
-
-      if (expires == Infinity) {
-        return Infinity;
-      }
-
-      return expires.getTime() - (now || Date.now());
-    }
-
-    return Infinity;
-  }
-
-  // expiryTime() replaces the "expiry-time" parts of S5.3 step 3 (setCookie()
-  // elsewhere)
-  expiryTime(now) {
-    if (this.maxAge != null) {
-      const relativeTo = now || this.creation || new Date();
-      const age = this.maxAge <= 0 ? -Infinity : this.maxAge * 1000;
-      return relativeTo.getTime() + age;
-    }
-
-    if (this.expires == Infinity) {
-      return Infinity;
-    }
-    return this.expires.getTime();
-  }
-
-  // expiryDate() replaces the "expiry-time" parts of S5.3 step 3 (setCookie()
-  // elsewhere), except it returns a Date
-  expiryDate(now) {
-    const millisec = this.expiryTime(now);
-    if (millisec == Infinity) {
-      return new Date(MAX_TIME);
-    } else if (millisec == -Infinity) {
-      return new Date(MIN_TIME);
-    } else {
-      return new Date(millisec);
-    }
-  }
-
-  // This replaces the "persistent-flag" parts of S5.3 step 3
-  isPersistent() {
-    return this.maxAge != null || this.expires != Infinity;
-  }
-
-  // Mostly S5.1.2 and S5.2.3:
-  canonicalizedDomain() {
-    if (this.domain == null) {
-      return null;
-    }
-    return canonicalDomain(this.domain);
-  }
-
-  cdomain() {
-    return this.canonicalizedDomain();
-  }
-}
-
-Cookie.cookiesCreated = 0;
-Cookie.parse = parse;
-Cookie.fromJSON = fromJSON;
-Cookie.serializableProperties = Object.keys(cookieDefaults);
-Cookie.sameSiteLevel = {
-  strict: 3,
-  lax: 2,
-  none: 1
-};
-
-Cookie.sameSiteCanonical = {
-  strict: "Strict",
-  lax: "Lax"
-};
-
-function getNormalizedPrefixSecurity(prefixSecurity) {
-  if (prefixSecurity != null) {
-    const normalizedPrefixSecurity = prefixSecurity.toLowerCase();
-    /* The three supported options */
-    switch (normalizedPrefixSecurity) {
-      case PrefixSecurityEnum.STRICT:
-      case PrefixSecurityEnum.SILENT:
-      case PrefixSecurityEnum.DISABLED:
-        return normalizedPrefixSecurity;
-    }
-  }
-  /* Default is SILENT */
-  return PrefixSecurityEnum.SILENT;
-}
-
-class CookieJar {
-  constructor(store, options = { rejectPublicSuffixes: true }) {
-    if (typeof options === "boolean") {
-      options = { rejectPublicSuffixes: options };
-    }
-    this.rejectPublicSuffixes = options.rejectPublicSuffixes;
-    this.enableLooseMode = !!options.looseMode;
-    this.allowSpecialUseDomain = !!options.allowSpecialUseDomain;
-    this.store = store || new MemoryCookieStore();
-    this.prefixSecurity = getNormalizedPrefixSecurity(options.prefixSecurity);
-    this._cloneSync = syncWrap("clone");
-    this._importCookiesSync = syncWrap("_importCookies");
-    this.getCookiesSync = syncWrap("getCookies");
-    this.getCookieStringSync = syncWrap("getCookieString");
-    this.getSetCookieStringsSync = syncWrap("getSetCookieStrings");
-    this.removeAllCookiesSync = syncWrap("removeAllCookies");
-    this.setCookieSync = syncWrap("setCookie");
-    this.serializeSync = syncWrap("serialize");
-  }
-
-  setCookie(cookie, url, options, cb) {
-    let err;
-    const context = getCookieContext(url);
-    if (typeof options === "function") {
-      cb = options;
-      options = {};
-    }
-
-    const host = canonicalDomain(context.hostname);
-    const loose = options.loose || this.enableLooseMode;
-
-    let sameSiteContext = null;
-    if (options.sameSiteContext) {
-      sameSiteContext = checkSameSiteContext(options.sameSiteContext);
-      if (!sameSiteContext) {
-        return cb(new Error(SAME_SITE_CONTEXT_VAL_ERR));
-      }
-    }
-
-    // S5.3 step 1
-    if (typeof cookie === "string" || cookie instanceof String) {
-      cookie = Cookie.parse(cookie, { loose: loose });
-      if (!cookie) {
-        err = new Error("Cookie failed to parse");
-        return cb(options.ignoreError ? null : err);
-      }
-    } else if (!(cookie instanceof Cookie)) {
-      // If you're seeing this error, and are passing in a Cookie object,
-      // it *might* be a Cookie object from another loaded version of tough-cookie.
-      err = new Error(
-        "First argument to setCookie must be a Cookie object or string"
-      );
-      return cb(options.ignoreError ? null : err);
-    }
-
-    // S5.3 step 2
-    const now = options.now || new Date(); // will assign later to save effort in the face of errors
-
-    // S5.3 step 3: NOOP; persistent-flag and expiry-time is handled by getCookie()
-
-    // S5.3 step 4: NOOP; domain is null by default
-
-    // S5.3 step 5: public suffixes
-    if (this.rejectPublicSuffixes && cookie.domain) {
-      const suffix = pubsuffix.getPublicSuffix(cookie.cdomain());
-      if (suffix == null) {
-        // e.g. "com"
-        err = new Error("Cookie has domain set to a public suffix");
-        return cb(options.ignoreError ? null : err);
-      }
-    }
-
-    // S5.3 step 6:
-    if (cookie.domain) {
-      if (!domainMatch(host, cookie.cdomain(), false)) {
-        err = new Error(
-          `Cookie not in this host's domain. Cookie:${cookie.cdomain()} Request:${host}`
-        );
-        return cb(options.ignoreError ? null : err);
-      }
-
-      if (cookie.hostOnly == null) {
-        // don't reset if already set
-        cookie.hostOnly = false;
-      }
-    } else {
-      cookie.hostOnly = true;
-      cookie.domain = host;
-    }
-
-    //S5.2.4 If the attribute-value is empty or if the first character of the
-    //attribute-value is not %x2F ("/"):
-    //Let cookie-path be the default-path.
-    if (!cookie.path || cookie.path[0] !== "/") {
-      cookie.path = defaultPath(context.pathname);
-      cookie.pathIsDefault = true;
-    }
-
-    // S5.3 step 8: NOOP; secure attribute
-    // S5.3 step 9: NOOP; httpOnly attribute
-
-    // S5.3 step 10
-    if (options.http === false && cookie.httpOnly) {
-      err = new Error("Cookie is HttpOnly and this isn't an HTTP API");
-      return cb(options.ignoreError ? null : err);
-    }
-
-    // 6252bis-02 S5.4 Step 13 & 14:
-    if (cookie.sameSite !== "none" && sameSiteContext) {
-      // "If the cookie's "same-site-flag" is not "None", and the cookie
-      //  is being set from a context whose "site for cookies" is not an
-      //  exact match for request-uri's host's registered domain, then
-      //  abort these steps and ignore the newly created cookie entirely."
-      if (sameSiteContext === "none") {
-        err = new Error(
-          "Cookie is SameSite but this is a cross-origin request"
-        );
-        return cb(options.ignoreError ? null : err);
-      }
-    }
-
-    /* 6265bis-02 S5.4 Steps 15 & 16 */
-    const ignoreErrorForPrefixSecurity =
-      this.prefixSecurity === PrefixSecurityEnum.SILENT;
-    const prefixSecurityDisabled =
-      this.prefixSecurity === PrefixSecurityEnum.DISABLED;
-    /* If prefix checking is not disabled ...*/
-    if (!prefixSecurityDisabled) {
-      let errorFound = false;
-      let errorMsg;
-      /* Check secure prefix condition */
-      if (!isSecurePrefixConditionMet(cookie)) {
-        errorFound = true;
-        errorMsg = "Cookie has __Secure prefix but Secure attribute is not set";
-      } else if (!isHostPrefixConditionMet(cookie)) {
-        /* Check host prefix condition */
-        errorFound = true;
-        errorMsg =
-          "Cookie has __Host prefix but either Secure or HostOnly attribute is not set or Path is not '/'";
-      }
-      if (errorFound) {
-        return cb(
-          options.ignoreError || ignoreErrorForPrefixSecurity
-            ? null
-            : new Error(errorMsg)
-        );
-      }
-    }
-
-    const store = this.store;
-
-    if (!store.updateCookie) {
-      store.updateCookie = function(oldCookie, newCookie, cb) {
-        this.putCookie(newCookie, cb);
-      };
-    }
-
-    function withCookie(err, oldCookie) {
-      if (err) {
-        return cb(err);
-      }
-
-      const next = function(err) {
-        if (err) {
-          return cb(err);
-        } else {
-          cb(null, cookie);
-        }
-      };
-
-      if (oldCookie) {
-        // S5.3 step 11 - "If the cookie store contains a cookie with the same name,
-        // domain, and path as the newly created cookie:"
-        if (options.http === false && oldCookie.httpOnly) {
-          // step 11.2
-          err = new Error("old Cookie is HttpOnly and this isn't an HTTP API");
-          return cb(options.ignoreError ? null : err);
-        }
-        cookie.creation = oldCookie.creation; // step 11.3
-        cookie.creationIndex = oldCookie.creationIndex; // preserve tie-breaker
-        cookie.lastAccessed = now;
-        // Step 11.4 (delete cookie) is implied by just setting the new one:
-        store.updateCookie(oldCookie, cookie, next); // step 12
-      } else {
-        cookie.creation = cookie.lastAccessed = now;
-        store.putCookie(cookie, next); // step 12
-      }
-    }
-
-    store.findCookie(cookie.domain, cookie.path, cookie.key, withCookie);
-  }
-
-  // RFC6365 S5.4
-  getCookies(url, options, cb) {
-    const context = getCookieContext(url);
-    if (typeof options === "function") {
-      cb = options;
-      options = {};
-    }
-
-    const host = canonicalDomain(context.hostname);
-    const path = context.pathname || "/";
-
-    let secure = options.secure;
-    if (
-      secure == null &&
-      context.protocol &&
-      (context.protocol == "https:" || context.protocol == "wss:")
-    ) {
-      secure = true;
-    }
-
-    let sameSiteLevel = 0;
-    if (options.sameSiteContext) {
-      const sameSiteContext = checkSameSiteContext(options.sameSiteContext);
-      sameSiteLevel = Cookie.sameSiteLevel[sameSiteContext];
-      if (!sameSiteLevel) {
-        return cb(new Error(SAME_SITE_CONTEXT_VAL_ERR));
-      }
-    }
-
-    let http = options.http;
-    if (http == null) {
-      http = true;
-    }
-
-    const now = options.now || Date.now();
-    const expireCheck = options.expire !== false;
-    const allPaths = !!options.allPaths;
-    const store = this.store;
-
-    function matchingCookie(c) {
-      // "Either:
-      //   The cookie's host-only-flag is true and the canonicalized
-      //   request-host is identical to the cookie's domain.
-      // Or:
-      //   The cookie's host-only-flag is false and the canonicalized
-      //   request-host domain-matches the cookie's domain."
-      if (c.hostOnly) {
-        if (c.domain != host) {
-          return false;
-        }
-      } else {
-        if (!domainMatch(host, c.domain, false)) {
-          return false;
-        }
-      }
-
-      // "The request-uri's path path-matches the cookie's path."
-      if (!allPaths && !pathMatch(path, c.path)) {
-        return false;
-      }
-
-      // "If the cookie's secure-only-flag is true, then the request-uri's
-      // scheme must denote a "secure" protocol"
-      if (c.secure && !secure) {
-        return false;
-      }
-
-      // "If the cookie's http-only-flag is true, then exclude the cookie if the
-      // cookie-string is being generated for a "non-HTTP" API"
-      if (c.httpOnly && !http) {
-        return false;
-      }
-
-      // RFC6265bis-02 S5.3.7
-      if (sameSiteLevel) {
-        const cookieLevel = Cookie.sameSiteLevel[c.sameSite || "none"];
-        if (cookieLevel > sameSiteLevel) {
-          // only allow cookies at or below the request level
-          return false;
-        }
-      }
-
-      // deferred from S5.3
-      // non-RFC: allow retention of expired cookies by choice
-      if (expireCheck && c.expiryTime() <= now) {
-        store.removeCookie(c.domain, c.path, c.key, () => {}); // result ignored
-        return false;
-      }
-
-      return true;
-    }
-
-    store.findCookies(
-      host,
-      allPaths ? null : path,
-      this.allowSpecialUseDomain,
-      (err, cookies) => {
-        if (err) {
-          return cb(err);
-        }
-
-        cookies = cookies.filter(matchingCookie);
-
-        // sorting of S5.4 part 2
-        if (options.sort !== false) {
-          cookies = cookies.sort(cookieCompare);
-        }
-
-        // S5.4 part 3
-        const now = new Date();
-        for (const cookie of cookies) {
-          cookie.lastAccessed = now;
-        }
-        // TODO persist lastAccessed
-
-        cb(null, cookies);
-      }
-    );
-  }
-
-  getCookieString(...args) {
-    const cb = args.pop();
-    const next = function(err, cookies) {
-      if (err) {
-        cb(err);
-      } else {
-        cb(
-          null,
-          cookies
-            .sort(cookieCompare)
-            .map(c => c.cookieString())
-            .join("; ")
-        );
-      }
-    };
-    args.push(next);
-    this.getCookies.apply(this, args);
-  }
-
-  getSetCookieStrings(...args) {
-    const cb = args.pop();
-    const next = function(err, cookies) {
-      if (err) {
-        cb(err);
-      } else {
-        cb(
-          null,
-          cookies.map(c => {
-            return c.toString();
-          })
-        );
-      }
-    };
-    args.push(next);
-    this.getCookies.apply(this, args);
-  }
-
-  serialize(cb) {
-    let type = this.store.constructor.name;
-    if (type === "Object") {
-      type = null;
-    }
-
-    // update README.md "Serialization Format" if you change this, please!
-    const serialized = {
-      // The version of tough-cookie that serialized this jar. Generally a good
-      // practice since future versions can make data import decisions based on
-      // known past behavior. When/if this matters, use `semver`.
-      version: `tough-cookie@${VERSION}`,
-
-      // add the store type, to make humans happy:
-      storeType: type,
-
-      // CookieJar configuration:
-      rejectPublicSuffixes: !!this.rejectPublicSuffixes,
-
-      // this gets filled from getAllCookies:
-      cookies: []
-    };
-
-    if (
-      !(
-        this.store.getAllCookies &&
-        typeof this.store.getAllCookies === "function"
-      )
-    ) {
-      return cb(
-        new Error(
-          "store does not support getAllCookies and cannot be serialized"
-        )
-      );
-    }
-
-    this.store.getAllCookies((err, cookies) => {
-      if (err) {
-        return cb(err);
-      }
-
-      serialized.cookies = cookies.map(cookie => {
-        // convert to serialized 'raw' cookies
-        cookie = cookie instanceof Cookie ? cookie.toJSON() : cookie;
-
-        // Remove the index so new ones get assigned during deserialization
-        delete cookie.creationIndex;
-
-        return cookie;
-      });
-
-      return cb(null, serialized);
-    });
-  }
-
-  toJSON() {
-    return this.serializeSync();
-  }
-
-  // use the class method CookieJar.deserialize instead of calling this directly
-  _importCookies(serialized, cb) {
-    let cookies = serialized.cookies;
-    if (!cookies || !Array.isArray(cookies)) {
-      return cb(new Error("serialized jar has no cookies array"));
-    }
-    cookies = cookies.slice(); // do not modify the original
-
-    const putNext = err => {
-      if (err) {
-        return cb(err);
-      }
-
-      if (!cookies.length) {
-        return cb(err, this);
-      }
-
-      let cookie;
-      try {
-        cookie = fromJSON(cookies.shift());
-      } catch (e) {
-        return cb(e);
-      }
-
-      if (cookie === null) {
-        return putNext(null); // skip this cookie
-      }
-
-      this.store.putCookie(cookie, putNext);
-    };
-
-    putNext();
-  }
-
-  clone(newStore, cb) {
-    if (arguments.length === 1) {
-      cb = newStore;
-      newStore = null;
-    }
-
-    this.serialize((err, serialized) => {
-      if (err) {
-        return cb(err);
-      }
-      CookieJar.deserialize(serialized, newStore, cb);
-    });
-  }
-
-  cloneSync(newStore) {
-    if (arguments.length === 0) {
-      return this._cloneSync();
-    }
-    if (!newStore.synchronous) {
-      throw new Error(
-        "CookieJar clone destination store is not synchronous; use async API instead."
-      );
-    }
-    return this._cloneSync(newStore);
-  }
-
-  removeAllCookies(cb) {
-    const store = this.store;
-
-    // Check that the store implements its own removeAllCookies(). The default
-    // implementation in Store will immediately call the callback with a "not
-    // implemented" Error.
-    if (
-      typeof store.removeAllCookies === "function" &&
-      store.removeAllCookies !== Store.prototype.removeAllCookies
-    ) {
-      return store.removeAllCookies(cb);
-    }
-
-    store.getAllCookies((err, cookies) => {
-      if (err) {
-        return cb(err);
-      }
-
-      if (cookies.length === 0) {
-        return cb(null);
-      }
-
-      let completedCount = 0;
-      const removeErrors = [];
-
-      function removeCookieCb(removeErr) {
-        if (removeErr) {
-          removeErrors.push(removeErr);
-        }
-
-        completedCount++;
-
-        if (completedCount === cookies.length) {
-          return cb(removeErrors.length ? removeErrors[0] : null);
-        }
-      }
-
-      cookies.forEach(cookie => {
-        store.removeCookie(
-          cookie.domain,
-          cookie.path,
-          cookie.key,
-          removeCookieCb
-        );
-      });
-    });
-  }
-
-  static deserialize(strOrObj, store, cb) {
-    if (arguments.length !== 3) {
-      // store is optional
-      cb = store;
-      store = null;
-    }
-
-    let serialized;
-    if (typeof strOrObj === "string") {
-      serialized = jsonParse(strOrObj);
-      if (serialized instanceof Error) {
-        return cb(serialized);
-      }
-    } else {
-      serialized = strOrObj;
-    }
-
-    const jar = new CookieJar(store, serialized.rejectPublicSuffixes);
-    jar._importCookies(serialized, err => {
-      if (err) {
-        return cb(err);
-      }
-      cb(null, jar);
-    });
-  }
-
-  static deserializeSync(strOrObj, store) {
-    const serialized =
-      typeof strOrObj === "string" ? JSON.parse(strOrObj) : strOrObj;
-    const jar = new CookieJar(store, serialized.rejectPublicSuffixes);
-
-    // catch this mistake early:
-    if (!jar.store.synchronous) {
-      throw new Error(
-        "CookieJar store is not synchronous; use async API instead."
-      );
-    }
-
-    jar._importCookiesSync(serialized);
-    return jar;
-  }
-}
-CookieJar.fromJSON = CookieJar.deserializeSync;
-
-[
-  "_importCookies",
-  "clone",
-  "getCookies",
-  "getCookieString",
-  "getSetCookieStrings",
-  "removeAllCookies",
-  "serialize",
-  "setCookie"
-].forEach(name => {
-  CookieJar.prototype[name] = fromCallback(CookieJar.prototype[name]);
-});
-CookieJar.deserialize = fromCallback(CookieJar.deserialize);
-
-// Use a closure to provide a true imperative API for synchronous stores.
-function syncWrap(method) {
-  return function(...args) {
-    if (!this.store.synchronous) {
-      throw new Error(
-        "CookieJar store is not synchronous; use async API instead."
-      );
-    }
-
-    let syncErr, syncResult;
-    this[method](...args, (err, result) => {
-      syncErr = err;
-      syncResult = result;
-    });
-
-    if (syncErr) {
-      throw syncErr;
-    }
-    return syncResult;
-  };
-}
-
-exports.version = VERSION;
-exports.CookieJar = CookieJar;
-exports.Cookie = Cookie;
-exports.Store = Store;
-exports.MemoryCookieStore = MemoryCookieStore;
-exports.parseDate = parseDate;
-exports.formatDate = formatDate;
-exports.parse = parse;
-exports.fromJSON = fromJSON;
-exports.domainMatch = domainMatch;
-exports.defaultPath = defaultPath;
-exports.pathMatch = pathMatch;
-exports.getPublicSuffix = pubsuffix.getPublicSuffix;
-exports.cookieCompare = cookieCompare;
-exports.permuteDomain = __webpack_require__(89).permuteDomain;
-exports.permutePath = permutePath;
-exports.canonicalDomain = canonicalDomain;
-exports.PrefixSecurityEnum = PrefixSecurityEnum;
-
-
-/***/ }),
+/* 393 */,
 /* 394 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -36367,7 +33890,51 @@ exports.ProxyTracer = ProxyTracer;
 /* 408 */,
 /* 409 */,
 /* 410 */,
-/* 411 */,
+/* 411 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _validate = _interopRequireDefault(__webpack_require__(78));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+const byteToHex = [];
+
+for (let i = 0; i < 256; ++i) {
+  byteToHex.push((i + 0x100).toString(16).substr(1));
+}
+
+function stringify(arr, offset = 0) {
+  // Note: Be careful editing this code!  It's been tuned for performance
+  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
+  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  // of the following:
+  // - One or more input array values don't map to a hex octet (leading to
+  // "undefined" in the uuid)
+  // - Invalid input values for the RFC `version` or `variant` fields
+
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Stringified UUID is invalid');
+  }
+
+  return uuid;
+}
+
+var _default = stringify;
+exports.default = _default;
+
+/***/ }),
 /* 412 */,
 /* 413 */
 /***/ (function(module, __unusedexports, __webpack_require__) {
@@ -36389,7 +33956,329 @@ module.exports = require("crypto");
 /* 419 */,
 /* 420 */,
 /* 421 */,
-/* 422 */,
+/* 422 */
+/***/ (function(module) {
+
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global global, define, System, Reflect, Promise */
+var __extends;
+var __assign;
+var __rest;
+var __decorate;
+var __param;
+var __metadata;
+var __awaiter;
+var __generator;
+var __exportStar;
+var __values;
+var __read;
+var __spread;
+var __spreadArrays;
+var __spreadArray;
+var __await;
+var __asyncGenerator;
+var __asyncDelegator;
+var __asyncValues;
+var __makeTemplateObject;
+var __importStar;
+var __importDefault;
+var __classPrivateFieldGet;
+var __classPrivateFieldSet;
+var __classPrivateFieldIn;
+var __createBinding;
+(function (factory) {
+    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
+    if (typeof define === "function" && define.amd) {
+        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
+    }
+    else if ( true && typeof module.exports === "object") {
+        factory(createExporter(root, createExporter(module.exports)));
+    }
+    else {
+        factory(createExporter(root));
+    }
+    function createExporter(exports, previous) {
+        if (exports !== root) {
+            if (typeof Object.create === "function") {
+                Object.defineProperty(exports, "__esModule", { value: true });
+            }
+            else {
+                exports.__esModule = true;
+            }
+        }
+        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
+    }
+})
+(function (exporter) {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+
+    __extends = function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+
+    __assign = Object.assign || function (t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+
+    __rest = function (s, e) {
+        var t = {};
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t[p] = s[p];
+        if (s != null && typeof Object.getOwnPropertySymbols === "function")
+            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                    t[p[i]] = s[p[i]];
+            }
+        return t;
+    };
+
+    __decorate = function (decorators, target, key, desc) {
+        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+        return c > 3 && r && Object.defineProperty(target, key, r), r;
+    };
+
+    __param = function (paramIndex, decorator) {
+        return function (target, key) { decorator(target, key, paramIndex); }
+    };
+
+    __metadata = function (metadataKey, metadataValue) {
+        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+    };
+
+    __awaiter = function (thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    };
+
+    __generator = function (thisArg, body) {
+        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+        function verb(n) { return function (v) { return step([n, v]); }; }
+        function step(op) {
+            if (f) throw new TypeError("Generator is already executing.");
+            while (_) try {
+                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+                if (y = 0, t) op = [op[0] & 2, t.value];
+                switch (op[0]) {
+                    case 0: case 1: t = op; break;
+                    case 4: _.label++; return { value: op[1], done: false };
+                    case 5: _.label++; y = op[1]; op = [0]; continue;
+                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                    default:
+                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                        if (t[2]) _.ops.pop();
+                        _.trys.pop(); continue;
+                }
+                op = body.call(thisArg, _);
+            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+        }
+    };
+
+    __exportStar = function(m, o) {
+        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+    };
+
+    __createBinding = Object.create ? (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        var desc = Object.getOwnPropertyDescriptor(m, k);
+        if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+            desc = { enumerable: true, get: function() { return m[k]; } };
+        }
+        Object.defineProperty(o, k2, desc);
+    }) : (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        o[k2] = m[k];
+    });
+
+    __values = function (o) {
+        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+        if (m) return m.call(o);
+        if (o && typeof o.length === "number") return {
+            next: function () {
+                if (o && i >= o.length) o = void 0;
+                return { value: o && o[i++], done: !o };
+            }
+        };
+        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+    };
+
+    __read = function (o, n) {
+        var m = typeof Symbol === "function" && o[Symbol.iterator];
+        if (!m) return o;
+        var i = m.call(o), r, ar = [], e;
+        try {
+            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+        }
+        catch (error) { e = { error: error }; }
+        finally {
+            try {
+                if (r && !r.done && (m = i["return"])) m.call(i);
+            }
+            finally { if (e) throw e.error; }
+        }
+        return ar;
+    };
+
+    /** @deprecated */
+    __spread = function () {
+        for (var ar = [], i = 0; i < arguments.length; i++)
+            ar = ar.concat(__read(arguments[i]));
+        return ar;
+    };
+
+    /** @deprecated */
+    __spreadArrays = function () {
+        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+        for (var r = Array(s), k = 0, i = 0; i < il; i++)
+            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+                r[k] = a[j];
+        return r;
+    };
+
+    __spreadArray = function (to, from, pack) {
+        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+            if (ar || !(i in from)) {
+                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+                ar[i] = from[i];
+            }
+        }
+        return to.concat(ar || Array.prototype.slice.call(from));
+    };
+
+    __await = function (v) {
+        return this instanceof __await ? (this.v = v, this) : new __await(v);
+    };
+
+    __asyncGenerator = function (thisArg, _arguments, generator) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var g = generator.apply(thisArg, _arguments || []), i, q = [];
+        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
+        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
+        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
+        function fulfill(value) { resume("next", value); }
+        function reject(value) { resume("throw", value); }
+        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+    };
+
+    __asyncDelegator = function (o) {
+        var i, p;
+        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
+        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
+    };
+
+    __asyncValues = function (o) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var m = o[Symbol.asyncIterator], i;
+        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+    };
+
+    __makeTemplateObject = function (cooked, raw) {
+        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+        return cooked;
+    };
+
+    var __setModuleDefault = Object.create ? (function(o, v) {
+        Object.defineProperty(o, "default", { enumerable: true, value: v });
+    }) : function(o, v) {
+        o["default"] = v;
+    };
+
+    __importStar = function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+
+    __importDefault = function (mod) {
+        return (mod && mod.__esModule) ? mod : { "default": mod };
+    };
+
+    __classPrivateFieldGet = function (receiver, state, kind, f) {
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+    };
+
+    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
+        if (kind === "m") throw new TypeError("Private method is not writable");
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+    };
+
+    __classPrivateFieldIn = function (state, receiver) {
+        if (receiver === null || (typeof receiver !== "object" && typeof receiver !== "function")) throw new TypeError("Cannot use 'in' operator on non-object");
+        return typeof state === "function" ? receiver === state : state.has(receiver);
+    };
+
+    exporter("__extends", __extends);
+    exporter("__assign", __assign);
+    exporter("__rest", __rest);
+    exporter("__decorate", __decorate);
+    exporter("__param", __param);
+    exporter("__metadata", __metadata);
+    exporter("__awaiter", __awaiter);
+    exporter("__generator", __generator);
+    exporter("__exportStar", __exportStar);
+    exporter("__createBinding", __createBinding);
+    exporter("__values", __values);
+    exporter("__read", __read);
+    exporter("__spread", __spread);
+    exporter("__spreadArrays", __spreadArrays);
+    exporter("__spreadArray", __spreadArray);
+    exporter("__await", __await);
+    exporter("__asyncGenerator", __asyncGenerator);
+    exporter("__asyncDelegator", __asyncDelegator);
+    exporter("__asyncValues", __asyncValues);
+    exporter("__makeTemplateObject", __makeTemplateObject);
+    exporter("__importStar", __importStar);
+    exporter("__importDefault", __importDefault);
+    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
+    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
+    exporter("__classPrivateFieldIn", __classPrivateFieldIn);
+});
+
+
+/***/ }),
 /* 423 */
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -36828,7 +34717,7 @@ module.exports = require("crypto");
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
 var iterate    = __webpack_require__(157)
-  , initState  = __webpack_require__(903)
+  , initState  = __webpack_require__(147)
   , terminator = __webpack_require__(939)
   ;
 
@@ -37348,7 +35237,7 @@ var utils_1 = __webpack_require__(112);
 Object.defineProperty(exports, "baggageEntryMetadataFromString", { enumerable: true, get: function () { return utils_1.baggageEntryMetadataFromString; } });
 __exportStar(__webpack_require__(452), exports);
 __exportStar(__webpack_require__(158), exports);
-__exportStar(__webpack_require__(893), exports);
+__exportStar(__webpack_require__(248), exports);
 __exportStar(__webpack_require__(881), exports);
 __exportStar(__webpack_require__(906), exports);
 __exportStar(__webpack_require__(95), exports);
@@ -37364,7 +35253,7 @@ __exportStar(__webpack_require__(932), exports);
 __exportStar(__webpack_require__(975), exports);
 __exportStar(__webpack_require__(207), exports);
 __exportStar(__webpack_require__(694), exports);
-__exportStar(__webpack_require__(695), exports);
+__exportStar(__webpack_require__(977), exports);
 var spancontext_utils_1 = __webpack_require__(629);
 Object.defineProperty(exports, "isSpanContextValid", { enumerable: true, get: function () { return spancontext_utils_1.isSpanContextValid; } });
 Object.defineProperty(exports, "isValidTraceId", { enumerable: true, get: function () { return spancontext_utils_1.isValidTraceId; } });
@@ -37381,7 +35270,7 @@ exports.context = context_1.ContextAPI.getInstance();
 var trace_1 = __webpack_require__(875);
 /** Entrypoint for trace API */
 exports.trace = trace_1.TraceAPI.getInstance();
-var propagation_1 = __webpack_require__(22);
+var propagation_1 = __webpack_require__(21);
 /** Entrypoint for propagation API */
 exports.propagation = propagation_1.PropagationAPI.getInstance();
 var diag_1 = __webpack_require__(118);
@@ -39311,7 +37200,20 @@ exports.FetchError = FetchError;
 
 /***/ }),
 /* 455 */,
-/* 456 */,
+/* 456 */
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
+exports.default = _default;
+
+/***/ }),
 /* 457 */,
 /* 458 */
 /***/ (function(module, __unusedexports, __webpack_require__) {
@@ -39495,8 +37397,7 @@ exports.FetchError = FetchError;
 
 
 /***/ }),
-/* 459 */,
-/* 460 */
+/* 459 */
 /***/ (function(module) {
 
 // generated by genversion
@@ -39504,6 +37405,7 @@ module.exports = '4.0.0'
 
 
 /***/ }),
+/* 460 */,
 /* 461 */,
 /* 462 */,
 /* 463 */
@@ -39515,7 +37417,7 @@ module.exports = '4.0.0'
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   NodeType = __webpack_require__(683);
 
@@ -40087,7 +37989,20 @@ exports.deleteBaggage = deleteBaggage;
 /* 486 */,
 /* 487 */,
 /* 488 */,
-/* 489 */,
+/* 489 */
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+// Unique ID creation requires a high quality random # generator.  In node.js
+// this is pretty straight-forward - we use the crypto API.
+
+var crypto = __webpack_require__(417);
+
+module.exports = function nodeRNG() {
+  return crypto.randomBytes(16);
+};
+
+
+/***/ }),
 /* 490 */,
 /* 491 */
 /***/ (function(module, __unusedexports, __webpack_require__) {
@@ -40248,7 +38163,35 @@ exports.ContextAPI = ContextAPI;
 /* 495 */,
 /* 496 */,
 /* 497 */,
-/* 498 */,
+/* 498 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _crypto = _interopRequireDefault(__webpack_require__(417));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function sha1(bytes) {
+  if (Array.isArray(bytes)) {
+    bytes = Buffer.from(bytes);
+  } else if (typeof bytes === 'string') {
+    bytes = Buffer.from(bytes, 'utf8');
+  }
+
+  return _crypto.default.createHash('sha1').update(bytes).digest();
+}
+
+var _default = sha1;
+exports.default = _default;
+
+/***/ }),
 /* 499 */,
 /* 500 */
 /***/ (function(module) {
@@ -40300,7 +38243,7 @@ function defer(fn)
 Object.defineProperty(exports, '__esModule', { value: true });
 
 __webpack_require__(97);
-var tslib = __webpack_require__(671);
+var tslib = __webpack_require__(422);
 
 // Copyright (c) Microsoft Corporation.
 /**
@@ -40376,7 +38319,7 @@ exports.getPagedAsyncIterator = getPagedAsyncIterator;
 /* 512 */
 /***/ (function(module) {
 
-module.exports = {"application/1d-interleaved-parityfec":{"source":"iana"},"application/3gpdash-qoe-report+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/3gpp-ims+xml":{"source":"iana","compressible":true},"application/3gpphal+json":{"source":"iana","compressible":true},"application/3gpphalforms+json":{"source":"iana","compressible":true},"application/a2l":{"source":"iana"},"application/ace+cbor":{"source":"iana"},"application/activemessage":{"source":"iana"},"application/activity+json":{"source":"iana","compressible":true},"application/alto-costmap+json":{"source":"iana","compressible":true},"application/alto-costmapfilter+json":{"source":"iana","compressible":true},"application/alto-directory+json":{"source":"iana","compressible":true},"application/alto-endpointcost+json":{"source":"iana","compressible":true},"application/alto-endpointcostparams+json":{"source":"iana","compressible":true},"application/alto-endpointprop+json":{"source":"iana","compressible":true},"application/alto-endpointpropparams+json":{"source":"iana","compressible":true},"application/alto-error+json":{"source":"iana","compressible":true},"application/alto-networkmap+json":{"source":"iana","compressible":true},"application/alto-networkmapfilter+json":{"source":"iana","compressible":true},"application/alto-updatestreamcontrol+json":{"source":"iana","compressible":true},"application/alto-updatestreamparams+json":{"source":"iana","compressible":true},"application/aml":{"source":"iana"},"application/andrew-inset":{"source":"iana","extensions":["ez"]},"application/applefile":{"source":"iana"},"application/applixware":{"source":"apache","extensions":["aw"]},"application/at+jwt":{"source":"iana"},"application/atf":{"source":"iana"},"application/atfx":{"source":"iana"},"application/atom+xml":{"source":"iana","compressible":true,"extensions":["atom"]},"application/atomcat+xml":{"source":"iana","compressible":true,"extensions":["atomcat"]},"application/atomdeleted+xml":{"source":"iana","compressible":true,"extensions":["atomdeleted"]},"application/atomicmail":{"source":"iana"},"application/atomsvc+xml":{"source":"iana","compressible":true,"extensions":["atomsvc"]},"application/atsc-dwd+xml":{"source":"iana","compressible":true,"extensions":["dwd"]},"application/atsc-dynamic-event-message":{"source":"iana"},"application/atsc-held+xml":{"source":"iana","compressible":true,"extensions":["held"]},"application/atsc-rdt+json":{"source":"iana","compressible":true},"application/atsc-rsat+xml":{"source":"iana","compressible":true,"extensions":["rsat"]},"application/atxml":{"source":"iana"},"application/auth-policy+xml":{"source":"iana","compressible":true},"application/bacnet-xdd+zip":{"source":"iana","compressible":false},"application/batch-smtp":{"source":"iana"},"application/bdoc":{"compressible":false,"extensions":["bdoc"]},"application/beep+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/calendar+json":{"source":"iana","compressible":true},"application/calendar+xml":{"source":"iana","compressible":true,"extensions":["xcs"]},"application/call-completion":{"source":"iana"},"application/cals-1840":{"source":"iana"},"application/captive+json":{"source":"iana","compressible":true},"application/cbor":{"source":"iana"},"application/cbor-seq":{"source":"iana"},"application/cccex":{"source":"iana"},"application/ccmp+xml":{"source":"iana","compressible":true},"application/ccxml+xml":{"source":"iana","compressible":true,"extensions":["ccxml"]},"application/cdfx+xml":{"source":"iana","compressible":true,"extensions":["cdfx"]},"application/cdmi-capability":{"source":"iana","extensions":["cdmia"]},"application/cdmi-container":{"source":"iana","extensions":["cdmic"]},"application/cdmi-domain":{"source":"iana","extensions":["cdmid"]},"application/cdmi-object":{"source":"iana","extensions":["cdmio"]},"application/cdmi-queue":{"source":"iana","extensions":["cdmiq"]},"application/cdni":{"source":"iana"},"application/cea":{"source":"iana"},"application/cea-2018+xml":{"source":"iana","compressible":true},"application/cellml+xml":{"source":"iana","compressible":true},"application/cfw":{"source":"iana"},"application/clr":{"source":"iana"},"application/clue+xml":{"source":"iana","compressible":true},"application/clue_info+xml":{"source":"iana","compressible":true},"application/cms":{"source":"iana"},"application/cnrp+xml":{"source":"iana","compressible":true},"application/coap-group+json":{"source":"iana","compressible":true},"application/coap-payload":{"source":"iana"},"application/commonground":{"source":"iana"},"application/conference-info+xml":{"source":"iana","compressible":true},"application/cose":{"source":"iana"},"application/cose-key":{"source":"iana"},"application/cose-key-set":{"source":"iana"},"application/cpl+xml":{"source":"iana","compressible":true},"application/csrattrs":{"source":"iana"},"application/csta+xml":{"source":"iana","compressible":true},"application/cstadata+xml":{"source":"iana","compressible":true},"application/csvm+json":{"source":"iana","compressible":true},"application/cu-seeme":{"source":"apache","extensions":["cu"]},"application/cwt":{"source":"iana"},"application/cybercash":{"source":"iana"},"application/dart":{"compressible":true},"application/dash+xml":{"source":"iana","compressible":true,"extensions":["mpd"]},"application/dashdelta":{"source":"iana"},"application/davmount+xml":{"source":"iana","compressible":true,"extensions":["davmount"]},"application/dca-rft":{"source":"iana"},"application/dcd":{"source":"iana"},"application/dec-dx":{"source":"iana"},"application/dialog-info+xml":{"source":"iana","compressible":true},"application/dicom":{"source":"iana"},"application/dicom+json":{"source":"iana","compressible":true},"application/dicom+xml":{"source":"iana","compressible":true},"application/dii":{"source":"iana"},"application/dit":{"source":"iana"},"application/dns":{"source":"iana"},"application/dns+json":{"source":"iana","compressible":true},"application/dns-message":{"source":"iana"},"application/docbook+xml":{"source":"apache","compressible":true,"extensions":["dbk"]},"application/dots+cbor":{"source":"iana"},"application/dskpp+xml":{"source":"iana","compressible":true},"application/dssc+der":{"source":"iana","extensions":["dssc"]},"application/dssc+xml":{"source":"iana","compressible":true,"extensions":["xdssc"]},"application/dvcs":{"source":"iana"},"application/ecmascript":{"source":"iana","compressible":true,"extensions":["es","ecma"]},"application/edi-consent":{"source":"iana"},"application/edi-x12":{"source":"iana","compressible":false},"application/edifact":{"source":"iana","compressible":false},"application/efi":{"source":"iana"},"application/elm+json":{"source":"iana","charset":"UTF-8","compressible":true},"application/elm+xml":{"source":"iana","compressible":true},"application/emergencycalldata.cap+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/emergencycalldata.comment+xml":{"source":"iana","compressible":true},"application/emergencycalldata.control+xml":{"source":"iana","compressible":true},"application/emergencycalldata.deviceinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.ecall.msd":{"source":"iana"},"application/emergencycalldata.providerinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.serviceinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.subscriberinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.veds+xml":{"source":"iana","compressible":true},"application/emma+xml":{"source":"iana","compressible":true,"extensions":["emma"]},"application/emotionml+xml":{"source":"iana","compressible":true,"extensions":["emotionml"]},"application/encaprtp":{"source":"iana"},"application/epp+xml":{"source":"iana","compressible":true},"application/epub+zip":{"source":"iana","compressible":false,"extensions":["epub"]},"application/eshop":{"source":"iana"},"application/exi":{"source":"iana","extensions":["exi"]},"application/expect-ct-report+json":{"source":"iana","compressible":true},"application/express":{"source":"iana","extensions":["exp"]},"application/fastinfoset":{"source":"iana"},"application/fastsoap":{"source":"iana"},"application/fdt+xml":{"source":"iana","compressible":true,"extensions":["fdt"]},"application/fhir+json":{"source":"iana","charset":"UTF-8","compressible":true},"application/fhir+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/fido.trusted-apps+json":{"compressible":true},"application/fits":{"source":"iana"},"application/flexfec":{"source":"iana"},"application/font-sfnt":{"source":"iana"},"application/font-tdpfr":{"source":"iana","extensions":["pfr"]},"application/font-woff":{"source":"iana","compressible":false},"application/framework-attributes+xml":{"source":"iana","compressible":true},"application/geo+json":{"source":"iana","compressible":true,"extensions":["geojson"]},"application/geo+json-seq":{"source":"iana"},"application/geopackage+sqlite3":{"source":"iana"},"application/geoxacml+xml":{"source":"iana","compressible":true},"application/gltf-buffer":{"source":"iana"},"application/gml+xml":{"source":"iana","compressible":true,"extensions":["gml"]},"application/gpx+xml":{"source":"apache","compressible":true,"extensions":["gpx"]},"application/gxf":{"source":"apache","extensions":["gxf"]},"application/gzip":{"source":"iana","compressible":false,"extensions":["gz"]},"application/h224":{"source":"iana"},"application/held+xml":{"source":"iana","compressible":true},"application/hjson":{"extensions":["hjson"]},"application/http":{"source":"iana"},"application/hyperstudio":{"source":"iana","extensions":["stk"]},"application/ibe-key-request+xml":{"source":"iana","compressible":true},"application/ibe-pkg-reply+xml":{"source":"iana","compressible":true},"application/ibe-pp-data":{"source":"iana"},"application/iges":{"source":"iana"},"application/im-iscomposing+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/index":{"source":"iana"},"application/index.cmd":{"source":"iana"},"application/index.obj":{"source":"iana"},"application/index.response":{"source":"iana"},"application/index.vnd":{"source":"iana"},"application/inkml+xml":{"source":"iana","compressible":true,"extensions":["ink","inkml"]},"application/iotp":{"source":"iana"},"application/ipfix":{"source":"iana","extensions":["ipfix"]},"application/ipp":{"source":"iana"},"application/isup":{"source":"iana"},"application/its+xml":{"source":"iana","compressible":true,"extensions":["its"]},"application/java-archive":{"source":"apache","compressible":false,"extensions":["jar","war","ear"]},"application/java-serialized-object":{"source":"apache","compressible":false,"extensions":["ser"]},"application/java-vm":{"source":"apache","compressible":false,"extensions":["class"]},"application/javascript":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["js","mjs"]},"application/jf2feed+json":{"source":"iana","compressible":true},"application/jose":{"source":"iana"},"application/jose+json":{"source":"iana","compressible":true},"application/jrd+json":{"source":"iana","compressible":true},"application/jscalendar+json":{"source":"iana","compressible":true},"application/json":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["json","map"]},"application/json-patch+json":{"source":"iana","compressible":true},"application/json-seq":{"source":"iana"},"application/json5":{"extensions":["json5"]},"application/jsonml+json":{"source":"apache","compressible":true,"extensions":["jsonml"]},"application/jwk+json":{"source":"iana","compressible":true},"application/jwk-set+json":{"source":"iana","compressible":true},"application/jwt":{"source":"iana"},"application/kpml-request+xml":{"source":"iana","compressible":true},"application/kpml-response+xml":{"source":"iana","compressible":true},"application/ld+json":{"source":"iana","compressible":true,"extensions":["jsonld"]},"application/lgr+xml":{"source":"iana","compressible":true,"extensions":["lgr"]},"application/link-format":{"source":"iana"},"application/load-control+xml":{"source":"iana","compressible":true},"application/lost+xml":{"source":"iana","compressible":true,"extensions":["lostxml"]},"application/lostsync+xml":{"source":"iana","compressible":true},"application/lpf+zip":{"source":"iana","compressible":false},"application/lxf":{"source":"iana"},"application/mac-binhex40":{"source":"iana","extensions":["hqx"]},"application/mac-compactpro":{"source":"apache","extensions":["cpt"]},"application/macwriteii":{"source":"iana"},"application/mads+xml":{"source":"iana","compressible":true,"extensions":["mads"]},"application/manifest+json":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["webmanifest"]},"application/marc":{"source":"iana","extensions":["mrc"]},"application/marcxml+xml":{"source":"iana","compressible":true,"extensions":["mrcx"]},"application/mathematica":{"source":"iana","extensions":["ma","nb","mb"]},"application/mathml+xml":{"source":"iana","compressible":true,"extensions":["mathml"]},"application/mathml-content+xml":{"source":"iana","compressible":true},"application/mathml-presentation+xml":{"source":"iana","compressible":true},"application/mbms-associated-procedure-description+xml":{"source":"iana","compressible":true},"application/mbms-deregister+xml":{"source":"iana","compressible":true},"application/mbms-envelope+xml":{"source":"iana","compressible":true},"application/mbms-msk+xml":{"source":"iana","compressible":true},"application/mbms-msk-response+xml":{"source":"iana","compressible":true},"application/mbms-protection-description+xml":{"source":"iana","compressible":true},"application/mbms-reception-report+xml":{"source":"iana","compressible":true},"application/mbms-register+xml":{"source":"iana","compressible":true},"application/mbms-register-response+xml":{"source":"iana","compressible":true},"application/mbms-schedule+xml":{"source":"iana","compressible":true},"application/mbms-user-service-description+xml":{"source":"iana","compressible":true},"application/mbox":{"source":"iana","extensions":["mbox"]},"application/media-policy-dataset+xml":{"source":"iana","compressible":true},"application/media_control+xml":{"source":"iana","compressible":true},"application/mediaservercontrol+xml":{"source":"iana","compressible":true,"extensions":["mscml"]},"application/merge-patch+json":{"source":"iana","compressible":true},"application/metalink+xml":{"source":"apache","compressible":true,"extensions":["metalink"]},"application/metalink4+xml":{"source":"iana","compressible":true,"extensions":["meta4"]},"application/mets+xml":{"source":"iana","compressible":true,"extensions":["mets"]},"application/mf4":{"source":"iana"},"application/mikey":{"source":"iana"},"application/mipc":{"source":"iana"},"application/missing-blocks+cbor-seq":{"source":"iana"},"application/mmt-aei+xml":{"source":"iana","compressible":true,"extensions":["maei"]},"application/mmt-usd+xml":{"source":"iana","compressible":true,"extensions":["musd"]},"application/mods+xml":{"source":"iana","compressible":true,"extensions":["mods"]},"application/moss-keys":{"source":"iana"},"application/moss-signature":{"source":"iana"},"application/mosskey-data":{"source":"iana"},"application/mosskey-request":{"source":"iana"},"application/mp21":{"source":"iana","extensions":["m21","mp21"]},"application/mp4":{"source":"iana","extensions":["mp4s","m4p"]},"application/mpeg4-generic":{"source":"iana"},"application/mpeg4-iod":{"source":"iana"},"application/mpeg4-iod-xmt":{"source":"iana"},"application/mrb-consumer+xml":{"source":"iana","compressible":true},"application/mrb-publish+xml":{"source":"iana","compressible":true},"application/msc-ivr+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/msc-mixer+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/msword":{"source":"iana","compressible":false,"extensions":["doc","dot"]},"application/mud+json":{"source":"iana","compressible":true},"application/multipart-core":{"source":"iana"},"application/mxf":{"source":"iana","extensions":["mxf"]},"application/n-quads":{"source":"iana","extensions":["nq"]},"application/n-triples":{"source":"iana","extensions":["nt"]},"application/nasdata":{"source":"iana"},"application/news-checkgroups":{"source":"iana","charset":"US-ASCII"},"application/news-groupinfo":{"source":"iana","charset":"US-ASCII"},"application/news-transmission":{"source":"iana"},"application/nlsml+xml":{"source":"iana","compressible":true},"application/node":{"source":"iana","extensions":["cjs"]},"application/nss":{"source":"iana"},"application/oauth-authz-req+jwt":{"source":"iana"},"application/ocsp-request":{"source":"iana"},"application/ocsp-response":{"source":"iana"},"application/octet-stream":{"source":"iana","compressible":false,"extensions":["bin","dms","lrf","mar","so","dist","distz","pkg","bpk","dump","elc","deploy","exe","dll","deb","dmg","iso","img","msi","msp","msm","buffer"]},"application/oda":{"source":"iana","extensions":["oda"]},"application/odm+xml":{"source":"iana","compressible":true},"application/odx":{"source":"iana"},"application/oebps-package+xml":{"source":"iana","compressible":true,"extensions":["opf"]},"application/ogg":{"source":"iana","compressible":false,"extensions":["ogx"]},"application/omdoc+xml":{"source":"apache","compressible":true,"extensions":["omdoc"]},"application/onenote":{"source":"apache","extensions":["onetoc","onetoc2","onetmp","onepkg"]},"application/opc-nodeset+xml":{"source":"iana","compressible":true},"application/oscore":{"source":"iana"},"application/oxps":{"source":"iana","extensions":["oxps"]},"application/p21":{"source":"iana"},"application/p21+zip":{"source":"iana","compressible":false},"application/p2p-overlay+xml":{"source":"iana","compressible":true,"extensions":["relo"]},"application/parityfec":{"source":"iana"},"application/passport":{"source":"iana"},"application/patch-ops-error+xml":{"source":"iana","compressible":true,"extensions":["xer"]},"application/pdf":{"source":"iana","compressible":false,"extensions":["pdf"]},"application/pdx":{"source":"iana"},"application/pem-certificate-chain":{"source":"iana"},"application/pgp-encrypted":{"source":"iana","compressible":false,"extensions":["pgp"]},"application/pgp-keys":{"source":"iana"},"application/pgp-signature":{"source":"iana","extensions":["asc","sig"]},"application/pics-rules":{"source":"apache","extensions":["prf"]},"application/pidf+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/pidf-diff+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/pkcs10":{"source":"iana","extensions":["p10"]},"application/pkcs12":{"source":"iana"},"application/pkcs7-mime":{"source":"iana","extensions":["p7m","p7c"]},"application/pkcs7-signature":{"source":"iana","extensions":["p7s"]},"application/pkcs8":{"source":"iana","extensions":["p8"]},"application/pkcs8-encrypted":{"source":"iana"},"application/pkix-attr-cert":{"source":"iana","extensions":["ac"]},"application/pkix-cert":{"source":"iana","extensions":["cer"]},"application/pkix-crl":{"source":"iana","extensions":["crl"]},"application/pkix-pkipath":{"source":"iana","extensions":["pkipath"]},"application/pkixcmp":{"source":"iana","extensions":["pki"]},"application/pls+xml":{"source":"iana","compressible":true,"extensions":["pls"]},"application/poc-settings+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/postscript":{"source":"iana","compressible":true,"extensions":["ai","eps","ps"]},"application/ppsp-tracker+json":{"source":"iana","compressible":true},"application/problem+json":{"source":"iana","compressible":true},"application/problem+xml":{"source":"iana","compressible":true},"application/provenance+xml":{"source":"iana","compressible":true,"extensions":["provx"]},"application/prs.alvestrand.titrax-sheet":{"source":"iana"},"application/prs.cww":{"source":"iana","extensions":["cww"]},"application/prs.cyn":{"source":"iana","charset":"7-BIT"},"application/prs.hpub+zip":{"source":"iana","compressible":false},"application/prs.nprend":{"source":"iana"},"application/prs.plucker":{"source":"iana"},"application/prs.rdf-xml-crypt":{"source":"iana"},"application/prs.xsf+xml":{"source":"iana","compressible":true},"application/pskc+xml":{"source":"iana","compressible":true,"extensions":["pskcxml"]},"application/pvd+json":{"source":"iana","compressible":true},"application/qsig":{"source":"iana"},"application/raml+yaml":{"compressible":true,"extensions":["raml"]},"application/raptorfec":{"source":"iana"},"application/rdap+json":{"source":"iana","compressible":true},"application/rdf+xml":{"source":"iana","compressible":true,"extensions":["rdf","owl"]},"application/reginfo+xml":{"source":"iana","compressible":true,"extensions":["rif"]},"application/relax-ng-compact-syntax":{"source":"iana","extensions":["rnc"]},"application/remote-printing":{"source":"iana"},"application/reputon+json":{"source":"iana","compressible":true},"application/resource-lists+xml":{"source":"iana","compressible":true,"extensions":["rl"]},"application/resource-lists-diff+xml":{"source":"iana","compressible":true,"extensions":["rld"]},"application/rfc+xml":{"source":"iana","compressible":true},"application/riscos":{"source":"iana"},"application/rlmi+xml":{"source":"iana","compressible":true},"application/rls-services+xml":{"source":"iana","compressible":true,"extensions":["rs"]},"application/route-apd+xml":{"source":"iana","compressible":true,"extensions":["rapd"]},"application/route-s-tsid+xml":{"source":"iana","compressible":true,"extensions":["sls"]},"application/route-usd+xml":{"source":"iana","compressible":true,"extensions":["rusd"]},"application/rpki-ghostbusters":{"source":"iana","extensions":["gbr"]},"application/rpki-manifest":{"source":"iana","extensions":["mft"]},"application/rpki-publication":{"source":"iana"},"application/rpki-roa":{"source":"iana","extensions":["roa"]},"application/rpki-updown":{"source":"iana"},"application/rsd+xml":{"source":"apache","compressible":true,"extensions":["rsd"]},"application/rss+xml":{"source":"apache","compressible":true,"extensions":["rss"]},"application/rtf":{"source":"iana","compressible":true,"extensions":["rtf"]},"application/rtploopback":{"source":"iana"},"application/rtx":{"source":"iana"},"application/samlassertion+xml":{"source":"iana","compressible":true},"application/samlmetadata+xml":{"source":"iana","compressible":true},"application/sarif+json":{"source":"iana","compressible":true},"application/sarif-external-properties+json":{"source":"iana","compressible":true},"application/sbe":{"source":"iana"},"application/sbml+xml":{"source":"iana","compressible":true,"extensions":["sbml"]},"application/scaip+xml":{"source":"iana","compressible":true},"application/scim+json":{"source":"iana","compressible":true},"application/scvp-cv-request":{"source":"iana","extensions":["scq"]},"application/scvp-cv-response":{"source":"iana","extensions":["scs"]},"application/scvp-vp-request":{"source":"iana","extensions":["spq"]},"application/scvp-vp-response":{"source":"iana","extensions":["spp"]},"application/sdp":{"source":"iana","extensions":["sdp"]},"application/secevent+jwt":{"source":"iana"},"application/senml+cbor":{"source":"iana"},"application/senml+json":{"source":"iana","compressible":true},"application/senml+xml":{"source":"iana","compressible":true,"extensions":["senmlx"]},"application/senml-etch+cbor":{"source":"iana"},"application/senml-etch+json":{"source":"iana","compressible":true},"application/senml-exi":{"source":"iana"},"application/sensml+cbor":{"source":"iana"},"application/sensml+json":{"source":"iana","compressible":true},"application/sensml+xml":{"source":"iana","compressible":true,"extensions":["sensmlx"]},"application/sensml-exi":{"source":"iana"},"application/sep+xml":{"source":"iana","compressible":true},"application/sep-exi":{"source":"iana"},"application/session-info":{"source":"iana"},"application/set-payment":{"source":"iana"},"application/set-payment-initiation":{"source":"iana","extensions":["setpay"]},"application/set-registration":{"source":"iana"},"application/set-registration-initiation":{"source":"iana","extensions":["setreg"]},"application/sgml":{"source":"iana"},"application/sgml-open-catalog":{"source":"iana"},"application/shf+xml":{"source":"iana","compressible":true,"extensions":["shf"]},"application/sieve":{"source":"iana","extensions":["siv","sieve"]},"application/simple-filter+xml":{"source":"iana","compressible":true},"application/simple-message-summary":{"source":"iana"},"application/simplesymbolcontainer":{"source":"iana"},"application/sipc":{"source":"iana"},"application/slate":{"source":"iana"},"application/smil":{"source":"iana"},"application/smil+xml":{"source":"iana","compressible":true,"extensions":["smi","smil"]},"application/smpte336m":{"source":"iana"},"application/soap+fastinfoset":{"source":"iana"},"application/soap+xml":{"source":"iana","compressible":true},"application/sparql-query":{"source":"iana","extensions":["rq"]},"application/sparql-results+xml":{"source":"iana","compressible":true,"extensions":["srx"]},"application/spdx+json":{"source":"iana","compressible":true},"application/spirits-event+xml":{"source":"iana","compressible":true},"application/sql":{"source":"iana"},"application/srgs":{"source":"iana","extensions":["gram"]},"application/srgs+xml":{"source":"iana","compressible":true,"extensions":["grxml"]},"application/sru+xml":{"source":"iana","compressible":true,"extensions":["sru"]},"application/ssdl+xml":{"source":"apache","compressible":true,"extensions":["ssdl"]},"application/ssml+xml":{"source":"iana","compressible":true,"extensions":["ssml"]},"application/stix+json":{"source":"iana","compressible":true},"application/swid+xml":{"source":"iana","compressible":true,"extensions":["swidtag"]},"application/tamp-apex-update":{"source":"iana"},"application/tamp-apex-update-confirm":{"source":"iana"},"application/tamp-community-update":{"source":"iana"},"application/tamp-community-update-confirm":{"source":"iana"},"application/tamp-error":{"source":"iana"},"application/tamp-sequence-adjust":{"source":"iana"},"application/tamp-sequence-adjust-confirm":{"source":"iana"},"application/tamp-status-query":{"source":"iana"},"application/tamp-status-response":{"source":"iana"},"application/tamp-update":{"source":"iana"},"application/tamp-update-confirm":{"source":"iana"},"application/tar":{"compressible":true},"application/taxii+json":{"source":"iana","compressible":true},"application/td+json":{"source":"iana","compressible":true},"application/tei+xml":{"source":"iana","compressible":true,"extensions":["tei","teicorpus"]},"application/tetra_isi":{"source":"iana"},"application/thraud+xml":{"source":"iana","compressible":true,"extensions":["tfi"]},"application/timestamp-query":{"source":"iana"},"application/timestamp-reply":{"source":"iana"},"application/timestamped-data":{"source":"iana","extensions":["tsd"]},"application/tlsrpt+gzip":{"source":"iana"},"application/tlsrpt+json":{"source":"iana","compressible":true},"application/tnauthlist":{"source":"iana"},"application/token-introspection+jwt":{"source":"iana"},"application/toml":{"compressible":true,"extensions":["toml"]},"application/trickle-ice-sdpfrag":{"source":"iana"},"application/trig":{"source":"iana","extensions":["trig"]},"application/ttml+xml":{"source":"iana","compressible":true,"extensions":["ttml"]},"application/tve-trigger":{"source":"iana"},"application/tzif":{"source":"iana"},"application/tzif-leap":{"source":"iana"},"application/ubjson":{"compressible":false,"extensions":["ubj"]},"application/ulpfec":{"source":"iana"},"application/urc-grpsheet+xml":{"source":"iana","compressible":true},"application/urc-ressheet+xml":{"source":"iana","compressible":true,"extensions":["rsheet"]},"application/urc-targetdesc+xml":{"source":"iana","compressible":true,"extensions":["td"]},"application/urc-uisocketdesc+xml":{"source":"iana","compressible":true},"application/vcard+json":{"source":"iana","compressible":true},"application/vcard+xml":{"source":"iana","compressible":true},"application/vemmi":{"source":"iana"},"application/vividence.scriptfile":{"source":"apache"},"application/vnd.1000minds.decision-model+xml":{"source":"iana","compressible":true,"extensions":["1km"]},"application/vnd.3gpp-prose+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-prose-pc3ch+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-v2x-local-service-information":{"source":"iana"},"application/vnd.3gpp.5gnas":{"source":"iana"},"application/vnd.3gpp.access-transfer-events+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.bsf+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.gmop+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.gtpc":{"source":"iana"},"application/vnd.3gpp.interworking-data":{"source":"iana"},"application/vnd.3gpp.lpp":{"source":"iana"},"application/vnd.3gpp.mc-signalling-ear":{"source":"iana"},"application/vnd.3gpp.mcdata-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-payload":{"source":"iana"},"application/vnd.3gpp.mcdata-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-signalling":{"source":"iana"},"application/vnd.3gpp.mcdata-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-floor-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-signed+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-ue-init-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-affiliation-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-transmission-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mid-call+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.ngap":{"source":"iana"},"application/vnd.3gpp.pfcp":{"source":"iana"},"application/vnd.3gpp.pic-bw-large":{"source":"iana","extensions":["plb"]},"application/vnd.3gpp.pic-bw-small":{"source":"iana","extensions":["psb"]},"application/vnd.3gpp.pic-bw-var":{"source":"iana","extensions":["pvb"]},"application/vnd.3gpp.s1ap":{"source":"iana"},"application/vnd.3gpp.sms":{"source":"iana"},"application/vnd.3gpp.sms+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.srvcc-ext+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.srvcc-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.state-and-event-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.ussd+xml":{"source":"iana","compressible":true},"application/vnd.3gpp2.bcmcsinfo+xml":{"source":"iana","compressible":true},"application/vnd.3gpp2.sms":{"source":"iana"},"application/vnd.3gpp2.tcap":{"source":"iana","extensions":["tcap"]},"application/vnd.3lightssoftware.imagescal":{"source":"iana"},"application/vnd.3m.post-it-notes":{"source":"iana","extensions":["pwn"]},"application/vnd.accpac.simply.aso":{"source":"iana","extensions":["aso"]},"application/vnd.accpac.simply.imp":{"source":"iana","extensions":["imp"]},"application/vnd.acucobol":{"source":"iana","extensions":["acu"]},"application/vnd.acucorp":{"source":"iana","extensions":["atc","acutc"]},"application/vnd.adobe.air-application-installer-package+zip":{"source":"apache","compressible":false,"extensions":["air"]},"application/vnd.adobe.flash.movie":{"source":"iana"},"application/vnd.adobe.formscentral.fcdt":{"source":"iana","extensions":["fcdt"]},"application/vnd.adobe.fxp":{"source":"iana","extensions":["fxp","fxpl"]},"application/vnd.adobe.partial-upload":{"source":"iana"},"application/vnd.adobe.xdp+xml":{"source":"iana","compressible":true,"extensions":["xdp"]},"application/vnd.adobe.xfdf":{"source":"iana","extensions":["xfdf"]},"application/vnd.aether.imp":{"source":"iana"},"application/vnd.afpc.afplinedata":{"source":"iana"},"application/vnd.afpc.afplinedata-pagedef":{"source":"iana"},"application/vnd.afpc.cmoca-cmresource":{"source":"iana"},"application/vnd.afpc.foca-charset":{"source":"iana"},"application/vnd.afpc.foca-codedfont":{"source":"iana"},"application/vnd.afpc.foca-codepage":{"source":"iana"},"application/vnd.afpc.modca":{"source":"iana"},"application/vnd.afpc.modca-cmtable":{"source":"iana"},"application/vnd.afpc.modca-formdef":{"source":"iana"},"application/vnd.afpc.modca-mediummap":{"source":"iana"},"application/vnd.afpc.modca-objectcontainer":{"source":"iana"},"application/vnd.afpc.modca-overlay":{"source":"iana"},"application/vnd.afpc.modca-pagesegment":{"source":"iana"},"application/vnd.age":{"source":"iana","extensions":["age"]},"application/vnd.ah-barcode":{"source":"iana"},"application/vnd.ahead.space":{"source":"iana","extensions":["ahead"]},"application/vnd.airzip.filesecure.azf":{"source":"iana","extensions":["azf"]},"application/vnd.airzip.filesecure.azs":{"source":"iana","extensions":["azs"]},"application/vnd.amadeus+json":{"source":"iana","compressible":true},"application/vnd.amazon.ebook":{"source":"apache","extensions":["azw"]},"application/vnd.amazon.mobi8-ebook":{"source":"iana"},"application/vnd.americandynamics.acc":{"source":"iana","extensions":["acc"]},"application/vnd.amiga.ami":{"source":"iana","extensions":["ami"]},"application/vnd.amundsen.maze+xml":{"source":"iana","compressible":true},"application/vnd.android.ota":{"source":"iana"},"application/vnd.android.package-archive":{"source":"apache","compressible":false,"extensions":["apk"]},"application/vnd.anki":{"source":"iana"},"application/vnd.anser-web-certificate-issue-initiation":{"source":"iana","extensions":["cii"]},"application/vnd.anser-web-funds-transfer-initiation":{"source":"apache","extensions":["fti"]},"application/vnd.antix.game-component":{"source":"iana","extensions":["atx"]},"application/vnd.apache.arrow.file":{"source":"iana"},"application/vnd.apache.arrow.stream":{"source":"iana"},"application/vnd.apache.thrift.binary":{"source":"iana"},"application/vnd.apache.thrift.compact":{"source":"iana"},"application/vnd.apache.thrift.json":{"source":"iana"},"application/vnd.api+json":{"source":"iana","compressible":true},"application/vnd.aplextor.warrp+json":{"source":"iana","compressible":true},"application/vnd.apothekende.reservation+json":{"source":"iana","compressible":true},"application/vnd.apple.installer+xml":{"source":"iana","compressible":true,"extensions":["mpkg"]},"application/vnd.apple.keynote":{"source":"iana","extensions":["key"]},"application/vnd.apple.mpegurl":{"source":"iana","extensions":["m3u8"]},"application/vnd.apple.numbers":{"source":"iana","extensions":["numbers"]},"application/vnd.apple.pages":{"source":"iana","extensions":["pages"]},"application/vnd.apple.pkpass":{"compressible":false,"extensions":["pkpass"]},"application/vnd.arastra.swi":{"source":"iana"},"application/vnd.aristanetworks.swi":{"source":"iana","extensions":["swi"]},"application/vnd.artisan+json":{"source":"iana","compressible":true},"application/vnd.artsquare":{"source":"iana"},"application/vnd.astraea-software.iota":{"source":"iana","extensions":["iota"]},"application/vnd.audiograph":{"source":"iana","extensions":["aep"]},"application/vnd.autopackage":{"source":"iana"},"application/vnd.avalon+json":{"source":"iana","compressible":true},"application/vnd.avistar+xml":{"source":"iana","compressible":true},"application/vnd.balsamiq.bmml+xml":{"source":"iana","compressible":true,"extensions":["bmml"]},"application/vnd.balsamiq.bmpr":{"source":"iana"},"application/vnd.banana-accounting":{"source":"iana"},"application/vnd.bbf.usp.error":{"source":"iana"},"application/vnd.bbf.usp.msg":{"source":"iana"},"application/vnd.bbf.usp.msg+json":{"source":"iana","compressible":true},"application/vnd.bekitzur-stech+json":{"source":"iana","compressible":true},"application/vnd.bint.med-content":{"source":"iana"},"application/vnd.biopax.rdf+xml":{"source":"iana","compressible":true},"application/vnd.blink-idb-value-wrapper":{"source":"iana"},"application/vnd.blueice.multipass":{"source":"iana","extensions":["mpm"]},"application/vnd.bluetooth.ep.oob":{"source":"iana"},"application/vnd.bluetooth.le.oob":{"source":"iana"},"application/vnd.bmi":{"source":"iana","extensions":["bmi"]},"application/vnd.bpf":{"source":"iana"},"application/vnd.bpf3":{"source":"iana"},"application/vnd.businessobjects":{"source":"iana","extensions":["rep"]},"application/vnd.byu.uapi+json":{"source":"iana","compressible":true},"application/vnd.cab-jscript":{"source":"iana"},"application/vnd.canon-cpdl":{"source":"iana"},"application/vnd.canon-lips":{"source":"iana"},"application/vnd.capasystems-pg+json":{"source":"iana","compressible":true},"application/vnd.cendio.thinlinc.clientconf":{"source":"iana"},"application/vnd.century-systems.tcp_stream":{"source":"iana"},"application/vnd.chemdraw+xml":{"source":"iana","compressible":true,"extensions":["cdxml"]},"application/vnd.chess-pgn":{"source":"iana"},"application/vnd.chipnuts.karaoke-mmd":{"source":"iana","extensions":["mmd"]},"application/vnd.ciedi":{"source":"iana"},"application/vnd.cinderella":{"source":"iana","extensions":["cdy"]},"application/vnd.cirpack.isdn-ext":{"source":"iana"},"application/vnd.citationstyles.style+xml":{"source":"iana","compressible":true,"extensions":["csl"]},"application/vnd.claymore":{"source":"iana","extensions":["cla"]},"application/vnd.cloanto.rp9":{"source":"iana","extensions":["rp9"]},"application/vnd.clonk.c4group":{"source":"iana","extensions":["c4g","c4d","c4f","c4p","c4u"]},"application/vnd.cluetrust.cartomobile-config":{"source":"iana","extensions":["c11amc"]},"application/vnd.cluetrust.cartomobile-config-pkg":{"source":"iana","extensions":["c11amz"]},"application/vnd.coffeescript":{"source":"iana"},"application/vnd.collabio.xodocuments.document":{"source":"iana"},"application/vnd.collabio.xodocuments.document-template":{"source":"iana"},"application/vnd.collabio.xodocuments.presentation":{"source":"iana"},"application/vnd.collabio.xodocuments.presentation-template":{"source":"iana"},"application/vnd.collabio.xodocuments.spreadsheet":{"source":"iana"},"application/vnd.collabio.xodocuments.spreadsheet-template":{"source":"iana"},"application/vnd.collection+json":{"source":"iana","compressible":true},"application/vnd.collection.doc+json":{"source":"iana","compressible":true},"application/vnd.collection.next+json":{"source":"iana","compressible":true},"application/vnd.comicbook+zip":{"source":"iana","compressible":false},"application/vnd.comicbook-rar":{"source":"iana"},"application/vnd.commerce-battelle":{"source":"iana"},"application/vnd.commonspace":{"source":"iana","extensions":["csp"]},"application/vnd.contact.cmsg":{"source":"iana","extensions":["cdbcmsg"]},"application/vnd.coreos.ignition+json":{"source":"iana","compressible":true},"application/vnd.cosmocaller":{"source":"iana","extensions":["cmc"]},"application/vnd.crick.clicker":{"source":"iana","extensions":["clkx"]},"application/vnd.crick.clicker.keyboard":{"source":"iana","extensions":["clkk"]},"application/vnd.crick.clicker.palette":{"source":"iana","extensions":["clkp"]},"application/vnd.crick.clicker.template":{"source":"iana","extensions":["clkt"]},"application/vnd.crick.clicker.wordbank":{"source":"iana","extensions":["clkw"]},"application/vnd.criticaltools.wbs+xml":{"source":"iana","compressible":true,"extensions":["wbs"]},"application/vnd.cryptii.pipe+json":{"source":"iana","compressible":true},"application/vnd.crypto-shade-file":{"source":"iana"},"application/vnd.cryptomator.encrypted":{"source":"iana"},"application/vnd.cryptomator.vault":{"source":"iana"},"application/vnd.ctc-posml":{"source":"iana","extensions":["pml"]},"application/vnd.ctct.ws+xml":{"source":"iana","compressible":true},"application/vnd.cups-pdf":{"source":"iana"},"application/vnd.cups-postscript":{"source":"iana"},"application/vnd.cups-ppd":{"source":"iana","extensions":["ppd"]},"application/vnd.cups-raster":{"source":"iana"},"application/vnd.cups-raw":{"source":"iana"},"application/vnd.curl":{"source":"iana"},"application/vnd.curl.car":{"source":"apache","extensions":["car"]},"application/vnd.curl.pcurl":{"source":"apache","extensions":["pcurl"]},"application/vnd.cyan.dean.root+xml":{"source":"iana","compressible":true},"application/vnd.cybank":{"source":"iana"},"application/vnd.cyclonedx+json":{"source":"iana","compressible":true},"application/vnd.cyclonedx+xml":{"source":"iana","compressible":true},"application/vnd.d2l.coursepackage1p0+zip":{"source":"iana","compressible":false},"application/vnd.d3m-dataset":{"source":"iana"},"application/vnd.d3m-problem":{"source":"iana"},"application/vnd.dart":{"source":"iana","compressible":true,"extensions":["dart"]},"application/vnd.data-vision.rdz":{"source":"iana","extensions":["rdz"]},"application/vnd.datapackage+json":{"source":"iana","compressible":true},"application/vnd.dataresource+json":{"source":"iana","compressible":true},"application/vnd.dbf":{"source":"iana","extensions":["dbf"]},"application/vnd.debian.binary-package":{"source":"iana"},"application/vnd.dece.data":{"source":"iana","extensions":["uvf","uvvf","uvd","uvvd"]},"application/vnd.dece.ttml+xml":{"source":"iana","compressible":true,"extensions":["uvt","uvvt"]},"application/vnd.dece.unspecified":{"source":"iana","extensions":["uvx","uvvx"]},"application/vnd.dece.zip":{"source":"iana","extensions":["uvz","uvvz"]},"application/vnd.denovo.fcselayout-link":{"source":"iana","extensions":["fe_launch"]},"application/vnd.desmume.movie":{"source":"iana"},"application/vnd.dir-bi.plate-dl-nosuffix":{"source":"iana"},"application/vnd.dm.delegation+xml":{"source":"iana","compressible":true},"application/vnd.dna":{"source":"iana","extensions":["dna"]},"application/vnd.document+json":{"source":"iana","compressible":true},"application/vnd.dolby.mlp":{"source":"apache","extensions":["mlp"]},"application/vnd.dolby.mobile.1":{"source":"iana"},"application/vnd.dolby.mobile.2":{"source":"iana"},"application/vnd.doremir.scorecloud-binary-document":{"source":"iana"},"application/vnd.dpgraph":{"source":"iana","extensions":["dpg"]},"application/vnd.dreamfactory":{"source":"iana","extensions":["dfac"]},"application/vnd.drive+json":{"source":"iana","compressible":true},"application/vnd.ds-keypoint":{"source":"apache","extensions":["kpxx"]},"application/vnd.dtg.local":{"source":"iana"},"application/vnd.dtg.local.flash":{"source":"iana"},"application/vnd.dtg.local.html":{"source":"iana"},"application/vnd.dvb.ait":{"source":"iana","extensions":["ait"]},"application/vnd.dvb.dvbisl+xml":{"source":"iana","compressible":true},"application/vnd.dvb.dvbj":{"source":"iana"},"application/vnd.dvb.esgcontainer":{"source":"iana"},"application/vnd.dvb.ipdcdftnotifaccess":{"source":"iana"},"application/vnd.dvb.ipdcesgaccess":{"source":"iana"},"application/vnd.dvb.ipdcesgaccess2":{"source":"iana"},"application/vnd.dvb.ipdcesgpdd":{"source":"iana"},"application/vnd.dvb.ipdcroaming":{"source":"iana"},"application/vnd.dvb.iptv.alfec-base":{"source":"iana"},"application/vnd.dvb.iptv.alfec-enhancement":{"source":"iana"},"application/vnd.dvb.notif-aggregate-root+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-container+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-generic+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-msglist+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-registration-request+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-registration-response+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-init+xml":{"source":"iana","compressible":true},"application/vnd.dvb.pfr":{"source":"iana"},"application/vnd.dvb.service":{"source":"iana","extensions":["svc"]},"application/vnd.dxr":{"source":"iana"},"application/vnd.dynageo":{"source":"iana","extensions":["geo"]},"application/vnd.dzr":{"source":"iana"},"application/vnd.easykaraoke.cdgdownload":{"source":"iana"},"application/vnd.ecdis-update":{"source":"iana"},"application/vnd.ecip.rlp":{"source":"iana"},"application/vnd.ecowin.chart":{"source":"iana","extensions":["mag"]},"application/vnd.ecowin.filerequest":{"source":"iana"},"application/vnd.ecowin.fileupdate":{"source":"iana"},"application/vnd.ecowin.series":{"source":"iana"},"application/vnd.ecowin.seriesrequest":{"source":"iana"},"application/vnd.ecowin.seriesupdate":{"source":"iana"},"application/vnd.efi.img":{"source":"iana"},"application/vnd.efi.iso":{"source":"iana"},"application/vnd.emclient.accessrequest+xml":{"source":"iana","compressible":true},"application/vnd.enliven":{"source":"iana","extensions":["nml"]},"application/vnd.enphase.envoy":{"source":"iana"},"application/vnd.eprints.data+xml":{"source":"iana","compressible":true},"application/vnd.epson.esf":{"source":"iana","extensions":["esf"]},"application/vnd.epson.msf":{"source":"iana","extensions":["msf"]},"application/vnd.epson.quickanime":{"source":"iana","extensions":["qam"]},"application/vnd.epson.salt":{"source":"iana","extensions":["slt"]},"application/vnd.epson.ssf":{"source":"iana","extensions":["ssf"]},"application/vnd.ericsson.quickcall":{"source":"iana"},"application/vnd.espass-espass+zip":{"source":"iana","compressible":false},"application/vnd.eszigno3+xml":{"source":"iana","compressible":true,"extensions":["es3","et3"]},"application/vnd.etsi.aoc+xml":{"source":"iana","compressible":true},"application/vnd.etsi.asic-e+zip":{"source":"iana","compressible":false},"application/vnd.etsi.asic-s+zip":{"source":"iana","compressible":false},"application/vnd.etsi.cug+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvcommand+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvdiscovery+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvprofile+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-bc+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-cod+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-npvr+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvservice+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsync+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvueprofile+xml":{"source":"iana","compressible":true},"application/vnd.etsi.mcid+xml":{"source":"iana","compressible":true},"application/vnd.etsi.mheg5":{"source":"iana"},"application/vnd.etsi.overload-control-policy-dataset+xml":{"source":"iana","compressible":true},"application/vnd.etsi.pstn+xml":{"source":"iana","compressible":true},"application/vnd.etsi.sci+xml":{"source":"iana","compressible":true},"application/vnd.etsi.simservs+xml":{"source":"iana","compressible":true},"application/vnd.etsi.timestamp-token":{"source":"iana"},"application/vnd.etsi.tsl+xml":{"source":"iana","compressible":true},"application/vnd.etsi.tsl.der":{"source":"iana"},"application/vnd.eudora.data":{"source":"iana"},"application/vnd.evolv.ecig.profile":{"source":"iana"},"application/vnd.evolv.ecig.settings":{"source":"iana"},"application/vnd.evolv.ecig.theme":{"source":"iana"},"application/vnd.exstream-empower+zip":{"source":"iana","compressible":false},"application/vnd.exstream-package":{"source":"iana"},"application/vnd.ezpix-album":{"source":"iana","extensions":["ez2"]},"application/vnd.ezpix-package":{"source":"iana","extensions":["ez3"]},"application/vnd.f-secure.mobile":{"source":"iana"},"application/vnd.fastcopy-disk-image":{"source":"iana"},"application/vnd.fdf":{"source":"iana","extensions":["fdf"]},"application/vnd.fdsn.mseed":{"source":"iana","extensions":["mseed"]},"application/vnd.fdsn.seed":{"source":"iana","extensions":["seed","dataless"]},"application/vnd.ffsns":{"source":"iana"},"application/vnd.ficlab.flb+zip":{"source":"iana","compressible":false},"application/vnd.filmit.zfc":{"source":"iana"},"application/vnd.fints":{"source":"iana"},"application/vnd.firemonkeys.cloudcell":{"source":"iana"},"application/vnd.flographit":{"source":"iana","extensions":["gph"]},"application/vnd.fluxtime.clip":{"source":"iana","extensions":["ftc"]},"application/vnd.font-fontforge-sfd":{"source":"iana"},"application/vnd.framemaker":{"source":"iana","extensions":["fm","frame","maker","book"]},"application/vnd.frogans.fnc":{"source":"iana","extensions":["fnc"]},"application/vnd.frogans.ltf":{"source":"iana","extensions":["ltf"]},"application/vnd.fsc.weblaunch":{"source":"iana","extensions":["fsc"]},"application/vnd.fujifilm.fb.docuworks":{"source":"iana"},"application/vnd.fujifilm.fb.docuworks.binder":{"source":"iana"},"application/vnd.fujifilm.fb.docuworks.container":{"source":"iana"},"application/vnd.fujifilm.fb.jfi+xml":{"source":"iana","compressible":true},"application/vnd.fujitsu.oasys":{"source":"iana","extensions":["oas"]},"application/vnd.fujitsu.oasys2":{"source":"iana","extensions":["oa2"]},"application/vnd.fujitsu.oasys3":{"source":"iana","extensions":["oa3"]},"application/vnd.fujitsu.oasysgp":{"source":"iana","extensions":["fg5"]},"application/vnd.fujitsu.oasysprs":{"source":"iana","extensions":["bh2"]},"application/vnd.fujixerox.art-ex":{"source":"iana"},"application/vnd.fujixerox.art4":{"source":"iana"},"application/vnd.fujixerox.ddd":{"source":"iana","extensions":["ddd"]},"application/vnd.fujixerox.docuworks":{"source":"iana","extensions":["xdw"]},"application/vnd.fujixerox.docuworks.binder":{"source":"iana","extensions":["xbd"]},"application/vnd.fujixerox.docuworks.container":{"source":"iana"},"application/vnd.fujixerox.hbpl":{"source":"iana"},"application/vnd.fut-misnet":{"source":"iana"},"application/vnd.futoin+cbor":{"source":"iana"},"application/vnd.futoin+json":{"source":"iana","compressible":true},"application/vnd.fuzzysheet":{"source":"iana","extensions":["fzs"]},"application/vnd.genomatix.tuxedo":{"source":"iana","extensions":["txd"]},"application/vnd.gentics.grd+json":{"source":"iana","compressible":true},"application/vnd.geo+json":{"source":"iana","compressible":true},"application/vnd.geocube+xml":{"source":"iana","compressible":true},"application/vnd.geogebra.file":{"source":"iana","extensions":["ggb"]},"application/vnd.geogebra.slides":{"source":"iana"},"application/vnd.geogebra.tool":{"source":"iana","extensions":["ggt"]},"application/vnd.geometry-explorer":{"source":"iana","extensions":["gex","gre"]},"application/vnd.geonext":{"source":"iana","extensions":["gxt"]},"application/vnd.geoplan":{"source":"iana","extensions":["g2w"]},"application/vnd.geospace":{"source":"iana","extensions":["g3w"]},"application/vnd.gerber":{"source":"iana"},"application/vnd.globalplatform.card-content-mgt":{"source":"iana"},"application/vnd.globalplatform.card-content-mgt-response":{"source":"iana"},"application/vnd.gmx":{"source":"iana","extensions":["gmx"]},"application/vnd.google-apps.document":{"compressible":false,"extensions":["gdoc"]},"application/vnd.google-apps.presentation":{"compressible":false,"extensions":["gslides"]},"application/vnd.google-apps.spreadsheet":{"compressible":false,"extensions":["gsheet"]},"application/vnd.google-earth.kml+xml":{"source":"iana","compressible":true,"extensions":["kml"]},"application/vnd.google-earth.kmz":{"source":"iana","compressible":false,"extensions":["kmz"]},"application/vnd.gov.sk.e-form+xml":{"source":"iana","compressible":true},"application/vnd.gov.sk.e-form+zip":{"source":"iana","compressible":false},"application/vnd.gov.sk.xmldatacontainer+xml":{"source":"iana","compressible":true},"application/vnd.grafeq":{"source":"iana","extensions":["gqf","gqs"]},"application/vnd.gridmp":{"source":"iana"},"application/vnd.groove-account":{"source":"iana","extensions":["gac"]},"application/vnd.groove-help":{"source":"iana","extensions":["ghf"]},"application/vnd.groove-identity-message":{"source":"iana","extensions":["gim"]},"application/vnd.groove-injector":{"source":"iana","extensions":["grv"]},"application/vnd.groove-tool-message":{"source":"iana","extensions":["gtm"]},"application/vnd.groove-tool-template":{"source":"iana","extensions":["tpl"]},"application/vnd.groove-vcard":{"source":"iana","extensions":["vcg"]},"application/vnd.hal+json":{"source":"iana","compressible":true},"application/vnd.hal+xml":{"source":"iana","compressible":true,"extensions":["hal"]},"application/vnd.handheld-entertainment+xml":{"source":"iana","compressible":true,"extensions":["zmm"]},"application/vnd.hbci":{"source":"iana","extensions":["hbci"]},"application/vnd.hc+json":{"source":"iana","compressible":true},"application/vnd.hcl-bireports":{"source":"iana"},"application/vnd.hdt":{"source":"iana"},"application/vnd.heroku+json":{"source":"iana","compressible":true},"application/vnd.hhe.lesson-player":{"source":"iana","extensions":["les"]},"application/vnd.hp-hpgl":{"source":"iana","extensions":["hpgl"]},"application/vnd.hp-hpid":{"source":"iana","extensions":["hpid"]},"application/vnd.hp-hps":{"source":"iana","extensions":["hps"]},"application/vnd.hp-jlyt":{"source":"iana","extensions":["jlt"]},"application/vnd.hp-pcl":{"source":"iana","extensions":["pcl"]},"application/vnd.hp-pclxl":{"source":"iana","extensions":["pclxl"]},"application/vnd.httphone":{"source":"iana"},"application/vnd.hydrostatix.sof-data":{"source":"iana","extensions":["sfd-hdstx"]},"application/vnd.hyper+json":{"source":"iana","compressible":true},"application/vnd.hyper-item+json":{"source":"iana","compressible":true},"application/vnd.hyperdrive+json":{"source":"iana","compressible":true},"application/vnd.hzn-3d-crossword":{"source":"iana"},"application/vnd.ibm.afplinedata":{"source":"iana"},"application/vnd.ibm.electronic-media":{"source":"iana"},"application/vnd.ibm.minipay":{"source":"iana","extensions":["mpy"]},"application/vnd.ibm.modcap":{"source":"iana","extensions":["afp","listafp","list3820"]},"application/vnd.ibm.rights-management":{"source":"iana","extensions":["irm"]},"application/vnd.ibm.secure-container":{"source":"iana","extensions":["sc"]},"application/vnd.iccprofile":{"source":"iana","extensions":["icc","icm"]},"application/vnd.ieee.1905":{"source":"iana"},"application/vnd.igloader":{"source":"iana","extensions":["igl"]},"application/vnd.imagemeter.folder+zip":{"source":"iana","compressible":false},"application/vnd.imagemeter.image+zip":{"source":"iana","compressible":false},"application/vnd.immervision-ivp":{"source":"iana","extensions":["ivp"]},"application/vnd.immervision-ivu":{"source":"iana","extensions":["ivu"]},"application/vnd.ims.imsccv1p1":{"source":"iana"},"application/vnd.ims.imsccv1p2":{"source":"iana"},"application/vnd.ims.imsccv1p3":{"source":"iana"},"application/vnd.ims.lis.v2.result+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolconsumerprofile+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolproxy+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolproxy.id+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolsettings+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolsettings.simple+json":{"source":"iana","compressible":true},"application/vnd.informedcontrol.rms+xml":{"source":"iana","compressible":true},"application/vnd.informix-visionary":{"source":"iana"},"application/vnd.infotech.project":{"source":"iana"},"application/vnd.infotech.project+xml":{"source":"iana","compressible":true},"application/vnd.innopath.wamp.notification":{"source":"iana"},"application/vnd.insors.igm":{"source":"iana","extensions":["igm"]},"application/vnd.intercon.formnet":{"source":"iana","extensions":["xpw","xpx"]},"application/vnd.intergeo":{"source":"iana","extensions":["i2g"]},"application/vnd.intertrust.digibox":{"source":"iana"},"application/vnd.intertrust.nncp":{"source":"iana"},"application/vnd.intu.qbo":{"source":"iana","extensions":["qbo"]},"application/vnd.intu.qfx":{"source":"iana","extensions":["qfx"]},"application/vnd.iptc.g2.catalogitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.conceptitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.knowledgeitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.newsitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.newsmessage+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.packageitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.planningitem+xml":{"source":"iana","compressible":true},"application/vnd.ipunplugged.rcprofile":{"source":"iana","extensions":["rcprofile"]},"application/vnd.irepository.package+xml":{"source":"iana","compressible":true,"extensions":["irp"]},"application/vnd.is-xpr":{"source":"iana","extensions":["xpr"]},"application/vnd.isac.fcs":{"source":"iana","extensions":["fcs"]},"application/vnd.iso11783-10+zip":{"source":"iana","compressible":false},"application/vnd.jam":{"source":"iana","extensions":["jam"]},"application/vnd.japannet-directory-service":{"source":"iana"},"application/vnd.japannet-jpnstore-wakeup":{"source":"iana"},"application/vnd.japannet-payment-wakeup":{"source":"iana"},"application/vnd.japannet-registration":{"source":"iana"},"application/vnd.japannet-registration-wakeup":{"source":"iana"},"application/vnd.japannet-setstore-wakeup":{"source":"iana"},"application/vnd.japannet-verification":{"source":"iana"},"application/vnd.japannet-verification-wakeup":{"source":"iana"},"application/vnd.jcp.javame.midlet-rms":{"source":"iana","extensions":["rms"]},"application/vnd.jisp":{"source":"iana","extensions":["jisp"]},"application/vnd.joost.joda-archive":{"source":"iana","extensions":["joda"]},"application/vnd.jsk.isdn-ngn":{"source":"iana"},"application/vnd.kahootz":{"source":"iana","extensions":["ktz","ktr"]},"application/vnd.kde.karbon":{"source":"iana","extensions":["karbon"]},"application/vnd.kde.kchart":{"source":"iana","extensions":["chrt"]},"application/vnd.kde.kformula":{"source":"iana","extensions":["kfo"]},"application/vnd.kde.kivio":{"source":"iana","extensions":["flw"]},"application/vnd.kde.kontour":{"source":"iana","extensions":["kon"]},"application/vnd.kde.kpresenter":{"source":"iana","extensions":["kpr","kpt"]},"application/vnd.kde.kspread":{"source":"iana","extensions":["ksp"]},"application/vnd.kde.kword":{"source":"iana","extensions":["kwd","kwt"]},"application/vnd.kenameaapp":{"source":"iana","extensions":["htke"]},"application/vnd.kidspiration":{"source":"iana","extensions":["kia"]},"application/vnd.kinar":{"source":"iana","extensions":["kne","knp"]},"application/vnd.koan":{"source":"iana","extensions":["skp","skd","skt","skm"]},"application/vnd.kodak-descriptor":{"source":"iana","extensions":["sse"]},"application/vnd.las":{"source":"iana"},"application/vnd.las.las+json":{"source":"iana","compressible":true},"application/vnd.las.las+xml":{"source":"iana","compressible":true,"extensions":["lasxml"]},"application/vnd.laszip":{"source":"iana"},"application/vnd.leap+json":{"source":"iana","compressible":true},"application/vnd.liberty-request+xml":{"source":"iana","compressible":true},"application/vnd.llamagraphics.life-balance.desktop":{"source":"iana","extensions":["lbd"]},"application/vnd.llamagraphics.life-balance.exchange+xml":{"source":"iana","compressible":true,"extensions":["lbe"]},"application/vnd.logipipe.circuit+zip":{"source":"iana","compressible":false},"application/vnd.loom":{"source":"iana"},"application/vnd.lotus-1-2-3":{"source":"iana","extensions":["123"]},"application/vnd.lotus-approach":{"source":"iana","extensions":["apr"]},"application/vnd.lotus-freelance":{"source":"iana","extensions":["pre"]},"application/vnd.lotus-notes":{"source":"iana","extensions":["nsf"]},"application/vnd.lotus-organizer":{"source":"iana","extensions":["org"]},"application/vnd.lotus-screencam":{"source":"iana","extensions":["scm"]},"application/vnd.lotus-wordpro":{"source":"iana","extensions":["lwp"]},"application/vnd.macports.portpkg":{"source":"iana","extensions":["portpkg"]},"application/vnd.mapbox-vector-tile":{"source":"iana","extensions":["mvt"]},"application/vnd.marlin.drm.actiontoken+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.conftoken+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.license+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.mdcf":{"source":"iana"},"application/vnd.mason+json":{"source":"iana","compressible":true},"application/vnd.maxmind.maxmind-db":{"source":"iana"},"application/vnd.mcd":{"source":"iana","extensions":["mcd"]},"application/vnd.medcalcdata":{"source":"iana","extensions":["mc1"]},"application/vnd.mediastation.cdkey":{"source":"iana","extensions":["cdkey"]},"application/vnd.meridian-slingshot":{"source":"iana"},"application/vnd.mfer":{"source":"iana","extensions":["mwf"]},"application/vnd.mfmp":{"source":"iana","extensions":["mfm"]},"application/vnd.micro+json":{"source":"iana","compressible":true},"application/vnd.micrografx.flo":{"source":"iana","extensions":["flo"]},"application/vnd.micrografx.igx":{"source":"iana","extensions":["igx"]},"application/vnd.microsoft.portable-executable":{"source":"iana"},"application/vnd.microsoft.windows.thumbnail-cache":{"source":"iana"},"application/vnd.miele+json":{"source":"iana","compressible":true},"application/vnd.mif":{"source":"iana","extensions":["mif"]},"application/vnd.minisoft-hp3000-save":{"source":"iana"},"application/vnd.mitsubishi.misty-guard.trustweb":{"source":"iana"},"application/vnd.mobius.daf":{"source":"iana","extensions":["daf"]},"application/vnd.mobius.dis":{"source":"iana","extensions":["dis"]},"application/vnd.mobius.mbk":{"source":"iana","extensions":["mbk"]},"application/vnd.mobius.mqy":{"source":"iana","extensions":["mqy"]},"application/vnd.mobius.msl":{"source":"iana","extensions":["msl"]},"application/vnd.mobius.plc":{"source":"iana","extensions":["plc"]},"application/vnd.mobius.txf":{"source":"iana","extensions":["txf"]},"application/vnd.mophun.application":{"source":"iana","extensions":["mpn"]},"application/vnd.mophun.certificate":{"source":"iana","extensions":["mpc"]},"application/vnd.motorola.flexsuite":{"source":"iana"},"application/vnd.motorola.flexsuite.adsi":{"source":"iana"},"application/vnd.motorola.flexsuite.fis":{"source":"iana"},"application/vnd.motorola.flexsuite.gotap":{"source":"iana"},"application/vnd.motorola.flexsuite.kmr":{"source":"iana"},"application/vnd.motorola.flexsuite.ttc":{"source":"iana"},"application/vnd.motorola.flexsuite.wem":{"source":"iana"},"application/vnd.motorola.iprm":{"source":"iana"},"application/vnd.mozilla.xul+xml":{"source":"iana","compressible":true,"extensions":["xul"]},"application/vnd.ms-3mfdocument":{"source":"iana"},"application/vnd.ms-artgalry":{"source":"iana","extensions":["cil"]},"application/vnd.ms-asf":{"source":"iana"},"application/vnd.ms-cab-compressed":{"source":"iana","extensions":["cab"]},"application/vnd.ms-color.iccprofile":{"source":"apache"},"application/vnd.ms-excel":{"source":"iana","compressible":false,"extensions":["xls","xlm","xla","xlc","xlt","xlw"]},"application/vnd.ms-excel.addin.macroenabled.12":{"source":"iana","extensions":["xlam"]},"application/vnd.ms-excel.sheet.binary.macroenabled.12":{"source":"iana","extensions":["xlsb"]},"application/vnd.ms-excel.sheet.macroenabled.12":{"source":"iana","extensions":["xlsm"]},"application/vnd.ms-excel.template.macroenabled.12":{"source":"iana","extensions":["xltm"]},"application/vnd.ms-fontobject":{"source":"iana","compressible":true,"extensions":["eot"]},"application/vnd.ms-htmlhelp":{"source":"iana","extensions":["chm"]},"application/vnd.ms-ims":{"source":"iana","extensions":["ims"]},"application/vnd.ms-lrm":{"source":"iana","extensions":["lrm"]},"application/vnd.ms-office.activex+xml":{"source":"iana","compressible":true},"application/vnd.ms-officetheme":{"source":"iana","extensions":["thmx"]},"application/vnd.ms-opentype":{"source":"apache","compressible":true},"application/vnd.ms-outlook":{"compressible":false,"extensions":["msg"]},"application/vnd.ms-package.obfuscated-opentype":{"source":"apache"},"application/vnd.ms-pki.seccat":{"source":"apache","extensions":["cat"]},"application/vnd.ms-pki.stl":{"source":"apache","extensions":["stl"]},"application/vnd.ms-playready.initiator+xml":{"source":"iana","compressible":true},"application/vnd.ms-powerpoint":{"source":"iana","compressible":false,"extensions":["ppt","pps","pot"]},"application/vnd.ms-powerpoint.addin.macroenabled.12":{"source":"iana","extensions":["ppam"]},"application/vnd.ms-powerpoint.presentation.macroenabled.12":{"source":"iana","extensions":["pptm"]},"application/vnd.ms-powerpoint.slide.macroenabled.12":{"source":"iana","extensions":["sldm"]},"application/vnd.ms-powerpoint.slideshow.macroenabled.12":{"source":"iana","extensions":["ppsm"]},"application/vnd.ms-powerpoint.template.macroenabled.12":{"source":"iana","extensions":["potm"]},"application/vnd.ms-printdevicecapabilities+xml":{"source":"iana","compressible":true},"application/vnd.ms-printing.printticket+xml":{"source":"apache","compressible":true},"application/vnd.ms-printschematicket+xml":{"source":"iana","compressible":true},"application/vnd.ms-project":{"source":"iana","extensions":["mpp","mpt"]},"application/vnd.ms-tnef":{"source":"iana"},"application/vnd.ms-windows.devicepairing":{"source":"iana"},"application/vnd.ms-windows.nwprinting.oob":{"source":"iana"},"application/vnd.ms-windows.printerpairing":{"source":"iana"},"application/vnd.ms-windows.wsd.oob":{"source":"iana"},"application/vnd.ms-wmdrm.lic-chlg-req":{"source":"iana"},"application/vnd.ms-wmdrm.lic-resp":{"source":"iana"},"application/vnd.ms-wmdrm.meter-chlg-req":{"source":"iana"},"application/vnd.ms-wmdrm.meter-resp":{"source":"iana"},"application/vnd.ms-word.document.macroenabled.12":{"source":"iana","extensions":["docm"]},"application/vnd.ms-word.template.macroenabled.12":{"source":"iana","extensions":["dotm"]},"application/vnd.ms-works":{"source":"iana","extensions":["wps","wks","wcm","wdb"]},"application/vnd.ms-wpl":{"source":"iana","extensions":["wpl"]},"application/vnd.ms-xpsdocument":{"source":"iana","compressible":false,"extensions":["xps"]},"application/vnd.msa-disk-image":{"source":"iana"},"application/vnd.mseq":{"source":"iana","extensions":["mseq"]},"application/vnd.msign":{"source":"iana"},"application/vnd.multiad.creator":{"source":"iana"},"application/vnd.multiad.creator.cif":{"source":"iana"},"application/vnd.music-niff":{"source":"iana"},"application/vnd.musician":{"source":"iana","extensions":["mus"]},"application/vnd.muvee.style":{"source":"iana","extensions":["msty"]},"application/vnd.mynfc":{"source":"iana","extensions":["taglet"]},"application/vnd.nacamar.ybrid+json":{"source":"iana","compressible":true},"application/vnd.ncd.control":{"source":"iana"},"application/vnd.ncd.reference":{"source":"iana"},"application/vnd.nearst.inv+json":{"source":"iana","compressible":true},"application/vnd.nebumind.line":{"source":"iana"},"application/vnd.nervana":{"source":"iana"},"application/vnd.netfpx":{"source":"iana"},"application/vnd.neurolanguage.nlu":{"source":"iana","extensions":["nlu"]},"application/vnd.nimn":{"source":"iana"},"application/vnd.nintendo.nitro.rom":{"source":"iana"},"application/vnd.nintendo.snes.rom":{"source":"iana"},"application/vnd.nitf":{"source":"iana","extensions":["ntf","nitf"]},"application/vnd.noblenet-directory":{"source":"iana","extensions":["nnd"]},"application/vnd.noblenet-sealer":{"source":"iana","extensions":["nns"]},"application/vnd.noblenet-web":{"source":"iana","extensions":["nnw"]},"application/vnd.nokia.catalogs":{"source":"iana"},"application/vnd.nokia.conml+wbxml":{"source":"iana"},"application/vnd.nokia.conml+xml":{"source":"iana","compressible":true},"application/vnd.nokia.iptv.config+xml":{"source":"iana","compressible":true},"application/vnd.nokia.isds-radio-presets":{"source":"iana"},"application/vnd.nokia.landmark+wbxml":{"source":"iana"},"application/vnd.nokia.landmark+xml":{"source":"iana","compressible":true},"application/vnd.nokia.landmarkcollection+xml":{"source":"iana","compressible":true},"application/vnd.nokia.n-gage.ac+xml":{"source":"iana","compressible":true,"extensions":["ac"]},"application/vnd.nokia.n-gage.data":{"source":"iana","extensions":["ngdat"]},"application/vnd.nokia.n-gage.symbian.install":{"source":"iana","extensions":["n-gage"]},"application/vnd.nokia.ncd":{"source":"iana"},"application/vnd.nokia.pcd+wbxml":{"source":"iana"},"application/vnd.nokia.pcd+xml":{"source":"iana","compressible":true},"application/vnd.nokia.radio-preset":{"source":"iana","extensions":["rpst"]},"application/vnd.nokia.radio-presets":{"source":"iana","extensions":["rpss"]},"application/vnd.novadigm.edm":{"source":"iana","extensions":["edm"]},"application/vnd.novadigm.edx":{"source":"iana","extensions":["edx"]},"application/vnd.novadigm.ext":{"source":"iana","extensions":["ext"]},"application/vnd.ntt-local.content-share":{"source":"iana"},"application/vnd.ntt-local.file-transfer":{"source":"iana"},"application/vnd.ntt-local.ogw_remote-access":{"source":"iana"},"application/vnd.ntt-local.sip-ta_remote":{"source":"iana"},"application/vnd.ntt-local.sip-ta_tcp_stream":{"source":"iana"},"application/vnd.oasis.opendocument.chart":{"source":"iana","extensions":["odc"]},"application/vnd.oasis.opendocument.chart-template":{"source":"iana","extensions":["otc"]},"application/vnd.oasis.opendocument.database":{"source":"iana","extensions":["odb"]},"application/vnd.oasis.opendocument.formula":{"source":"iana","extensions":["odf"]},"application/vnd.oasis.opendocument.formula-template":{"source":"iana","extensions":["odft"]},"application/vnd.oasis.opendocument.graphics":{"source":"iana","compressible":false,"extensions":["odg"]},"application/vnd.oasis.opendocument.graphics-template":{"source":"iana","extensions":["otg"]},"application/vnd.oasis.opendocument.image":{"source":"iana","extensions":["odi"]},"application/vnd.oasis.opendocument.image-template":{"source":"iana","extensions":["oti"]},"application/vnd.oasis.opendocument.presentation":{"source":"iana","compressible":false,"extensions":["odp"]},"application/vnd.oasis.opendocument.presentation-template":{"source":"iana","extensions":["otp"]},"application/vnd.oasis.opendocument.spreadsheet":{"source":"iana","compressible":false,"extensions":["ods"]},"application/vnd.oasis.opendocument.spreadsheet-template":{"source":"iana","extensions":["ots"]},"application/vnd.oasis.opendocument.text":{"source":"iana","compressible":false,"extensions":["odt"]},"application/vnd.oasis.opendocument.text-master":{"source":"iana","extensions":["odm"]},"application/vnd.oasis.opendocument.text-template":{"source":"iana","extensions":["ott"]},"application/vnd.oasis.opendocument.text-web":{"source":"iana","extensions":["oth"]},"application/vnd.obn":{"source":"iana"},"application/vnd.ocf+cbor":{"source":"iana"},"application/vnd.oci.image.manifest.v1+json":{"source":"iana","compressible":true},"application/vnd.oftn.l10n+json":{"source":"iana","compressible":true},"application/vnd.oipf.contentaccessdownload+xml":{"source":"iana","compressible":true},"application/vnd.oipf.contentaccessstreaming+xml":{"source":"iana","compressible":true},"application/vnd.oipf.cspg-hexbinary":{"source":"iana"},"application/vnd.oipf.dae.svg+xml":{"source":"iana","compressible":true},"application/vnd.oipf.dae.xhtml+xml":{"source":"iana","compressible":true},"application/vnd.oipf.mippvcontrolmessage+xml":{"source":"iana","compressible":true},"application/vnd.oipf.pae.gem":{"source":"iana"},"application/vnd.oipf.spdiscovery+xml":{"source":"iana","compressible":true},"application/vnd.oipf.spdlist+xml":{"source":"iana","compressible":true},"application/vnd.oipf.ueprofile+xml":{"source":"iana","compressible":true},"application/vnd.oipf.userprofile+xml":{"source":"iana","compressible":true},"application/vnd.olpc-sugar":{"source":"iana","extensions":["xo"]},"application/vnd.oma-scws-config":{"source":"iana"},"application/vnd.oma-scws-http-request":{"source":"iana"},"application/vnd.oma-scws-http-response":{"source":"iana"},"application/vnd.oma.bcast.associated-procedure-parameter+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.drm-trigger+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.imd+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.ltkm":{"source":"iana"},"application/vnd.oma.bcast.notification+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.provisioningtrigger":{"source":"iana"},"application/vnd.oma.bcast.sgboot":{"source":"iana"},"application/vnd.oma.bcast.sgdd+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.sgdu":{"source":"iana"},"application/vnd.oma.bcast.simple-symbol-container":{"source":"iana"},"application/vnd.oma.bcast.smartcard-trigger+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.sprov+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.stkm":{"source":"iana"},"application/vnd.oma.cab-address-book+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-feature-handler+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-pcc+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-subs-invite+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-user-prefs+xml":{"source":"iana","compressible":true},"application/vnd.oma.dcd":{"source":"iana"},"application/vnd.oma.dcdc":{"source":"iana"},"application/vnd.oma.dd2+xml":{"source":"iana","compressible":true,"extensions":["dd2"]},"application/vnd.oma.drm.risd+xml":{"source":"iana","compressible":true},"application/vnd.oma.group-usage-list+xml":{"source":"iana","compressible":true},"application/vnd.oma.lwm2m+cbor":{"source":"iana"},"application/vnd.oma.lwm2m+json":{"source":"iana","compressible":true},"application/vnd.oma.lwm2m+tlv":{"source":"iana"},"application/vnd.oma.pal+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.detailed-progress-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.final-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.groups+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.invocation-descriptor+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.optimized-progress-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.push":{"source":"iana"},"application/vnd.oma.scidm.messages+xml":{"source":"iana","compressible":true},"application/vnd.oma.xcap-directory+xml":{"source":"iana","compressible":true},"application/vnd.omads-email+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omads-file+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omads-folder+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omaloc-supl-init":{"source":"iana"},"application/vnd.onepager":{"source":"iana"},"application/vnd.onepagertamp":{"source":"iana"},"application/vnd.onepagertamx":{"source":"iana"},"application/vnd.onepagertat":{"source":"iana"},"application/vnd.onepagertatp":{"source":"iana"},"application/vnd.onepagertatx":{"source":"iana"},"application/vnd.openblox.game+xml":{"source":"iana","compressible":true,"extensions":["obgx"]},"application/vnd.openblox.game-binary":{"source":"iana"},"application/vnd.openeye.oeb":{"source":"iana"},"application/vnd.openofficeorg.extension":{"source":"apache","extensions":["oxt"]},"application/vnd.openstreetmap.data+xml":{"source":"iana","compressible":true,"extensions":["osm"]},"application/vnd.opentimestamps.ots":{"source":"iana"},"application/vnd.openxmlformats-officedocument.custom-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.customxmlproperties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawing+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.chart+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.chartshapes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramcolors+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramdata+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramlayout+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramstyle+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.extended-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.commentauthors+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.handoutmaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.notesmaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.notesslide+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.presentation":{"source":"iana","compressible":false,"extensions":["pptx"]},"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.presprops+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slide":{"source":"iana","extensions":["sldx"]},"application/vnd.openxmlformats-officedocument.presentationml.slide+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slidelayout+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slidemaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slideshow":{"source":"iana","extensions":["ppsx"]},"application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slideupdateinfo+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.tablestyles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.tags+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.template":{"source":"iana","extensions":["potx"]},"application/vnd.openxmlformats-officedocument.presentationml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.viewprops+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.calcchain+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.connections+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.dialogsheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.externallink+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivotcachedefinition+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivotcacherecords+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivottable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.querytable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.revisionheaders+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.revisionlog+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedstrings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":{"source":"iana","compressible":false,"extensions":["xlsx"]},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheetmetadata+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.tablesinglecells+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.template":{"source":"iana","extensions":["xltx"]},"application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.usernames+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.volatiledependencies+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.theme+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.themeoverride+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.vmldrawing":{"source":"iana"},"application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.document":{"source":"iana","compressible":false,"extensions":["docx"]},"application/vnd.openxmlformats-officedocument.wordprocessingml.document.glossary+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.fonttable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.template":{"source":"iana","extensions":["dotx"]},"application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.websettings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.core-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.digital-signature-xmlsignature+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.relationships+xml":{"source":"iana","compressible":true},"application/vnd.oracle.resource+json":{"source":"iana","compressible":true},"application/vnd.orange.indata":{"source":"iana"},"application/vnd.osa.netdeploy":{"source":"iana"},"application/vnd.osgeo.mapguide.package":{"source":"iana","extensions":["mgp"]},"application/vnd.osgi.bundle":{"source":"iana"},"application/vnd.osgi.dp":{"source":"iana","extensions":["dp"]},"application/vnd.osgi.subsystem":{"source":"iana","extensions":["esa"]},"application/vnd.otps.ct-kip+xml":{"source":"iana","compressible":true},"application/vnd.oxli.countgraph":{"source":"iana"},"application/vnd.pagerduty+json":{"source":"iana","compressible":true},"application/vnd.palm":{"source":"iana","extensions":["pdb","pqa","oprc"]},"application/vnd.panoply":{"source":"iana"},"application/vnd.paos.xml":{"source":"iana"},"application/vnd.patentdive":{"source":"iana"},"application/vnd.patientecommsdoc":{"source":"iana"},"application/vnd.pawaafile":{"source":"iana","extensions":["paw"]},"application/vnd.pcos":{"source":"iana"},"application/vnd.pg.format":{"source":"iana","extensions":["str"]},"application/vnd.pg.osasli":{"source":"iana","extensions":["ei6"]},"application/vnd.piaccess.application-licence":{"source":"iana"},"application/vnd.picsel":{"source":"iana","extensions":["efif"]},"application/vnd.pmi.widget":{"source":"iana","extensions":["wg"]},"application/vnd.poc.group-advertisement+xml":{"source":"iana","compressible":true},"application/vnd.pocketlearn":{"source":"iana","extensions":["plf"]},"application/vnd.powerbuilder6":{"source":"iana","extensions":["pbd"]},"application/vnd.powerbuilder6-s":{"source":"iana"},"application/vnd.powerbuilder7":{"source":"iana"},"application/vnd.powerbuilder7-s":{"source":"iana"},"application/vnd.powerbuilder75":{"source":"iana"},"application/vnd.powerbuilder75-s":{"source":"iana"},"application/vnd.preminet":{"source":"iana"},"application/vnd.previewsystems.box":{"source":"iana","extensions":["box"]},"application/vnd.proteus.magazine":{"source":"iana","extensions":["mgz"]},"application/vnd.psfs":{"source":"iana"},"application/vnd.publishare-delta-tree":{"source":"iana","extensions":["qps"]},"application/vnd.pvi.ptid1":{"source":"iana","extensions":["ptid"]},"application/vnd.pwg-multiplexed":{"source":"iana"},"application/vnd.pwg-xhtml-print+xml":{"source":"iana","compressible":true},"application/vnd.qualcomm.brew-app-res":{"source":"iana"},"application/vnd.quarantainenet":{"source":"iana"},"application/vnd.quark.quarkxpress":{"source":"iana","extensions":["qxd","qxt","qwd","qwt","qxl","qxb"]},"application/vnd.quobject-quoxdocument":{"source":"iana"},"application/vnd.radisys.moml+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-conf+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-conn+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-dialog+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-stream+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-conf+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-base+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-fax-detect+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-fax-sendrecv+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-group+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-speech+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-transform+xml":{"source":"iana","compressible":true},"application/vnd.rainstor.data":{"source":"iana"},"application/vnd.rapid":{"source":"iana"},"application/vnd.rar":{"source":"iana","extensions":["rar"]},"application/vnd.realvnc.bed":{"source":"iana","extensions":["bed"]},"application/vnd.recordare.musicxml":{"source":"iana","extensions":["mxl"]},"application/vnd.recordare.musicxml+xml":{"source":"iana","compressible":true,"extensions":["musicxml"]},"application/vnd.renlearn.rlprint":{"source":"iana"},"application/vnd.resilient.logic":{"source":"iana"},"application/vnd.restful+json":{"source":"iana","compressible":true},"application/vnd.rig.cryptonote":{"source":"iana","extensions":["cryptonote"]},"application/vnd.rim.cod":{"source":"apache","extensions":["cod"]},"application/vnd.rn-realmedia":{"source":"apache","extensions":["rm"]},"application/vnd.rn-realmedia-vbr":{"source":"apache","extensions":["rmvb"]},"application/vnd.route66.link66+xml":{"source":"iana","compressible":true,"extensions":["link66"]},"application/vnd.rs-274x":{"source":"iana"},"application/vnd.ruckus.download":{"source":"iana"},"application/vnd.s3sms":{"source":"iana"},"application/vnd.sailingtracker.track":{"source":"iana","extensions":["st"]},"application/vnd.sar":{"source":"iana"},"application/vnd.sbm.cid":{"source":"iana"},"application/vnd.sbm.mid2":{"source":"iana"},"application/vnd.scribus":{"source":"iana"},"application/vnd.sealed.3df":{"source":"iana"},"application/vnd.sealed.csf":{"source":"iana"},"application/vnd.sealed.doc":{"source":"iana"},"application/vnd.sealed.eml":{"source":"iana"},"application/vnd.sealed.mht":{"source":"iana"},"application/vnd.sealed.net":{"source":"iana"},"application/vnd.sealed.ppt":{"source":"iana"},"application/vnd.sealed.tiff":{"source":"iana"},"application/vnd.sealed.xls":{"source":"iana"},"application/vnd.sealedmedia.softseal.html":{"source":"iana"},"application/vnd.sealedmedia.softseal.pdf":{"source":"iana"},"application/vnd.seemail":{"source":"iana","extensions":["see"]},"application/vnd.seis+json":{"source":"iana","compressible":true},"application/vnd.sema":{"source":"iana","extensions":["sema"]},"application/vnd.semd":{"source":"iana","extensions":["semd"]},"application/vnd.semf":{"source":"iana","extensions":["semf"]},"application/vnd.shade-save-file":{"source":"iana"},"application/vnd.shana.informed.formdata":{"source":"iana","extensions":["ifm"]},"application/vnd.shana.informed.formtemplate":{"source":"iana","extensions":["itp"]},"application/vnd.shana.informed.interchange":{"source":"iana","extensions":["iif"]},"application/vnd.shana.informed.package":{"source":"iana","extensions":["ipk"]},"application/vnd.shootproof+json":{"source":"iana","compressible":true},"application/vnd.shopkick+json":{"source":"iana","compressible":true},"application/vnd.shp":{"source":"iana"},"application/vnd.shx":{"source":"iana"},"application/vnd.sigrok.session":{"source":"iana"},"application/vnd.simtech-mindmapper":{"source":"iana","extensions":["twd","twds"]},"application/vnd.siren+json":{"source":"iana","compressible":true},"application/vnd.smaf":{"source":"iana","extensions":["mmf"]},"application/vnd.smart.notebook":{"source":"iana"},"application/vnd.smart.teacher":{"source":"iana","extensions":["teacher"]},"application/vnd.snesdev-page-table":{"source":"iana"},"application/vnd.software602.filler.form+xml":{"source":"iana","compressible":true,"extensions":["fo"]},"application/vnd.software602.filler.form-xml-zip":{"source":"iana"},"application/vnd.solent.sdkm+xml":{"source":"iana","compressible":true,"extensions":["sdkm","sdkd"]},"application/vnd.spotfire.dxp":{"source":"iana","extensions":["dxp"]},"application/vnd.spotfire.sfs":{"source":"iana","extensions":["sfs"]},"application/vnd.sqlite3":{"source":"iana"},"application/vnd.sss-cod":{"source":"iana"},"application/vnd.sss-dtf":{"source":"iana"},"application/vnd.sss-ntf":{"source":"iana"},"application/vnd.stardivision.calc":{"source":"apache","extensions":["sdc"]},"application/vnd.stardivision.draw":{"source":"apache","extensions":["sda"]},"application/vnd.stardivision.impress":{"source":"apache","extensions":["sdd"]},"application/vnd.stardivision.math":{"source":"apache","extensions":["smf"]},"application/vnd.stardivision.writer":{"source":"apache","extensions":["sdw","vor"]},"application/vnd.stardivision.writer-global":{"source":"apache","extensions":["sgl"]},"application/vnd.stepmania.package":{"source":"iana","extensions":["smzip"]},"application/vnd.stepmania.stepchart":{"source":"iana","extensions":["sm"]},"application/vnd.street-stream":{"source":"iana"},"application/vnd.sun.wadl+xml":{"source":"iana","compressible":true,"extensions":["wadl"]},"application/vnd.sun.xml.calc":{"source":"apache","extensions":["sxc"]},"application/vnd.sun.xml.calc.template":{"source":"apache","extensions":["stc"]},"application/vnd.sun.xml.draw":{"source":"apache","extensions":["sxd"]},"application/vnd.sun.xml.draw.template":{"source":"apache","extensions":["std"]},"application/vnd.sun.xml.impress":{"source":"apache","extensions":["sxi"]},"application/vnd.sun.xml.impress.template":{"source":"apache","extensions":["sti"]},"application/vnd.sun.xml.math":{"source":"apache","extensions":["sxm"]},"application/vnd.sun.xml.writer":{"source":"apache","extensions":["sxw"]},"application/vnd.sun.xml.writer.global":{"source":"apache","extensions":["sxg"]},"application/vnd.sun.xml.writer.template":{"source":"apache","extensions":["stw"]},"application/vnd.sus-calendar":{"source":"iana","extensions":["sus","susp"]},"application/vnd.svd":{"source":"iana","extensions":["svd"]},"application/vnd.swiftview-ics":{"source":"iana"},"application/vnd.sycle+xml":{"source":"iana","compressible":true},"application/vnd.symbian.install":{"source":"apache","extensions":["sis","sisx"]},"application/vnd.syncml+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["xsm"]},"application/vnd.syncml.dm+wbxml":{"source":"iana","charset":"UTF-8","extensions":["bdm"]},"application/vnd.syncml.dm+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["xdm"]},"application/vnd.syncml.dm.notification":{"source":"iana"},"application/vnd.syncml.dmddf+wbxml":{"source":"iana"},"application/vnd.syncml.dmddf+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["ddf"]},"application/vnd.syncml.dmtnds+wbxml":{"source":"iana"},"application/vnd.syncml.dmtnds+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.syncml.ds.notification":{"source":"iana"},"application/vnd.tableschema+json":{"source":"iana","compressible":true},"application/vnd.tao.intent-module-archive":{"source":"iana","extensions":["tao"]},"application/vnd.tcpdump.pcap":{"source":"iana","extensions":["pcap","cap","dmp"]},"application/vnd.think-cell.ppttc+json":{"source":"iana","compressible":true},"application/vnd.tmd.mediaflex.api+xml":{"source":"iana","compressible":true},"application/vnd.tml":{"source":"iana"},"application/vnd.tmobile-livetv":{"source":"iana","extensions":["tmo"]},"application/vnd.tri.onesource":{"source":"iana"},"application/vnd.trid.tpt":{"source":"iana","extensions":["tpt"]},"application/vnd.triscape.mxs":{"source":"iana","extensions":["mxs"]},"application/vnd.trueapp":{"source":"iana","extensions":["tra"]},"application/vnd.truedoc":{"source":"iana"},"application/vnd.ubisoft.webplayer":{"source":"iana"},"application/vnd.ufdl":{"source":"iana","extensions":["ufd","ufdl"]},"application/vnd.uiq.theme":{"source":"iana","extensions":["utz"]},"application/vnd.umajin":{"source":"iana","extensions":["umj"]},"application/vnd.unity":{"source":"iana","extensions":["unityweb"]},"application/vnd.uoml+xml":{"source":"iana","compressible":true,"extensions":["uoml"]},"application/vnd.uplanet.alert":{"source":"iana"},"application/vnd.uplanet.alert-wbxml":{"source":"iana"},"application/vnd.uplanet.bearer-choice":{"source":"iana"},"application/vnd.uplanet.bearer-choice-wbxml":{"source":"iana"},"application/vnd.uplanet.cacheop":{"source":"iana"},"application/vnd.uplanet.cacheop-wbxml":{"source":"iana"},"application/vnd.uplanet.channel":{"source":"iana"},"application/vnd.uplanet.channel-wbxml":{"source":"iana"},"application/vnd.uplanet.list":{"source":"iana"},"application/vnd.uplanet.list-wbxml":{"source":"iana"},"application/vnd.uplanet.listcmd":{"source":"iana"},"application/vnd.uplanet.listcmd-wbxml":{"source":"iana"},"application/vnd.uplanet.signal":{"source":"iana"},"application/vnd.uri-map":{"source":"iana"},"application/vnd.valve.source.material":{"source":"iana"},"application/vnd.vcx":{"source":"iana","extensions":["vcx"]},"application/vnd.vd-study":{"source":"iana"},"application/vnd.vectorworks":{"source":"iana"},"application/vnd.vel+json":{"source":"iana","compressible":true},"application/vnd.verimatrix.vcas":{"source":"iana"},"application/vnd.veritone.aion+json":{"source":"iana","compressible":true},"application/vnd.veryant.thin":{"source":"iana"},"application/vnd.ves.encrypted":{"source":"iana"},"application/vnd.vidsoft.vidconference":{"source":"iana"},"application/vnd.visio":{"source":"iana","extensions":["vsd","vst","vss","vsw"]},"application/vnd.visionary":{"source":"iana","extensions":["vis"]},"application/vnd.vividence.scriptfile":{"source":"iana"},"application/vnd.vsf":{"source":"iana","extensions":["vsf"]},"application/vnd.wap.sic":{"source":"iana"},"application/vnd.wap.slc":{"source":"iana"},"application/vnd.wap.wbxml":{"source":"iana","charset":"UTF-8","extensions":["wbxml"]},"application/vnd.wap.wmlc":{"source":"iana","extensions":["wmlc"]},"application/vnd.wap.wmlscriptc":{"source":"iana","extensions":["wmlsc"]},"application/vnd.webturbo":{"source":"iana","extensions":["wtb"]},"application/vnd.wfa.dpp":{"source":"iana"},"application/vnd.wfa.p2p":{"source":"iana"},"application/vnd.wfa.wsc":{"source":"iana"},"application/vnd.windows.devicepairing":{"source":"iana"},"application/vnd.wmc":{"source":"iana"},"application/vnd.wmf.bootstrap":{"source":"iana"},"application/vnd.wolfram.mathematica":{"source":"iana"},"application/vnd.wolfram.mathematica.package":{"source":"iana"},"application/vnd.wolfram.player":{"source":"iana","extensions":["nbp"]},"application/vnd.wordperfect":{"source":"iana","extensions":["wpd"]},"application/vnd.wqd":{"source":"iana","extensions":["wqd"]},"application/vnd.wrq-hp3000-labelled":{"source":"iana"},"application/vnd.wt.stf":{"source":"iana","extensions":["stf"]},"application/vnd.wv.csp+wbxml":{"source":"iana"},"application/vnd.wv.csp+xml":{"source":"iana","compressible":true},"application/vnd.wv.ssp+xml":{"source":"iana","compressible":true},"application/vnd.xacml+json":{"source":"iana","compressible":true},"application/vnd.xara":{"source":"iana","extensions":["xar"]},"application/vnd.xfdl":{"source":"iana","extensions":["xfdl"]},"application/vnd.xfdl.webform":{"source":"iana"},"application/vnd.xmi+xml":{"source":"iana","compressible":true},"application/vnd.xmpie.cpkg":{"source":"iana"},"application/vnd.xmpie.dpkg":{"source":"iana"},"application/vnd.xmpie.plan":{"source":"iana"},"application/vnd.xmpie.ppkg":{"source":"iana"},"application/vnd.xmpie.xlim":{"source":"iana"},"application/vnd.yamaha.hv-dic":{"source":"iana","extensions":["hvd"]},"application/vnd.yamaha.hv-script":{"source":"iana","extensions":["hvs"]},"application/vnd.yamaha.hv-voice":{"source":"iana","extensions":["hvp"]},"application/vnd.yamaha.openscoreformat":{"source":"iana","extensions":["osf"]},"application/vnd.yamaha.openscoreformat.osfpvg+xml":{"source":"iana","compressible":true,"extensions":["osfpvg"]},"application/vnd.yamaha.remote-setup":{"source":"iana"},"application/vnd.yamaha.smaf-audio":{"source":"iana","extensions":["saf"]},"application/vnd.yamaha.smaf-phrase":{"source":"iana","extensions":["spf"]},"application/vnd.yamaha.through-ngn":{"source":"iana"},"application/vnd.yamaha.tunnel-udpencap":{"source":"iana"},"application/vnd.yaoweme":{"source":"iana"},"application/vnd.yellowriver-custom-menu":{"source":"iana","extensions":["cmp"]},"application/vnd.youtube.yt":{"source":"iana"},"application/vnd.zul":{"source":"iana","extensions":["zir","zirz"]},"application/vnd.zzazz.deck+xml":{"source":"iana","compressible":true,"extensions":["zaz"]},"application/voicexml+xml":{"source":"iana","compressible":true,"extensions":["vxml"]},"application/voucher-cms+json":{"source":"iana","compressible":true},"application/vq-rtcpxr":{"source":"iana"},"application/wasm":{"source":"iana","compressible":true,"extensions":["wasm"]},"application/watcherinfo+xml":{"source":"iana","compressible":true},"application/webpush-options+json":{"source":"iana","compressible":true},"application/whoispp-query":{"source":"iana"},"application/whoispp-response":{"source":"iana"},"application/widget":{"source":"iana","extensions":["wgt"]},"application/winhlp":{"source":"apache","extensions":["hlp"]},"application/wita":{"source":"iana"},"application/wordperfect5.1":{"source":"iana"},"application/wsdl+xml":{"source":"iana","compressible":true,"extensions":["wsdl"]},"application/wspolicy+xml":{"source":"iana","compressible":true,"extensions":["wspolicy"]},"application/x-7z-compressed":{"source":"apache","compressible":false,"extensions":["7z"]},"application/x-abiword":{"source":"apache","extensions":["abw"]},"application/x-ace-compressed":{"source":"apache","extensions":["ace"]},"application/x-amf":{"source":"apache"},"application/x-apple-diskimage":{"source":"apache","extensions":["dmg"]},"application/x-arj":{"compressible":false,"extensions":["arj"]},"application/x-authorware-bin":{"source":"apache","extensions":["aab","x32","u32","vox"]},"application/x-authorware-map":{"source":"apache","extensions":["aam"]},"application/x-authorware-seg":{"source":"apache","extensions":["aas"]},"application/x-bcpio":{"source":"apache","extensions":["bcpio"]},"application/x-bdoc":{"compressible":false,"extensions":["bdoc"]},"application/x-bittorrent":{"source":"apache","extensions":["torrent"]},"application/x-blorb":{"source":"apache","extensions":["blb","blorb"]},"application/x-bzip":{"source":"apache","compressible":false,"extensions":["bz"]},"application/x-bzip2":{"source":"apache","compressible":false,"extensions":["bz2","boz"]},"application/x-cbr":{"source":"apache","extensions":["cbr","cba","cbt","cbz","cb7"]},"application/x-cdlink":{"source":"apache","extensions":["vcd"]},"application/x-cfs-compressed":{"source":"apache","extensions":["cfs"]},"application/x-chat":{"source":"apache","extensions":["chat"]},"application/x-chess-pgn":{"source":"apache","extensions":["pgn"]},"application/x-chrome-extension":{"extensions":["crx"]},"application/x-cocoa":{"source":"nginx","extensions":["cco"]},"application/x-compress":{"source":"apache"},"application/x-conference":{"source":"apache","extensions":["nsc"]},"application/x-cpio":{"source":"apache","extensions":["cpio"]},"application/x-csh":{"source":"apache","extensions":["csh"]},"application/x-deb":{"compressible":false},"application/x-debian-package":{"source":"apache","extensions":["deb","udeb"]},"application/x-dgc-compressed":{"source":"apache","extensions":["dgc"]},"application/x-director":{"source":"apache","extensions":["dir","dcr","dxr","cst","cct","cxt","w3d","fgd","swa"]},"application/x-doom":{"source":"apache","extensions":["wad"]},"application/x-dtbncx+xml":{"source":"apache","compressible":true,"extensions":["ncx"]},"application/x-dtbook+xml":{"source":"apache","compressible":true,"extensions":["dtb"]},"application/x-dtbresource+xml":{"source":"apache","compressible":true,"extensions":["res"]},"application/x-dvi":{"source":"apache","compressible":false,"extensions":["dvi"]},"application/x-envoy":{"source":"apache","extensions":["evy"]},"application/x-eva":{"source":"apache","extensions":["eva"]},"application/x-font-bdf":{"source":"apache","extensions":["bdf"]},"application/x-font-dos":{"source":"apache"},"application/x-font-framemaker":{"source":"apache"},"application/x-font-ghostscript":{"source":"apache","extensions":["gsf"]},"application/x-font-libgrx":{"source":"apache"},"application/x-font-linux-psf":{"source":"apache","extensions":["psf"]},"application/x-font-pcf":{"source":"apache","extensions":["pcf"]},"application/x-font-snf":{"source":"apache","extensions":["snf"]},"application/x-font-speedo":{"source":"apache"},"application/x-font-sunos-news":{"source":"apache"},"application/x-font-type1":{"source":"apache","extensions":["pfa","pfb","pfm","afm"]},"application/x-font-vfont":{"source":"apache"},"application/x-freearc":{"source":"apache","extensions":["arc"]},"application/x-futuresplash":{"source":"apache","extensions":["spl"]},"application/x-gca-compressed":{"source":"apache","extensions":["gca"]},"application/x-glulx":{"source":"apache","extensions":["ulx"]},"application/x-gnumeric":{"source":"apache","extensions":["gnumeric"]},"application/x-gramps-xml":{"source":"apache","extensions":["gramps"]},"application/x-gtar":{"source":"apache","extensions":["gtar"]},"application/x-gzip":{"source":"apache"},"application/x-hdf":{"source":"apache","extensions":["hdf"]},"application/x-httpd-php":{"compressible":true,"extensions":["php"]},"application/x-install-instructions":{"source":"apache","extensions":["install"]},"application/x-iso9660-image":{"source":"apache","extensions":["iso"]},"application/x-iwork-keynote-sffkey":{"extensions":["key"]},"application/x-iwork-numbers-sffnumbers":{"extensions":["numbers"]},"application/x-iwork-pages-sffpages":{"extensions":["pages"]},"application/x-java-archive-diff":{"source":"nginx","extensions":["jardiff"]},"application/x-java-jnlp-file":{"source":"apache","compressible":false,"extensions":["jnlp"]},"application/x-javascript":{"compressible":true},"application/x-keepass2":{"extensions":["kdbx"]},"application/x-latex":{"source":"apache","compressible":false,"extensions":["latex"]},"application/x-lua-bytecode":{"extensions":["luac"]},"application/x-lzh-compressed":{"source":"apache","extensions":["lzh","lha"]},"application/x-makeself":{"source":"nginx","extensions":["run"]},"application/x-mie":{"source":"apache","extensions":["mie"]},"application/x-mobipocket-ebook":{"source":"apache","extensions":["prc","mobi"]},"application/x-mpegurl":{"compressible":false},"application/x-ms-application":{"source":"apache","extensions":["application"]},"application/x-ms-shortcut":{"source":"apache","extensions":["lnk"]},"application/x-ms-wmd":{"source":"apache","extensions":["wmd"]},"application/x-ms-wmz":{"source":"apache","extensions":["wmz"]},"application/x-ms-xbap":{"source":"apache","extensions":["xbap"]},"application/x-msaccess":{"source":"apache","extensions":["mdb"]},"application/x-msbinder":{"source":"apache","extensions":["obd"]},"application/x-mscardfile":{"source":"apache","extensions":["crd"]},"application/x-msclip":{"source":"apache","extensions":["clp"]},"application/x-msdos-program":{"extensions":["exe"]},"application/x-msdownload":{"source":"apache","extensions":["exe","dll","com","bat","msi"]},"application/x-msmediaview":{"source":"apache","extensions":["mvb","m13","m14"]},"application/x-msmetafile":{"source":"apache","extensions":["wmf","wmz","emf","emz"]},"application/x-msmoney":{"source":"apache","extensions":["mny"]},"application/x-mspublisher":{"source":"apache","extensions":["pub"]},"application/x-msschedule":{"source":"apache","extensions":["scd"]},"application/x-msterminal":{"source":"apache","extensions":["trm"]},"application/x-mswrite":{"source":"apache","extensions":["wri"]},"application/x-netcdf":{"source":"apache","extensions":["nc","cdf"]},"application/x-ns-proxy-autoconfig":{"compressible":true,"extensions":["pac"]},"application/x-nzb":{"source":"apache","extensions":["nzb"]},"application/x-perl":{"source":"nginx","extensions":["pl","pm"]},"application/x-pilot":{"source":"nginx","extensions":["prc","pdb"]},"application/x-pkcs12":{"source":"apache","compressible":false,"extensions":["p12","pfx"]},"application/x-pkcs7-certificates":{"source":"apache","extensions":["p7b","spc"]},"application/x-pkcs7-certreqresp":{"source":"apache","extensions":["p7r"]},"application/x-pki-message":{"source":"iana"},"application/x-rar-compressed":{"source":"apache","compressible":false,"extensions":["rar"]},"application/x-redhat-package-manager":{"source":"nginx","extensions":["rpm"]},"application/x-research-info-systems":{"source":"apache","extensions":["ris"]},"application/x-sea":{"source":"nginx","extensions":["sea"]},"application/x-sh":{"source":"apache","compressible":true,"extensions":["sh"]},"application/x-shar":{"source":"apache","extensions":["shar"]},"application/x-shockwave-flash":{"source":"apache","compressible":false,"extensions":["swf"]},"application/x-silverlight-app":{"source":"apache","extensions":["xap"]},"application/x-sql":{"source":"apache","extensions":["sql"]},"application/x-stuffit":{"source":"apache","compressible":false,"extensions":["sit"]},"application/x-stuffitx":{"source":"apache","extensions":["sitx"]},"application/x-subrip":{"source":"apache","extensions":["srt"]},"application/x-sv4cpio":{"source":"apache","extensions":["sv4cpio"]},"application/x-sv4crc":{"source":"apache","extensions":["sv4crc"]},"application/x-t3vm-image":{"source":"apache","extensions":["t3"]},"application/x-tads":{"source":"apache","extensions":["gam"]},"application/x-tar":{"source":"apache","compressible":true,"extensions":["tar"]},"application/x-tcl":{"source":"apache","extensions":["tcl","tk"]},"application/x-tex":{"source":"apache","extensions":["tex"]},"application/x-tex-tfm":{"source":"apache","extensions":["tfm"]},"application/x-texinfo":{"source":"apache","extensions":["texinfo","texi"]},"application/x-tgif":{"source":"apache","extensions":["obj"]},"application/x-ustar":{"source":"apache","extensions":["ustar"]},"application/x-virtualbox-hdd":{"compressible":true,"extensions":["hdd"]},"application/x-virtualbox-ova":{"compressible":true,"extensions":["ova"]},"application/x-virtualbox-ovf":{"compressible":true,"extensions":["ovf"]},"application/x-virtualbox-vbox":{"compressible":true,"extensions":["vbox"]},"application/x-virtualbox-vbox-extpack":{"compressible":false,"extensions":["vbox-extpack"]},"application/x-virtualbox-vdi":{"compressible":true,"extensions":["vdi"]},"application/x-virtualbox-vhd":{"compressible":true,"extensions":["vhd"]},"application/x-virtualbox-vmdk":{"compressible":true,"extensions":["vmdk"]},"application/x-wais-source":{"source":"apache","extensions":["src"]},"application/x-web-app-manifest+json":{"compressible":true,"extensions":["webapp"]},"application/x-www-form-urlencoded":{"source":"iana","compressible":true},"application/x-x509-ca-cert":{"source":"iana","extensions":["der","crt","pem"]},"application/x-x509-ca-ra-cert":{"source":"iana"},"application/x-x509-next-ca-cert":{"source":"iana"},"application/x-xfig":{"source":"apache","extensions":["fig"]},"application/x-xliff+xml":{"source":"apache","compressible":true,"extensions":["xlf"]},"application/x-xpinstall":{"source":"apache","compressible":false,"extensions":["xpi"]},"application/x-xz":{"source":"apache","extensions":["xz"]},"application/x-zmachine":{"source":"apache","extensions":["z1","z2","z3","z4","z5","z6","z7","z8"]},"application/x400-bp":{"source":"iana"},"application/xacml+xml":{"source":"iana","compressible":true},"application/xaml+xml":{"source":"apache","compressible":true,"extensions":["xaml"]},"application/xcap-att+xml":{"source":"iana","compressible":true,"extensions":["xav"]},"application/xcap-caps+xml":{"source":"iana","compressible":true,"extensions":["xca"]},"application/xcap-diff+xml":{"source":"iana","compressible":true,"extensions":["xdf"]},"application/xcap-el+xml":{"source":"iana","compressible":true,"extensions":["xel"]},"application/xcap-error+xml":{"source":"iana","compressible":true},"application/xcap-ns+xml":{"source":"iana","compressible":true,"extensions":["xns"]},"application/xcon-conference-info+xml":{"source":"iana","compressible":true},"application/xcon-conference-info-diff+xml":{"source":"iana","compressible":true},"application/xenc+xml":{"source":"iana","compressible":true,"extensions":["xenc"]},"application/xhtml+xml":{"source":"iana","compressible":true,"extensions":["xhtml","xht"]},"application/xhtml-voice+xml":{"source":"apache","compressible":true},"application/xliff+xml":{"source":"iana","compressible":true,"extensions":["xlf"]},"application/xml":{"source":"iana","compressible":true,"extensions":["xml","xsl","xsd","rng"]},"application/xml-dtd":{"source":"iana","compressible":true,"extensions":["dtd"]},"application/xml-external-parsed-entity":{"source":"iana"},"application/xml-patch+xml":{"source":"iana","compressible":true},"application/xmpp+xml":{"source":"iana","compressible":true},"application/xop+xml":{"source":"iana","compressible":true,"extensions":["xop"]},"application/xproc+xml":{"source":"apache","compressible":true,"extensions":["xpl"]},"application/xslt+xml":{"source":"iana","compressible":true,"extensions":["xsl","xslt"]},"application/xspf+xml":{"source":"apache","compressible":true,"extensions":["xspf"]},"application/xv+xml":{"source":"iana","compressible":true,"extensions":["mxml","xhvml","xvml","xvm"]},"application/yang":{"source":"iana","extensions":["yang"]},"application/yang-data+json":{"source":"iana","compressible":true},"application/yang-data+xml":{"source":"iana","compressible":true},"application/yang-patch+json":{"source":"iana","compressible":true},"application/yang-patch+xml":{"source":"iana","compressible":true},"application/yin+xml":{"source":"iana","compressible":true,"extensions":["yin"]},"application/zip":{"source":"iana","compressible":false,"extensions":["zip"]},"application/zlib":{"source":"iana"},"application/zstd":{"source":"iana"},"audio/1d-interleaved-parityfec":{"source":"iana"},"audio/32kadpcm":{"source":"iana"},"audio/3gpp":{"source":"iana","compressible":false,"extensions":["3gpp"]},"audio/3gpp2":{"source":"iana"},"audio/aac":{"source":"iana"},"audio/ac3":{"source":"iana"},"audio/adpcm":{"source":"apache","extensions":["adp"]},"audio/amr":{"source":"iana","extensions":["amr"]},"audio/amr-wb":{"source":"iana"},"audio/amr-wb+":{"source":"iana"},"audio/aptx":{"source":"iana"},"audio/asc":{"source":"iana"},"audio/atrac-advanced-lossless":{"source":"iana"},"audio/atrac-x":{"source":"iana"},"audio/atrac3":{"source":"iana"},"audio/basic":{"source":"iana","compressible":false,"extensions":["au","snd"]},"audio/bv16":{"source":"iana"},"audio/bv32":{"source":"iana"},"audio/clearmode":{"source":"iana"},"audio/cn":{"source":"iana"},"audio/dat12":{"source":"iana"},"audio/dls":{"source":"iana"},"audio/dsr-es201108":{"source":"iana"},"audio/dsr-es202050":{"source":"iana"},"audio/dsr-es202211":{"source":"iana"},"audio/dsr-es202212":{"source":"iana"},"audio/dv":{"source":"iana"},"audio/dvi4":{"source":"iana"},"audio/eac3":{"source":"iana"},"audio/encaprtp":{"source":"iana"},"audio/evrc":{"source":"iana"},"audio/evrc-qcp":{"source":"iana"},"audio/evrc0":{"source":"iana"},"audio/evrc1":{"source":"iana"},"audio/evrcb":{"source":"iana"},"audio/evrcb0":{"source":"iana"},"audio/evrcb1":{"source":"iana"},"audio/evrcnw":{"source":"iana"},"audio/evrcnw0":{"source":"iana"},"audio/evrcnw1":{"source":"iana"},"audio/evrcwb":{"source":"iana"},"audio/evrcwb0":{"source":"iana"},"audio/evrcwb1":{"source":"iana"},"audio/evs":{"source":"iana"},"audio/flexfec":{"source":"iana"},"audio/fwdred":{"source":"iana"},"audio/g711-0":{"source":"iana"},"audio/g719":{"source":"iana"},"audio/g722":{"source":"iana"},"audio/g7221":{"source":"iana"},"audio/g723":{"source":"iana"},"audio/g726-16":{"source":"iana"},"audio/g726-24":{"source":"iana"},"audio/g726-32":{"source":"iana"},"audio/g726-40":{"source":"iana"},"audio/g728":{"source":"iana"},"audio/g729":{"source":"iana"},"audio/g7291":{"source":"iana"},"audio/g729d":{"source":"iana"},"audio/g729e":{"source":"iana"},"audio/gsm":{"source":"iana"},"audio/gsm-efr":{"source":"iana"},"audio/gsm-hr-08":{"source":"iana"},"audio/ilbc":{"source":"iana"},"audio/ip-mr_v2.5":{"source":"iana"},"audio/isac":{"source":"apache"},"audio/l16":{"source":"iana"},"audio/l20":{"source":"iana"},"audio/l24":{"source":"iana","compressible":false},"audio/l8":{"source":"iana"},"audio/lpc":{"source":"iana"},"audio/melp":{"source":"iana"},"audio/melp1200":{"source":"iana"},"audio/melp2400":{"source":"iana"},"audio/melp600":{"source":"iana"},"audio/mhas":{"source":"iana"},"audio/midi":{"source":"apache","extensions":["mid","midi","kar","rmi"]},"audio/mobile-xmf":{"source":"iana","extensions":["mxmf"]},"audio/mp3":{"compressible":false,"extensions":["mp3"]},"audio/mp4":{"source":"iana","compressible":false,"extensions":["m4a","mp4a"]},"audio/mp4a-latm":{"source":"iana"},"audio/mpa":{"source":"iana"},"audio/mpa-robust":{"source":"iana"},"audio/mpeg":{"source":"iana","compressible":false,"extensions":["mpga","mp2","mp2a","mp3","m2a","m3a"]},"audio/mpeg4-generic":{"source":"iana"},"audio/musepack":{"source":"apache"},"audio/ogg":{"source":"iana","compressible":false,"extensions":["oga","ogg","spx","opus"]},"audio/opus":{"source":"iana"},"audio/parityfec":{"source":"iana"},"audio/pcma":{"source":"iana"},"audio/pcma-wb":{"source":"iana"},"audio/pcmu":{"source":"iana"},"audio/pcmu-wb":{"source":"iana"},"audio/prs.sid":{"source":"iana"},"audio/qcelp":{"source":"iana"},"audio/raptorfec":{"source":"iana"},"audio/red":{"source":"iana"},"audio/rtp-enc-aescm128":{"source":"iana"},"audio/rtp-midi":{"source":"iana"},"audio/rtploopback":{"source":"iana"},"audio/rtx":{"source":"iana"},"audio/s3m":{"source":"apache","extensions":["s3m"]},"audio/scip":{"source":"iana"},"audio/silk":{"source":"apache","extensions":["sil"]},"audio/smv":{"source":"iana"},"audio/smv-qcp":{"source":"iana"},"audio/smv0":{"source":"iana"},"audio/sofa":{"source":"iana"},"audio/sp-midi":{"source":"iana"},"audio/speex":{"source":"iana"},"audio/t140c":{"source":"iana"},"audio/t38":{"source":"iana"},"audio/telephone-event":{"source":"iana"},"audio/tetra_acelp":{"source":"iana"},"audio/tetra_acelp_bb":{"source":"iana"},"audio/tone":{"source":"iana"},"audio/tsvcis":{"source":"iana"},"audio/uemclip":{"source":"iana"},"audio/ulpfec":{"source":"iana"},"audio/usac":{"source":"iana"},"audio/vdvi":{"source":"iana"},"audio/vmr-wb":{"source":"iana"},"audio/vnd.3gpp.iufp":{"source":"iana"},"audio/vnd.4sb":{"source":"iana"},"audio/vnd.audiokoz":{"source":"iana"},"audio/vnd.celp":{"source":"iana"},"audio/vnd.cisco.nse":{"source":"iana"},"audio/vnd.cmles.radio-events":{"source":"iana"},"audio/vnd.cns.anp1":{"source":"iana"},"audio/vnd.cns.inf1":{"source":"iana"},"audio/vnd.dece.audio":{"source":"iana","extensions":["uva","uvva"]},"audio/vnd.digital-winds":{"source":"iana","extensions":["eol"]},"audio/vnd.dlna.adts":{"source":"iana"},"audio/vnd.dolby.heaac.1":{"source":"iana"},"audio/vnd.dolby.heaac.2":{"source":"iana"},"audio/vnd.dolby.mlp":{"source":"iana"},"audio/vnd.dolby.mps":{"source":"iana"},"audio/vnd.dolby.pl2":{"source":"iana"},"audio/vnd.dolby.pl2x":{"source":"iana"},"audio/vnd.dolby.pl2z":{"source":"iana"},"audio/vnd.dolby.pulse.1":{"source":"iana"},"audio/vnd.dra":{"source":"iana","extensions":["dra"]},"audio/vnd.dts":{"source":"iana","extensions":["dts"]},"audio/vnd.dts.hd":{"source":"iana","extensions":["dtshd"]},"audio/vnd.dts.uhd":{"source":"iana"},"audio/vnd.dvb.file":{"source":"iana"},"audio/vnd.everad.plj":{"source":"iana"},"audio/vnd.hns.audio":{"source":"iana"},"audio/vnd.lucent.voice":{"source":"iana","extensions":["lvp"]},"audio/vnd.ms-playready.media.pya":{"source":"iana","extensions":["pya"]},"audio/vnd.nokia.mobile-xmf":{"source":"iana"},"audio/vnd.nortel.vbk":{"source":"iana"},"audio/vnd.nuera.ecelp4800":{"source":"iana","extensions":["ecelp4800"]},"audio/vnd.nuera.ecelp7470":{"source":"iana","extensions":["ecelp7470"]},"audio/vnd.nuera.ecelp9600":{"source":"iana","extensions":["ecelp9600"]},"audio/vnd.octel.sbc":{"source":"iana"},"audio/vnd.presonus.multitrack":{"source":"iana"},"audio/vnd.qcelp":{"source":"iana"},"audio/vnd.rhetorex.32kadpcm":{"source":"iana"},"audio/vnd.rip":{"source":"iana","extensions":["rip"]},"audio/vnd.rn-realaudio":{"compressible":false},"audio/vnd.sealedmedia.softseal.mpeg":{"source":"iana"},"audio/vnd.vmx.cvsd":{"source":"iana"},"audio/vnd.wave":{"compressible":false},"audio/vorbis":{"source":"iana","compressible":false},"audio/vorbis-config":{"source":"iana"},"audio/wav":{"compressible":false,"extensions":["wav"]},"audio/wave":{"compressible":false,"extensions":["wav"]},"audio/webm":{"source":"apache","compressible":false,"extensions":["weba"]},"audio/x-aac":{"source":"apache","compressible":false,"extensions":["aac"]},"audio/x-aiff":{"source":"apache","extensions":["aif","aiff","aifc"]},"audio/x-caf":{"source":"apache","compressible":false,"extensions":["caf"]},"audio/x-flac":{"source":"apache","extensions":["flac"]},"audio/x-m4a":{"source":"nginx","extensions":["m4a"]},"audio/x-matroska":{"source":"apache","extensions":["mka"]},"audio/x-mpegurl":{"source":"apache","extensions":["m3u"]},"audio/x-ms-wax":{"source":"apache","extensions":["wax"]},"audio/x-ms-wma":{"source":"apache","extensions":["wma"]},"audio/x-pn-realaudio":{"source":"apache","extensions":["ram","ra"]},"audio/x-pn-realaudio-plugin":{"source":"apache","extensions":["rmp"]},"audio/x-realaudio":{"source":"nginx","extensions":["ra"]},"audio/x-tta":{"source":"apache"},"audio/x-wav":{"source":"apache","extensions":["wav"]},"audio/xm":{"source":"apache","extensions":["xm"]},"chemical/x-cdx":{"source":"apache","extensions":["cdx"]},"chemical/x-cif":{"source":"apache","extensions":["cif"]},"chemical/x-cmdf":{"source":"apache","extensions":["cmdf"]},"chemical/x-cml":{"source":"apache","extensions":["cml"]},"chemical/x-csml":{"source":"apache","extensions":["csml"]},"chemical/x-pdb":{"source":"apache"},"chemical/x-xyz":{"source":"apache","extensions":["xyz"]},"font/collection":{"source":"iana","extensions":["ttc"]},"font/otf":{"source":"iana","compressible":true,"extensions":["otf"]},"font/sfnt":{"source":"iana"},"font/ttf":{"source":"iana","compressible":true,"extensions":["ttf"]},"font/woff":{"source":"iana","extensions":["woff"]},"font/woff2":{"source":"iana","extensions":["woff2"]},"image/aces":{"source":"iana","extensions":["exr"]},"image/apng":{"compressible":false,"extensions":["apng"]},"image/avci":{"source":"iana"},"image/avcs":{"source":"iana"},"image/avif":{"source":"iana","compressible":false,"extensions":["avif"]},"image/bmp":{"source":"iana","compressible":true,"extensions":["bmp"]},"image/cgm":{"source":"iana","extensions":["cgm"]},"image/dicom-rle":{"source":"iana","extensions":["drle"]},"image/emf":{"source":"iana","extensions":["emf"]},"image/fits":{"source":"iana","extensions":["fits"]},"image/g3fax":{"source":"iana","extensions":["g3"]},"image/gif":{"source":"iana","compressible":false,"extensions":["gif"]},"image/heic":{"source":"iana","extensions":["heic"]},"image/heic-sequence":{"source":"iana","extensions":["heics"]},"image/heif":{"source":"iana","extensions":["heif"]},"image/heif-sequence":{"source":"iana","extensions":["heifs"]},"image/hej2k":{"source":"iana","extensions":["hej2"]},"image/hsj2":{"source":"iana","extensions":["hsj2"]},"image/ief":{"source":"iana","extensions":["ief"]},"image/jls":{"source":"iana","extensions":["jls"]},"image/jp2":{"source":"iana","compressible":false,"extensions":["jp2","jpg2"]},"image/jpeg":{"source":"iana","compressible":false,"extensions":["jpeg","jpg","jpe"]},"image/jph":{"source":"iana","extensions":["jph"]},"image/jphc":{"source":"iana","extensions":["jhc"]},"image/jpm":{"source":"iana","compressible":false,"extensions":["jpm"]},"image/jpx":{"source":"iana","compressible":false,"extensions":["jpx","jpf"]},"image/jxr":{"source":"iana","extensions":["jxr"]},"image/jxra":{"source":"iana","extensions":["jxra"]},"image/jxrs":{"source":"iana","extensions":["jxrs"]},"image/jxs":{"source":"iana","extensions":["jxs"]},"image/jxsc":{"source":"iana","extensions":["jxsc"]},"image/jxsi":{"source":"iana","extensions":["jxsi"]},"image/jxss":{"source":"iana","extensions":["jxss"]},"image/ktx":{"source":"iana","extensions":["ktx"]},"image/ktx2":{"source":"iana","extensions":["ktx2"]},"image/naplps":{"source":"iana"},"image/pjpeg":{"compressible":false},"image/png":{"source":"iana","compressible":false,"extensions":["png"]},"image/prs.btif":{"source":"iana","extensions":["btif"]},"image/prs.pti":{"source":"iana","extensions":["pti"]},"image/pwg-raster":{"source":"iana"},"image/sgi":{"source":"apache","extensions":["sgi"]},"image/svg+xml":{"source":"iana","compressible":true,"extensions":["svg","svgz"]},"image/t38":{"source":"iana","extensions":["t38"]},"image/tiff":{"source":"iana","compressible":false,"extensions":["tif","tiff"]},"image/tiff-fx":{"source":"iana","extensions":["tfx"]},"image/vnd.adobe.photoshop":{"source":"iana","compressible":true,"extensions":["psd"]},"image/vnd.airzip.accelerator.azv":{"source":"iana","extensions":["azv"]},"image/vnd.cns.inf2":{"source":"iana"},"image/vnd.dece.graphic":{"source":"iana","extensions":["uvi","uvvi","uvg","uvvg"]},"image/vnd.djvu":{"source":"iana","extensions":["djvu","djv"]},"image/vnd.dvb.subtitle":{"source":"iana","extensions":["sub"]},"image/vnd.dwg":{"source":"iana","extensions":["dwg"]},"image/vnd.dxf":{"source":"iana","extensions":["dxf"]},"image/vnd.fastbidsheet":{"source":"iana","extensions":["fbs"]},"image/vnd.fpx":{"source":"iana","extensions":["fpx"]},"image/vnd.fst":{"source":"iana","extensions":["fst"]},"image/vnd.fujixerox.edmics-mmr":{"source":"iana","extensions":["mmr"]},"image/vnd.fujixerox.edmics-rlc":{"source":"iana","extensions":["rlc"]},"image/vnd.globalgraphics.pgb":{"source":"iana"},"image/vnd.microsoft.icon":{"source":"iana","compressible":true,"extensions":["ico"]},"image/vnd.mix":{"source":"iana"},"image/vnd.mozilla.apng":{"source":"iana"},"image/vnd.ms-dds":{"compressible":true,"extensions":["dds"]},"image/vnd.ms-modi":{"source":"iana","extensions":["mdi"]},"image/vnd.ms-photo":{"source":"apache","extensions":["wdp"]},"image/vnd.net-fpx":{"source":"iana","extensions":["npx"]},"image/vnd.pco.b16":{"source":"iana","extensions":["b16"]},"image/vnd.radiance":{"source":"iana"},"image/vnd.sealed.png":{"source":"iana"},"image/vnd.sealedmedia.softseal.gif":{"source":"iana"},"image/vnd.sealedmedia.softseal.jpg":{"source":"iana"},"image/vnd.svf":{"source":"iana"},"image/vnd.tencent.tap":{"source":"iana","extensions":["tap"]},"image/vnd.valve.source.texture":{"source":"iana","extensions":["vtf"]},"image/vnd.wap.wbmp":{"source":"iana","extensions":["wbmp"]},"image/vnd.xiff":{"source":"iana","extensions":["xif"]},"image/vnd.zbrush.pcx":{"source":"iana","extensions":["pcx"]},"image/webp":{"source":"apache","extensions":["webp"]},"image/wmf":{"source":"iana","extensions":["wmf"]},"image/x-3ds":{"source":"apache","extensions":["3ds"]},"image/x-cmu-raster":{"source":"apache","extensions":["ras"]},"image/x-cmx":{"source":"apache","extensions":["cmx"]},"image/x-freehand":{"source":"apache","extensions":["fh","fhc","fh4","fh5","fh7"]},"image/x-icon":{"source":"apache","compressible":true,"extensions":["ico"]},"image/x-jng":{"source":"nginx","extensions":["jng"]},"image/x-mrsid-image":{"source":"apache","extensions":["sid"]},"image/x-ms-bmp":{"source":"nginx","compressible":true,"extensions":["bmp"]},"image/x-pcx":{"source":"apache","extensions":["pcx"]},"image/x-pict":{"source":"apache","extensions":["pic","pct"]},"image/x-portable-anymap":{"source":"apache","extensions":["pnm"]},"image/x-portable-bitmap":{"source":"apache","extensions":["pbm"]},"image/x-portable-graymap":{"source":"apache","extensions":["pgm"]},"image/x-portable-pixmap":{"source":"apache","extensions":["ppm"]},"image/x-rgb":{"source":"apache","extensions":["rgb"]},"image/x-tga":{"source":"apache","extensions":["tga"]},"image/x-xbitmap":{"source":"apache","extensions":["xbm"]},"image/x-xcf":{"compressible":false},"image/x-xpixmap":{"source":"apache","extensions":["xpm"]},"image/x-xwindowdump":{"source":"apache","extensions":["xwd"]},"message/cpim":{"source":"iana"},"message/delivery-status":{"source":"iana"},"message/disposition-notification":{"source":"iana","extensions":["disposition-notification"]},"message/external-body":{"source":"iana"},"message/feedback-report":{"source":"iana"},"message/global":{"source":"iana","extensions":["u8msg"]},"message/global-delivery-status":{"source":"iana","extensions":["u8dsn"]},"message/global-disposition-notification":{"source":"iana","extensions":["u8mdn"]},"message/global-headers":{"source":"iana","extensions":["u8hdr"]},"message/http":{"source":"iana","compressible":false},"message/imdn+xml":{"source":"iana","compressible":true},"message/news":{"source":"iana"},"message/partial":{"source":"iana","compressible":false},"message/rfc822":{"source":"iana","compressible":true,"extensions":["eml","mime"]},"message/s-http":{"source":"iana"},"message/sip":{"source":"iana"},"message/sipfrag":{"source":"iana"},"message/tracking-status":{"source":"iana"},"message/vnd.si.simp":{"source":"iana"},"message/vnd.wfa.wsc":{"source":"iana","extensions":["wsc"]},"model/3mf":{"source":"iana","extensions":["3mf"]},"model/e57":{"source":"iana"},"model/gltf+json":{"source":"iana","compressible":true,"extensions":["gltf"]},"model/gltf-binary":{"source":"iana","compressible":true,"extensions":["glb"]},"model/iges":{"source":"iana","compressible":false,"extensions":["igs","iges"]},"model/mesh":{"source":"iana","compressible":false,"extensions":["msh","mesh","silo"]},"model/mtl":{"source":"iana","extensions":["mtl"]},"model/obj":{"source":"iana","extensions":["obj"]},"model/step":{"source":"iana"},"model/step+xml":{"source":"iana","compressible":true,"extensions":["stpx"]},"model/step+zip":{"source":"iana","compressible":false,"extensions":["stpz"]},"model/step-xml+zip":{"source":"iana","compressible":false,"extensions":["stpxz"]},"model/stl":{"source":"iana","extensions":["stl"]},"model/vnd.collada+xml":{"source":"iana","compressible":true,"extensions":["dae"]},"model/vnd.dwf":{"source":"iana","extensions":["dwf"]},"model/vnd.flatland.3dml":{"source":"iana"},"model/vnd.gdl":{"source":"iana","extensions":["gdl"]},"model/vnd.gs-gdl":{"source":"apache"},"model/vnd.gs.gdl":{"source":"iana"},"model/vnd.gtw":{"source":"iana","extensions":["gtw"]},"model/vnd.moml+xml":{"source":"iana","compressible":true},"model/vnd.mts":{"source":"iana","extensions":["mts"]},"model/vnd.opengex":{"source":"iana","extensions":["ogex"]},"model/vnd.parasolid.transmit.binary":{"source":"iana","extensions":["x_b"]},"model/vnd.parasolid.transmit.text":{"source":"iana","extensions":["x_t"]},"model/vnd.pytha.pyox":{"source":"iana"},"model/vnd.rosette.annotated-data-model":{"source":"iana"},"model/vnd.sap.vds":{"source":"iana","extensions":["vds"]},"model/vnd.usdz+zip":{"source":"iana","compressible":false,"extensions":["usdz"]},"model/vnd.valve.source.compiled-map":{"source":"iana","extensions":["bsp"]},"model/vnd.vtu":{"source":"iana","extensions":["vtu"]},"model/vrml":{"source":"iana","compressible":false,"extensions":["wrl","vrml"]},"model/x3d+binary":{"source":"apache","compressible":false,"extensions":["x3db","x3dbz"]},"model/x3d+fastinfoset":{"source":"iana","extensions":["x3db"]},"model/x3d+vrml":{"source":"apache","compressible":false,"extensions":["x3dv","x3dvz"]},"model/x3d+xml":{"source":"iana","compressible":true,"extensions":["x3d","x3dz"]},"model/x3d-vrml":{"source":"iana","extensions":["x3dv"]},"multipart/alternative":{"source":"iana","compressible":false},"multipart/appledouble":{"source":"iana"},"multipart/byteranges":{"source":"iana"},"multipart/digest":{"source":"iana"},"multipart/encrypted":{"source":"iana","compressible":false},"multipart/form-data":{"source":"iana","compressible":false},"multipart/header-set":{"source":"iana"},"multipart/mixed":{"source":"iana"},"multipart/multilingual":{"source":"iana"},"multipart/parallel":{"source":"iana"},"multipart/related":{"source":"iana","compressible":false},"multipart/report":{"source":"iana"},"multipart/signed":{"source":"iana","compressible":false},"multipart/vnd.bint.med-plus":{"source":"iana"},"multipart/voice-message":{"source":"iana"},"multipart/x-mixed-replace":{"source":"iana"},"text/1d-interleaved-parityfec":{"source":"iana"},"text/cache-manifest":{"source":"iana","compressible":true,"extensions":["appcache","manifest"]},"text/calendar":{"source":"iana","extensions":["ics","ifb"]},"text/calender":{"compressible":true},"text/cmd":{"compressible":true},"text/coffeescript":{"extensions":["coffee","litcoffee"]},"text/cql":{"source":"iana"},"text/cql-expression":{"source":"iana"},"text/cql-identifier":{"source":"iana"},"text/css":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["css"]},"text/csv":{"source":"iana","compressible":true,"extensions":["csv"]},"text/csv-schema":{"source":"iana"},"text/directory":{"source":"iana"},"text/dns":{"source":"iana"},"text/ecmascript":{"source":"iana"},"text/encaprtp":{"source":"iana"},"text/enriched":{"source":"iana"},"text/fhirpath":{"source":"iana"},"text/flexfec":{"source":"iana"},"text/fwdred":{"source":"iana"},"text/gff3":{"source":"iana"},"text/grammar-ref-list":{"source":"iana"},"text/html":{"source":"iana","compressible":true,"extensions":["html","htm","shtml"]},"text/jade":{"extensions":["jade"]},"text/javascript":{"source":"iana","compressible":true},"text/jcr-cnd":{"source":"iana"},"text/jsx":{"compressible":true,"extensions":["jsx"]},"text/less":{"compressible":true,"extensions":["less"]},"text/markdown":{"source":"iana","compressible":true,"extensions":["markdown","md"]},"text/mathml":{"source":"nginx","extensions":["mml"]},"text/mdx":{"compressible":true,"extensions":["mdx"]},"text/mizar":{"source":"iana"},"text/n3":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["n3"]},"text/parameters":{"source":"iana","charset":"UTF-8"},"text/parityfec":{"source":"iana"},"text/plain":{"source":"iana","compressible":true,"extensions":["txt","text","conf","def","list","log","in","ini"]},"text/provenance-notation":{"source":"iana","charset":"UTF-8"},"text/prs.fallenstein.rst":{"source":"iana"},"text/prs.lines.tag":{"source":"iana","extensions":["dsc"]},"text/prs.prop.logic":{"source":"iana"},"text/raptorfec":{"source":"iana"},"text/red":{"source":"iana"},"text/rfc822-headers":{"source":"iana"},"text/richtext":{"source":"iana","compressible":true,"extensions":["rtx"]},"text/rtf":{"source":"iana","compressible":true,"extensions":["rtf"]},"text/rtp-enc-aescm128":{"source":"iana"},"text/rtploopback":{"source":"iana"},"text/rtx":{"source":"iana"},"text/sgml":{"source":"iana","extensions":["sgml","sgm"]},"text/shaclc":{"source":"iana"},"text/shex":{"source":"iana","extensions":["shex"]},"text/slim":{"extensions":["slim","slm"]},"text/spdx":{"source":"iana","extensions":["spdx"]},"text/strings":{"source":"iana"},"text/stylus":{"extensions":["stylus","styl"]},"text/t140":{"source":"iana"},"text/tab-separated-values":{"source":"iana","compressible":true,"extensions":["tsv"]},"text/troff":{"source":"iana","extensions":["t","tr","roff","man","me","ms"]},"text/turtle":{"source":"iana","charset":"UTF-8","extensions":["ttl"]},"text/ulpfec":{"source":"iana"},"text/uri-list":{"source":"iana","compressible":true,"extensions":["uri","uris","urls"]},"text/vcard":{"source":"iana","compressible":true,"extensions":["vcard"]},"text/vnd.a":{"source":"iana"},"text/vnd.abc":{"source":"iana"},"text/vnd.ascii-art":{"source":"iana"},"text/vnd.curl":{"source":"iana","extensions":["curl"]},"text/vnd.curl.dcurl":{"source":"apache","extensions":["dcurl"]},"text/vnd.curl.mcurl":{"source":"apache","extensions":["mcurl"]},"text/vnd.curl.scurl":{"source":"apache","extensions":["scurl"]},"text/vnd.debian.copyright":{"source":"iana","charset":"UTF-8"},"text/vnd.dmclientscript":{"source":"iana"},"text/vnd.dvb.subtitle":{"source":"iana","extensions":["sub"]},"text/vnd.esmertec.theme-descriptor":{"source":"iana","charset":"UTF-8"},"text/vnd.familysearch.gedcom":{"source":"iana","extensions":["ged"]},"text/vnd.ficlab.flt":{"source":"iana"},"text/vnd.fly":{"source":"iana","extensions":["fly"]},"text/vnd.fmi.flexstor":{"source":"iana","extensions":["flx"]},"text/vnd.gml":{"source":"iana"},"text/vnd.graphviz":{"source":"iana","extensions":["gv"]},"text/vnd.hans":{"source":"iana"},"text/vnd.hgl":{"source":"iana"},"text/vnd.in3d.3dml":{"source":"iana","extensions":["3dml"]},"text/vnd.in3d.spot":{"source":"iana","extensions":["spot"]},"text/vnd.iptc.newsml":{"source":"iana"},"text/vnd.iptc.nitf":{"source":"iana"},"text/vnd.latex-z":{"source":"iana"},"text/vnd.motorola.reflex":{"source":"iana"},"text/vnd.ms-mediapackage":{"source":"iana"},"text/vnd.net2phone.commcenter.command":{"source":"iana"},"text/vnd.radisys.msml-basic-layout":{"source":"iana"},"text/vnd.senx.warpscript":{"source":"iana"},"text/vnd.si.uricatalogue":{"source":"iana"},"text/vnd.sosi":{"source":"iana"},"text/vnd.sun.j2me.app-descriptor":{"source":"iana","charset":"UTF-8","extensions":["jad"]},"text/vnd.trolltech.linguist":{"source":"iana","charset":"UTF-8"},"text/vnd.wap.si":{"source":"iana"},"text/vnd.wap.sl":{"source":"iana"},"text/vnd.wap.wml":{"source":"iana","extensions":["wml"]},"text/vnd.wap.wmlscript":{"source":"iana","extensions":["wmls"]},"text/vtt":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["vtt"]},"text/x-asm":{"source":"apache","extensions":["s","asm"]},"text/x-c":{"source":"apache","extensions":["c","cc","cxx","cpp","h","hh","dic"]},"text/x-component":{"source":"nginx","extensions":["htc"]},"text/x-fortran":{"source":"apache","extensions":["f","for","f77","f90"]},"text/x-gwt-rpc":{"compressible":true},"text/x-handlebars-template":{"extensions":["hbs"]},"text/x-java-source":{"source":"apache","extensions":["java"]},"text/x-jquery-tmpl":{"compressible":true},"text/x-lua":{"extensions":["lua"]},"text/x-markdown":{"compressible":true,"extensions":["mkd"]},"text/x-nfo":{"source":"apache","extensions":["nfo"]},"text/x-opml":{"source":"apache","extensions":["opml"]},"text/x-org":{"compressible":true,"extensions":["org"]},"text/x-pascal":{"source":"apache","extensions":["p","pas"]},"text/x-processing":{"compressible":true,"extensions":["pde"]},"text/x-sass":{"extensions":["sass"]},"text/x-scss":{"extensions":["scss"]},"text/x-setext":{"source":"apache","extensions":["etx"]},"text/x-sfv":{"source":"apache","extensions":["sfv"]},"text/x-suse-ymp":{"compressible":true,"extensions":["ymp"]},"text/x-uuencode":{"source":"apache","extensions":["uu"]},"text/x-vcalendar":{"source":"apache","extensions":["vcs"]},"text/x-vcard":{"source":"apache","extensions":["vcf"]},"text/xml":{"source":"iana","compressible":true,"extensions":["xml"]},"text/xml-external-parsed-entity":{"source":"iana"},"text/yaml":{"compressible":true,"extensions":["yaml","yml"]},"video/1d-interleaved-parityfec":{"source":"iana"},"video/3gpp":{"source":"iana","extensions":["3gp","3gpp"]},"video/3gpp-tt":{"source":"iana"},"video/3gpp2":{"source":"iana","extensions":["3g2"]},"video/av1":{"source":"iana"},"video/bmpeg":{"source":"iana"},"video/bt656":{"source":"iana"},"video/celb":{"source":"iana"},"video/dv":{"source":"iana"},"video/encaprtp":{"source":"iana"},"video/ffv1":{"source":"iana"},"video/flexfec":{"source":"iana"},"video/h261":{"source":"iana","extensions":["h261"]},"video/h263":{"source":"iana","extensions":["h263"]},"video/h263-1998":{"source":"iana"},"video/h263-2000":{"source":"iana"},"video/h264":{"source":"iana","extensions":["h264"]},"video/h264-rcdo":{"source":"iana"},"video/h264-svc":{"source":"iana"},"video/h265":{"source":"iana"},"video/iso.segment":{"source":"iana","extensions":["m4s"]},"video/jpeg":{"source":"iana","extensions":["jpgv"]},"video/jpeg2000":{"source":"iana"},"video/jpm":{"source":"apache","extensions":["jpm","jpgm"]},"video/jxsv":{"source":"iana"},"video/mj2":{"source":"iana","extensions":["mj2","mjp2"]},"video/mp1s":{"source":"iana"},"video/mp2p":{"source":"iana"},"video/mp2t":{"source":"iana","extensions":["ts"]},"video/mp4":{"source":"iana","compressible":false,"extensions":["mp4","mp4v","mpg4"]},"video/mp4v-es":{"source":"iana"},"video/mpeg":{"source":"iana","compressible":false,"extensions":["mpeg","mpg","mpe","m1v","m2v"]},"video/mpeg4-generic":{"source":"iana"},"video/mpv":{"source":"iana"},"video/nv":{"source":"iana"},"video/ogg":{"source":"iana","compressible":false,"extensions":["ogv"]},"video/parityfec":{"source":"iana"},"video/pointer":{"source":"iana"},"video/quicktime":{"source":"iana","compressible":false,"extensions":["qt","mov"]},"video/raptorfec":{"source":"iana"},"video/raw":{"source":"iana"},"video/rtp-enc-aescm128":{"source":"iana"},"video/rtploopback":{"source":"iana"},"video/rtx":{"source":"iana"},"video/scip":{"source":"iana"},"video/smpte291":{"source":"iana"},"video/smpte292m":{"source":"iana"},"video/ulpfec":{"source":"iana"},"video/vc1":{"source":"iana"},"video/vc2":{"source":"iana"},"video/vnd.cctv":{"source":"iana"},"video/vnd.dece.hd":{"source":"iana","extensions":["uvh","uvvh"]},"video/vnd.dece.mobile":{"source":"iana","extensions":["uvm","uvvm"]},"video/vnd.dece.mp4":{"source":"iana"},"video/vnd.dece.pd":{"source":"iana","extensions":["uvp","uvvp"]},"video/vnd.dece.sd":{"source":"iana","extensions":["uvs","uvvs"]},"video/vnd.dece.video":{"source":"iana","extensions":["uvv","uvvv"]},"video/vnd.directv.mpeg":{"source":"iana"},"video/vnd.directv.mpeg-tts":{"source":"iana"},"video/vnd.dlna.mpeg-tts":{"source":"iana"},"video/vnd.dvb.file":{"source":"iana","extensions":["dvb"]},"video/vnd.fvt":{"source":"iana","extensions":["fvt"]},"video/vnd.hns.video":{"source":"iana"},"video/vnd.iptvforum.1dparityfec-1010":{"source":"iana"},"video/vnd.iptvforum.1dparityfec-2005":{"source":"iana"},"video/vnd.iptvforum.2dparityfec-1010":{"source":"iana"},"video/vnd.iptvforum.2dparityfec-2005":{"source":"iana"},"video/vnd.iptvforum.ttsavc":{"source":"iana"},"video/vnd.iptvforum.ttsmpeg2":{"source":"iana"},"video/vnd.motorola.video":{"source":"iana"},"video/vnd.motorola.videop":{"source":"iana"},"video/vnd.mpegurl":{"source":"iana","extensions":["mxu","m4u"]},"video/vnd.ms-playready.media.pyv":{"source":"iana","extensions":["pyv"]},"video/vnd.nokia.interleaved-multimedia":{"source":"iana"},"video/vnd.nokia.mp4vr":{"source":"iana"},"video/vnd.nokia.videovoip":{"source":"iana"},"video/vnd.objectvideo":{"source":"iana"},"video/vnd.radgamettools.bink":{"source":"iana"},"video/vnd.radgamettools.smacker":{"source":"iana"},"video/vnd.sealed.mpeg1":{"source":"iana"},"video/vnd.sealed.mpeg4":{"source":"iana"},"video/vnd.sealed.swf":{"source":"iana"},"video/vnd.sealedmedia.softseal.mov":{"source":"iana"},"video/vnd.uvvu.mp4":{"source":"iana","extensions":["uvu","uvvu"]},"video/vnd.vivo":{"source":"iana","extensions":["viv"]},"video/vnd.youtube.yt":{"source":"iana"},"video/vp8":{"source":"iana"},"video/vp9":{"source":"iana"},"video/webm":{"source":"apache","compressible":false,"extensions":["webm"]},"video/x-f4v":{"source":"apache","extensions":["f4v"]},"video/x-fli":{"source":"apache","extensions":["fli"]},"video/x-flv":{"source":"apache","compressible":false,"extensions":["flv"]},"video/x-m4v":{"source":"apache","extensions":["m4v"]},"video/x-matroska":{"source":"apache","compressible":false,"extensions":["mkv","mk3d","mks"]},"video/x-mng":{"source":"apache","extensions":["mng"]},"video/x-ms-asf":{"source":"apache","extensions":["asf","asx"]},"video/x-ms-vob":{"source":"apache","extensions":["vob"]},"video/x-ms-wm":{"source":"apache","extensions":["wm"]},"video/x-ms-wmv":{"source":"apache","compressible":false,"extensions":["wmv"]},"video/x-ms-wmx":{"source":"apache","extensions":["wmx"]},"video/x-ms-wvx":{"source":"apache","extensions":["wvx"]},"video/x-msvideo":{"source":"apache","extensions":["avi"]},"video/x-sgi-movie":{"source":"apache","extensions":["movie"]},"video/x-smv":{"source":"apache","extensions":["smv"]},"x-conference/x-cooltalk":{"source":"apache","extensions":["ice"]},"x-shader/x-fragment":{"compressible":true},"x-shader/x-vertex":{"compressible":true}};
+module.exports = {"application/1d-interleaved-parityfec":{"source":"iana"},"application/3gpdash-qoe-report+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/3gpp-ims+xml":{"source":"iana","compressible":true},"application/3gpphal+json":{"source":"iana","compressible":true},"application/3gpphalforms+json":{"source":"iana","compressible":true},"application/a2l":{"source":"iana"},"application/ace+cbor":{"source":"iana"},"application/activemessage":{"source":"iana"},"application/activity+json":{"source":"iana","compressible":true},"application/alto-costmap+json":{"source":"iana","compressible":true},"application/alto-costmapfilter+json":{"source":"iana","compressible":true},"application/alto-directory+json":{"source":"iana","compressible":true},"application/alto-endpointcost+json":{"source":"iana","compressible":true},"application/alto-endpointcostparams+json":{"source":"iana","compressible":true},"application/alto-endpointprop+json":{"source":"iana","compressible":true},"application/alto-endpointpropparams+json":{"source":"iana","compressible":true},"application/alto-error+json":{"source":"iana","compressible":true},"application/alto-networkmap+json":{"source":"iana","compressible":true},"application/alto-networkmapfilter+json":{"source":"iana","compressible":true},"application/alto-updatestreamcontrol+json":{"source":"iana","compressible":true},"application/alto-updatestreamparams+json":{"source":"iana","compressible":true},"application/aml":{"source":"iana"},"application/andrew-inset":{"source":"iana","extensions":["ez"]},"application/applefile":{"source":"iana"},"application/applixware":{"source":"apache","extensions":["aw"]},"application/at+jwt":{"source":"iana"},"application/atf":{"source":"iana"},"application/atfx":{"source":"iana"},"application/atom+xml":{"source":"iana","compressible":true,"extensions":["atom"]},"application/atomcat+xml":{"source":"iana","compressible":true,"extensions":["atomcat"]},"application/atomdeleted+xml":{"source":"iana","compressible":true,"extensions":["atomdeleted"]},"application/atomicmail":{"source":"iana"},"application/atomsvc+xml":{"source":"iana","compressible":true,"extensions":["atomsvc"]},"application/atsc-dwd+xml":{"source":"iana","compressible":true,"extensions":["dwd"]},"application/atsc-dynamic-event-message":{"source":"iana"},"application/atsc-held+xml":{"source":"iana","compressible":true,"extensions":["held"]},"application/atsc-rdt+json":{"source":"iana","compressible":true},"application/atsc-rsat+xml":{"source":"iana","compressible":true,"extensions":["rsat"]},"application/atxml":{"source":"iana"},"application/auth-policy+xml":{"source":"iana","compressible":true},"application/bacnet-xdd+zip":{"source":"iana","compressible":false},"application/batch-smtp":{"source":"iana"},"application/bdoc":{"compressible":false,"extensions":["bdoc"]},"application/beep+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/calendar+json":{"source":"iana","compressible":true},"application/calendar+xml":{"source":"iana","compressible":true,"extensions":["xcs"]},"application/call-completion":{"source":"iana"},"application/cals-1840":{"source":"iana"},"application/captive+json":{"source":"iana","compressible":true},"application/cbor":{"source":"iana"},"application/cbor-seq":{"source":"iana"},"application/cccex":{"source":"iana"},"application/ccmp+xml":{"source":"iana","compressible":true},"application/ccxml+xml":{"source":"iana","compressible":true,"extensions":["ccxml"]},"application/cdfx+xml":{"source":"iana","compressible":true,"extensions":["cdfx"]},"application/cdmi-capability":{"source":"iana","extensions":["cdmia"]},"application/cdmi-container":{"source":"iana","extensions":["cdmic"]},"application/cdmi-domain":{"source":"iana","extensions":["cdmid"]},"application/cdmi-object":{"source":"iana","extensions":["cdmio"]},"application/cdmi-queue":{"source":"iana","extensions":["cdmiq"]},"application/cdni":{"source":"iana"},"application/cea":{"source":"iana"},"application/cea-2018+xml":{"source":"iana","compressible":true},"application/cellml+xml":{"source":"iana","compressible":true},"application/cfw":{"source":"iana"},"application/city+json":{"source":"iana","compressible":true},"application/clr":{"source":"iana"},"application/clue+xml":{"source":"iana","compressible":true},"application/clue_info+xml":{"source":"iana","compressible":true},"application/cms":{"source":"iana"},"application/cnrp+xml":{"source":"iana","compressible":true},"application/coap-group+json":{"source":"iana","compressible":true},"application/coap-payload":{"source":"iana"},"application/commonground":{"source":"iana"},"application/conference-info+xml":{"source":"iana","compressible":true},"application/cose":{"source":"iana"},"application/cose-key":{"source":"iana"},"application/cose-key-set":{"source":"iana"},"application/cpl+xml":{"source":"iana","compressible":true,"extensions":["cpl"]},"application/csrattrs":{"source":"iana"},"application/csta+xml":{"source":"iana","compressible":true},"application/cstadata+xml":{"source":"iana","compressible":true},"application/csvm+json":{"source":"iana","compressible":true},"application/cu-seeme":{"source":"apache","extensions":["cu"]},"application/cwt":{"source":"iana"},"application/cybercash":{"source":"iana"},"application/dart":{"compressible":true},"application/dash+xml":{"source":"iana","compressible":true,"extensions":["mpd"]},"application/dash-patch+xml":{"source":"iana","compressible":true,"extensions":["mpp"]},"application/dashdelta":{"source":"iana"},"application/davmount+xml":{"source":"iana","compressible":true,"extensions":["davmount"]},"application/dca-rft":{"source":"iana"},"application/dcd":{"source":"iana"},"application/dec-dx":{"source":"iana"},"application/dialog-info+xml":{"source":"iana","compressible":true},"application/dicom":{"source":"iana"},"application/dicom+json":{"source":"iana","compressible":true},"application/dicom+xml":{"source":"iana","compressible":true},"application/dii":{"source":"iana"},"application/dit":{"source":"iana"},"application/dns":{"source":"iana"},"application/dns+json":{"source":"iana","compressible":true},"application/dns-message":{"source":"iana"},"application/docbook+xml":{"source":"apache","compressible":true,"extensions":["dbk"]},"application/dots+cbor":{"source":"iana"},"application/dskpp+xml":{"source":"iana","compressible":true},"application/dssc+der":{"source":"iana","extensions":["dssc"]},"application/dssc+xml":{"source":"iana","compressible":true,"extensions":["xdssc"]},"application/dvcs":{"source":"iana"},"application/ecmascript":{"source":"iana","compressible":true,"extensions":["es","ecma"]},"application/edi-consent":{"source":"iana"},"application/edi-x12":{"source":"iana","compressible":false},"application/edifact":{"source":"iana","compressible":false},"application/efi":{"source":"iana"},"application/elm+json":{"source":"iana","charset":"UTF-8","compressible":true},"application/elm+xml":{"source":"iana","compressible":true},"application/emergencycalldata.cap+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/emergencycalldata.comment+xml":{"source":"iana","compressible":true},"application/emergencycalldata.control+xml":{"source":"iana","compressible":true},"application/emergencycalldata.deviceinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.ecall.msd":{"source":"iana"},"application/emergencycalldata.providerinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.serviceinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.subscriberinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.veds+xml":{"source":"iana","compressible":true},"application/emma+xml":{"source":"iana","compressible":true,"extensions":["emma"]},"application/emotionml+xml":{"source":"iana","compressible":true,"extensions":["emotionml"]},"application/encaprtp":{"source":"iana"},"application/epp+xml":{"source":"iana","compressible":true},"application/epub+zip":{"source":"iana","compressible":false,"extensions":["epub"]},"application/eshop":{"source":"iana"},"application/exi":{"source":"iana","extensions":["exi"]},"application/expect-ct-report+json":{"source":"iana","compressible":true},"application/express":{"source":"iana","extensions":["exp"]},"application/fastinfoset":{"source":"iana"},"application/fastsoap":{"source":"iana"},"application/fdt+xml":{"source":"iana","compressible":true,"extensions":["fdt"]},"application/fhir+json":{"source":"iana","charset":"UTF-8","compressible":true},"application/fhir+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/fido.trusted-apps+json":{"compressible":true},"application/fits":{"source":"iana"},"application/flexfec":{"source":"iana"},"application/font-sfnt":{"source":"iana"},"application/font-tdpfr":{"source":"iana","extensions":["pfr"]},"application/font-woff":{"source":"iana","compressible":false},"application/framework-attributes+xml":{"source":"iana","compressible":true},"application/geo+json":{"source":"iana","compressible":true,"extensions":["geojson"]},"application/geo+json-seq":{"source":"iana"},"application/geopackage+sqlite3":{"source":"iana"},"application/geoxacml+xml":{"source":"iana","compressible":true},"application/gltf-buffer":{"source":"iana"},"application/gml+xml":{"source":"iana","compressible":true,"extensions":["gml"]},"application/gpx+xml":{"source":"apache","compressible":true,"extensions":["gpx"]},"application/gxf":{"source":"apache","extensions":["gxf"]},"application/gzip":{"source":"iana","compressible":false,"extensions":["gz"]},"application/h224":{"source":"iana"},"application/held+xml":{"source":"iana","compressible":true},"application/hjson":{"extensions":["hjson"]},"application/http":{"source":"iana"},"application/hyperstudio":{"source":"iana","extensions":["stk"]},"application/ibe-key-request+xml":{"source":"iana","compressible":true},"application/ibe-pkg-reply+xml":{"source":"iana","compressible":true},"application/ibe-pp-data":{"source":"iana"},"application/iges":{"source":"iana"},"application/im-iscomposing+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/index":{"source":"iana"},"application/index.cmd":{"source":"iana"},"application/index.obj":{"source":"iana"},"application/index.response":{"source":"iana"},"application/index.vnd":{"source":"iana"},"application/inkml+xml":{"source":"iana","compressible":true,"extensions":["ink","inkml"]},"application/iotp":{"source":"iana"},"application/ipfix":{"source":"iana","extensions":["ipfix"]},"application/ipp":{"source":"iana"},"application/isup":{"source":"iana"},"application/its+xml":{"source":"iana","compressible":true,"extensions":["its"]},"application/java-archive":{"source":"apache","compressible":false,"extensions":["jar","war","ear"]},"application/java-serialized-object":{"source":"apache","compressible":false,"extensions":["ser"]},"application/java-vm":{"source":"apache","compressible":false,"extensions":["class"]},"application/javascript":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["js","mjs"]},"application/jf2feed+json":{"source":"iana","compressible":true},"application/jose":{"source":"iana"},"application/jose+json":{"source":"iana","compressible":true},"application/jrd+json":{"source":"iana","compressible":true},"application/jscalendar+json":{"source":"iana","compressible":true},"application/json":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["json","map"]},"application/json-patch+json":{"source":"iana","compressible":true},"application/json-seq":{"source":"iana"},"application/json5":{"extensions":["json5"]},"application/jsonml+json":{"source":"apache","compressible":true,"extensions":["jsonml"]},"application/jwk+json":{"source":"iana","compressible":true},"application/jwk-set+json":{"source":"iana","compressible":true},"application/jwt":{"source":"iana"},"application/kpml-request+xml":{"source":"iana","compressible":true},"application/kpml-response+xml":{"source":"iana","compressible":true},"application/ld+json":{"source":"iana","compressible":true,"extensions":["jsonld"]},"application/lgr+xml":{"source":"iana","compressible":true,"extensions":["lgr"]},"application/link-format":{"source":"iana"},"application/load-control+xml":{"source":"iana","compressible":true},"application/lost+xml":{"source":"iana","compressible":true,"extensions":["lostxml"]},"application/lostsync+xml":{"source":"iana","compressible":true},"application/lpf+zip":{"source":"iana","compressible":false},"application/lxf":{"source":"iana"},"application/mac-binhex40":{"source":"iana","extensions":["hqx"]},"application/mac-compactpro":{"source":"apache","extensions":["cpt"]},"application/macwriteii":{"source":"iana"},"application/mads+xml":{"source":"iana","compressible":true,"extensions":["mads"]},"application/manifest+json":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["webmanifest"]},"application/marc":{"source":"iana","extensions":["mrc"]},"application/marcxml+xml":{"source":"iana","compressible":true,"extensions":["mrcx"]},"application/mathematica":{"source":"iana","extensions":["ma","nb","mb"]},"application/mathml+xml":{"source":"iana","compressible":true,"extensions":["mathml"]},"application/mathml-content+xml":{"source":"iana","compressible":true},"application/mathml-presentation+xml":{"source":"iana","compressible":true},"application/mbms-associated-procedure-description+xml":{"source":"iana","compressible":true},"application/mbms-deregister+xml":{"source":"iana","compressible":true},"application/mbms-envelope+xml":{"source":"iana","compressible":true},"application/mbms-msk+xml":{"source":"iana","compressible":true},"application/mbms-msk-response+xml":{"source":"iana","compressible":true},"application/mbms-protection-description+xml":{"source":"iana","compressible":true},"application/mbms-reception-report+xml":{"source":"iana","compressible":true},"application/mbms-register+xml":{"source":"iana","compressible":true},"application/mbms-register-response+xml":{"source":"iana","compressible":true},"application/mbms-schedule+xml":{"source":"iana","compressible":true},"application/mbms-user-service-description+xml":{"source":"iana","compressible":true},"application/mbox":{"source":"iana","extensions":["mbox"]},"application/media-policy-dataset+xml":{"source":"iana","compressible":true,"extensions":["mpf"]},"application/media_control+xml":{"source":"iana","compressible":true},"application/mediaservercontrol+xml":{"source":"iana","compressible":true,"extensions":["mscml"]},"application/merge-patch+json":{"source":"iana","compressible":true},"application/metalink+xml":{"source":"apache","compressible":true,"extensions":["metalink"]},"application/metalink4+xml":{"source":"iana","compressible":true,"extensions":["meta4"]},"application/mets+xml":{"source":"iana","compressible":true,"extensions":["mets"]},"application/mf4":{"source":"iana"},"application/mikey":{"source":"iana"},"application/mipc":{"source":"iana"},"application/missing-blocks+cbor-seq":{"source":"iana"},"application/mmt-aei+xml":{"source":"iana","compressible":true,"extensions":["maei"]},"application/mmt-usd+xml":{"source":"iana","compressible":true,"extensions":["musd"]},"application/mods+xml":{"source":"iana","compressible":true,"extensions":["mods"]},"application/moss-keys":{"source":"iana"},"application/moss-signature":{"source":"iana"},"application/mosskey-data":{"source":"iana"},"application/mosskey-request":{"source":"iana"},"application/mp21":{"source":"iana","extensions":["m21","mp21"]},"application/mp4":{"source":"iana","extensions":["mp4s","m4p"]},"application/mpeg4-generic":{"source":"iana"},"application/mpeg4-iod":{"source":"iana"},"application/mpeg4-iod-xmt":{"source":"iana"},"application/mrb-consumer+xml":{"source":"iana","compressible":true},"application/mrb-publish+xml":{"source":"iana","compressible":true},"application/msc-ivr+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/msc-mixer+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/msword":{"source":"iana","compressible":false,"extensions":["doc","dot"]},"application/mud+json":{"source":"iana","compressible":true},"application/multipart-core":{"source":"iana"},"application/mxf":{"source":"iana","extensions":["mxf"]},"application/n-quads":{"source":"iana","extensions":["nq"]},"application/n-triples":{"source":"iana","extensions":["nt"]},"application/nasdata":{"source":"iana"},"application/news-checkgroups":{"source":"iana","charset":"US-ASCII"},"application/news-groupinfo":{"source":"iana","charset":"US-ASCII"},"application/news-transmission":{"source":"iana"},"application/nlsml+xml":{"source":"iana","compressible":true},"application/node":{"source":"iana","extensions":["cjs"]},"application/nss":{"source":"iana"},"application/oauth-authz-req+jwt":{"source":"iana"},"application/oblivious-dns-message":{"source":"iana"},"application/ocsp-request":{"source":"iana"},"application/ocsp-response":{"source":"iana"},"application/octet-stream":{"source":"iana","compressible":false,"extensions":["bin","dms","lrf","mar","so","dist","distz","pkg","bpk","dump","elc","deploy","exe","dll","deb","dmg","iso","img","msi","msp","msm","buffer"]},"application/oda":{"source":"iana","extensions":["oda"]},"application/odm+xml":{"source":"iana","compressible":true},"application/odx":{"source":"iana"},"application/oebps-package+xml":{"source":"iana","compressible":true,"extensions":["opf"]},"application/ogg":{"source":"iana","compressible":false,"extensions":["ogx"]},"application/omdoc+xml":{"source":"apache","compressible":true,"extensions":["omdoc"]},"application/onenote":{"source":"apache","extensions":["onetoc","onetoc2","onetmp","onepkg"]},"application/opc-nodeset+xml":{"source":"iana","compressible":true},"application/oscore":{"source":"iana"},"application/oxps":{"source":"iana","extensions":["oxps"]},"application/p21":{"source":"iana"},"application/p21+zip":{"source":"iana","compressible":false},"application/p2p-overlay+xml":{"source":"iana","compressible":true,"extensions":["relo"]},"application/parityfec":{"source":"iana"},"application/passport":{"source":"iana"},"application/patch-ops-error+xml":{"source":"iana","compressible":true,"extensions":["xer"]},"application/pdf":{"source":"iana","compressible":false,"extensions":["pdf"]},"application/pdx":{"source":"iana"},"application/pem-certificate-chain":{"source":"iana"},"application/pgp-encrypted":{"source":"iana","compressible":false,"extensions":["pgp"]},"application/pgp-keys":{"source":"iana","extensions":["asc"]},"application/pgp-signature":{"source":"iana","extensions":["asc","sig"]},"application/pics-rules":{"source":"apache","extensions":["prf"]},"application/pidf+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/pidf-diff+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/pkcs10":{"source":"iana","extensions":["p10"]},"application/pkcs12":{"source":"iana"},"application/pkcs7-mime":{"source":"iana","extensions":["p7m","p7c"]},"application/pkcs7-signature":{"source":"iana","extensions":["p7s"]},"application/pkcs8":{"source":"iana","extensions":["p8"]},"application/pkcs8-encrypted":{"source":"iana"},"application/pkix-attr-cert":{"source":"iana","extensions":["ac"]},"application/pkix-cert":{"source":"iana","extensions":["cer"]},"application/pkix-crl":{"source":"iana","extensions":["crl"]},"application/pkix-pkipath":{"source":"iana","extensions":["pkipath"]},"application/pkixcmp":{"source":"iana","extensions":["pki"]},"application/pls+xml":{"source":"iana","compressible":true,"extensions":["pls"]},"application/poc-settings+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/postscript":{"source":"iana","compressible":true,"extensions":["ai","eps","ps"]},"application/ppsp-tracker+json":{"source":"iana","compressible":true},"application/problem+json":{"source":"iana","compressible":true},"application/problem+xml":{"source":"iana","compressible":true},"application/provenance+xml":{"source":"iana","compressible":true,"extensions":["provx"]},"application/prs.alvestrand.titrax-sheet":{"source":"iana"},"application/prs.cww":{"source":"iana","extensions":["cww"]},"application/prs.cyn":{"source":"iana","charset":"7-BIT"},"application/prs.hpub+zip":{"source":"iana","compressible":false},"application/prs.nprend":{"source":"iana"},"application/prs.plucker":{"source":"iana"},"application/prs.rdf-xml-crypt":{"source":"iana"},"application/prs.xsf+xml":{"source":"iana","compressible":true},"application/pskc+xml":{"source":"iana","compressible":true,"extensions":["pskcxml"]},"application/pvd+json":{"source":"iana","compressible":true},"application/qsig":{"source":"iana"},"application/raml+yaml":{"compressible":true,"extensions":["raml"]},"application/raptorfec":{"source":"iana"},"application/rdap+json":{"source":"iana","compressible":true},"application/rdf+xml":{"source":"iana","compressible":true,"extensions":["rdf","owl"]},"application/reginfo+xml":{"source":"iana","compressible":true,"extensions":["rif"]},"application/relax-ng-compact-syntax":{"source":"iana","extensions":["rnc"]},"application/remote-printing":{"source":"iana"},"application/reputon+json":{"source":"iana","compressible":true},"application/resource-lists+xml":{"source":"iana","compressible":true,"extensions":["rl"]},"application/resource-lists-diff+xml":{"source":"iana","compressible":true,"extensions":["rld"]},"application/rfc+xml":{"source":"iana","compressible":true},"application/riscos":{"source":"iana"},"application/rlmi+xml":{"source":"iana","compressible":true},"application/rls-services+xml":{"source":"iana","compressible":true,"extensions":["rs"]},"application/route-apd+xml":{"source":"iana","compressible":true,"extensions":["rapd"]},"application/route-s-tsid+xml":{"source":"iana","compressible":true,"extensions":["sls"]},"application/route-usd+xml":{"source":"iana","compressible":true,"extensions":["rusd"]},"application/rpki-ghostbusters":{"source":"iana","extensions":["gbr"]},"application/rpki-manifest":{"source":"iana","extensions":["mft"]},"application/rpki-publication":{"source":"iana"},"application/rpki-roa":{"source":"iana","extensions":["roa"]},"application/rpki-updown":{"source":"iana"},"application/rsd+xml":{"source":"apache","compressible":true,"extensions":["rsd"]},"application/rss+xml":{"source":"apache","compressible":true,"extensions":["rss"]},"application/rtf":{"source":"iana","compressible":true,"extensions":["rtf"]},"application/rtploopback":{"source":"iana"},"application/rtx":{"source":"iana"},"application/samlassertion+xml":{"source":"iana","compressible":true},"application/samlmetadata+xml":{"source":"iana","compressible":true},"application/sarif+json":{"source":"iana","compressible":true},"application/sarif-external-properties+json":{"source":"iana","compressible":true},"application/sbe":{"source":"iana"},"application/sbml+xml":{"source":"iana","compressible":true,"extensions":["sbml"]},"application/scaip+xml":{"source":"iana","compressible":true},"application/scim+json":{"source":"iana","compressible":true},"application/scvp-cv-request":{"source":"iana","extensions":["scq"]},"application/scvp-cv-response":{"source":"iana","extensions":["scs"]},"application/scvp-vp-request":{"source":"iana","extensions":["spq"]},"application/scvp-vp-response":{"source":"iana","extensions":["spp"]},"application/sdp":{"source":"iana","extensions":["sdp"]},"application/secevent+jwt":{"source":"iana"},"application/senml+cbor":{"source":"iana"},"application/senml+json":{"source":"iana","compressible":true},"application/senml+xml":{"source":"iana","compressible":true,"extensions":["senmlx"]},"application/senml-etch+cbor":{"source":"iana"},"application/senml-etch+json":{"source":"iana","compressible":true},"application/senml-exi":{"source":"iana"},"application/sensml+cbor":{"source":"iana"},"application/sensml+json":{"source":"iana","compressible":true},"application/sensml+xml":{"source":"iana","compressible":true,"extensions":["sensmlx"]},"application/sensml-exi":{"source":"iana"},"application/sep+xml":{"source":"iana","compressible":true},"application/sep-exi":{"source":"iana"},"application/session-info":{"source":"iana"},"application/set-payment":{"source":"iana"},"application/set-payment-initiation":{"source":"iana","extensions":["setpay"]},"application/set-registration":{"source":"iana"},"application/set-registration-initiation":{"source":"iana","extensions":["setreg"]},"application/sgml":{"source":"iana"},"application/sgml-open-catalog":{"source":"iana"},"application/shf+xml":{"source":"iana","compressible":true,"extensions":["shf"]},"application/sieve":{"source":"iana","extensions":["siv","sieve"]},"application/simple-filter+xml":{"source":"iana","compressible":true},"application/simple-message-summary":{"source":"iana"},"application/simplesymbolcontainer":{"source":"iana"},"application/sipc":{"source":"iana"},"application/slate":{"source":"iana"},"application/smil":{"source":"iana"},"application/smil+xml":{"source":"iana","compressible":true,"extensions":["smi","smil"]},"application/smpte336m":{"source":"iana"},"application/soap+fastinfoset":{"source":"iana"},"application/soap+xml":{"source":"iana","compressible":true},"application/sparql-query":{"source":"iana","extensions":["rq"]},"application/sparql-results+xml":{"source":"iana","compressible":true,"extensions":["srx"]},"application/spdx+json":{"source":"iana","compressible":true},"application/spirits-event+xml":{"source":"iana","compressible":true},"application/sql":{"source":"iana"},"application/srgs":{"source":"iana","extensions":["gram"]},"application/srgs+xml":{"source":"iana","compressible":true,"extensions":["grxml"]},"application/sru+xml":{"source":"iana","compressible":true,"extensions":["sru"]},"application/ssdl+xml":{"source":"apache","compressible":true,"extensions":["ssdl"]},"application/ssml+xml":{"source":"iana","compressible":true,"extensions":["ssml"]},"application/stix+json":{"source":"iana","compressible":true},"application/swid+xml":{"source":"iana","compressible":true,"extensions":["swidtag"]},"application/tamp-apex-update":{"source":"iana"},"application/tamp-apex-update-confirm":{"source":"iana"},"application/tamp-community-update":{"source":"iana"},"application/tamp-community-update-confirm":{"source":"iana"},"application/tamp-error":{"source":"iana"},"application/tamp-sequence-adjust":{"source":"iana"},"application/tamp-sequence-adjust-confirm":{"source":"iana"},"application/tamp-status-query":{"source":"iana"},"application/tamp-status-response":{"source":"iana"},"application/tamp-update":{"source":"iana"},"application/tamp-update-confirm":{"source":"iana"},"application/tar":{"compressible":true},"application/taxii+json":{"source":"iana","compressible":true},"application/td+json":{"source":"iana","compressible":true},"application/tei+xml":{"source":"iana","compressible":true,"extensions":["tei","teicorpus"]},"application/tetra_isi":{"source":"iana"},"application/thraud+xml":{"source":"iana","compressible":true,"extensions":["tfi"]},"application/timestamp-query":{"source":"iana"},"application/timestamp-reply":{"source":"iana"},"application/timestamped-data":{"source":"iana","extensions":["tsd"]},"application/tlsrpt+gzip":{"source":"iana"},"application/tlsrpt+json":{"source":"iana","compressible":true},"application/tnauthlist":{"source":"iana"},"application/token-introspection+jwt":{"source":"iana"},"application/toml":{"compressible":true,"extensions":["toml"]},"application/trickle-ice-sdpfrag":{"source":"iana"},"application/trig":{"source":"iana","extensions":["trig"]},"application/ttml+xml":{"source":"iana","compressible":true,"extensions":["ttml"]},"application/tve-trigger":{"source":"iana"},"application/tzif":{"source":"iana"},"application/tzif-leap":{"source":"iana"},"application/ubjson":{"compressible":false,"extensions":["ubj"]},"application/ulpfec":{"source":"iana"},"application/urc-grpsheet+xml":{"source":"iana","compressible":true},"application/urc-ressheet+xml":{"source":"iana","compressible":true,"extensions":["rsheet"]},"application/urc-targetdesc+xml":{"source":"iana","compressible":true,"extensions":["td"]},"application/urc-uisocketdesc+xml":{"source":"iana","compressible":true},"application/vcard+json":{"source":"iana","compressible":true},"application/vcard+xml":{"source":"iana","compressible":true},"application/vemmi":{"source":"iana"},"application/vividence.scriptfile":{"source":"apache"},"application/vnd.1000minds.decision-model+xml":{"source":"iana","compressible":true,"extensions":["1km"]},"application/vnd.3gpp-prose+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-prose-pc3ch+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-v2x-local-service-information":{"source":"iana"},"application/vnd.3gpp.5gnas":{"source":"iana"},"application/vnd.3gpp.access-transfer-events+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.bsf+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.gmop+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.gtpc":{"source":"iana"},"application/vnd.3gpp.interworking-data":{"source":"iana"},"application/vnd.3gpp.lpp":{"source":"iana"},"application/vnd.3gpp.mc-signalling-ear":{"source":"iana"},"application/vnd.3gpp.mcdata-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-payload":{"source":"iana"},"application/vnd.3gpp.mcdata-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-signalling":{"source":"iana"},"application/vnd.3gpp.mcdata-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-floor-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-signed+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-ue-init-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-affiliation-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-transmission-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mid-call+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.ngap":{"source":"iana"},"application/vnd.3gpp.pfcp":{"source":"iana"},"application/vnd.3gpp.pic-bw-large":{"source":"iana","extensions":["plb"]},"application/vnd.3gpp.pic-bw-small":{"source":"iana","extensions":["psb"]},"application/vnd.3gpp.pic-bw-var":{"source":"iana","extensions":["pvb"]},"application/vnd.3gpp.s1ap":{"source":"iana"},"application/vnd.3gpp.sms":{"source":"iana"},"application/vnd.3gpp.sms+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.srvcc-ext+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.srvcc-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.state-and-event-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.ussd+xml":{"source":"iana","compressible":true},"application/vnd.3gpp2.bcmcsinfo+xml":{"source":"iana","compressible":true},"application/vnd.3gpp2.sms":{"source":"iana"},"application/vnd.3gpp2.tcap":{"source":"iana","extensions":["tcap"]},"application/vnd.3lightssoftware.imagescal":{"source":"iana"},"application/vnd.3m.post-it-notes":{"source":"iana","extensions":["pwn"]},"application/vnd.accpac.simply.aso":{"source":"iana","extensions":["aso"]},"application/vnd.accpac.simply.imp":{"source":"iana","extensions":["imp"]},"application/vnd.acucobol":{"source":"iana","extensions":["acu"]},"application/vnd.acucorp":{"source":"iana","extensions":["atc","acutc"]},"application/vnd.adobe.air-application-installer-package+zip":{"source":"apache","compressible":false,"extensions":["air"]},"application/vnd.adobe.flash.movie":{"source":"iana"},"application/vnd.adobe.formscentral.fcdt":{"source":"iana","extensions":["fcdt"]},"application/vnd.adobe.fxp":{"source":"iana","extensions":["fxp","fxpl"]},"application/vnd.adobe.partial-upload":{"source":"iana"},"application/vnd.adobe.xdp+xml":{"source":"iana","compressible":true,"extensions":["xdp"]},"application/vnd.adobe.xfdf":{"source":"iana","extensions":["xfdf"]},"application/vnd.aether.imp":{"source":"iana"},"application/vnd.afpc.afplinedata":{"source":"iana"},"application/vnd.afpc.afplinedata-pagedef":{"source":"iana"},"application/vnd.afpc.cmoca-cmresource":{"source":"iana"},"application/vnd.afpc.foca-charset":{"source":"iana"},"application/vnd.afpc.foca-codedfont":{"source":"iana"},"application/vnd.afpc.foca-codepage":{"source":"iana"},"application/vnd.afpc.modca":{"source":"iana"},"application/vnd.afpc.modca-cmtable":{"source":"iana"},"application/vnd.afpc.modca-formdef":{"source":"iana"},"application/vnd.afpc.modca-mediummap":{"source":"iana"},"application/vnd.afpc.modca-objectcontainer":{"source":"iana"},"application/vnd.afpc.modca-overlay":{"source":"iana"},"application/vnd.afpc.modca-pagesegment":{"source":"iana"},"application/vnd.age":{"source":"iana","extensions":["age"]},"application/vnd.ah-barcode":{"source":"iana"},"application/vnd.ahead.space":{"source":"iana","extensions":["ahead"]},"application/vnd.airzip.filesecure.azf":{"source":"iana","extensions":["azf"]},"application/vnd.airzip.filesecure.azs":{"source":"iana","extensions":["azs"]},"application/vnd.amadeus+json":{"source":"iana","compressible":true},"application/vnd.amazon.ebook":{"source":"apache","extensions":["azw"]},"application/vnd.amazon.mobi8-ebook":{"source":"iana"},"application/vnd.americandynamics.acc":{"source":"iana","extensions":["acc"]},"application/vnd.amiga.ami":{"source":"iana","extensions":["ami"]},"application/vnd.amundsen.maze+xml":{"source":"iana","compressible":true},"application/vnd.android.ota":{"source":"iana"},"application/vnd.android.package-archive":{"source":"apache","compressible":false,"extensions":["apk"]},"application/vnd.anki":{"source":"iana"},"application/vnd.anser-web-certificate-issue-initiation":{"source":"iana","extensions":["cii"]},"application/vnd.anser-web-funds-transfer-initiation":{"source":"apache","extensions":["fti"]},"application/vnd.antix.game-component":{"source":"iana","extensions":["atx"]},"application/vnd.apache.arrow.file":{"source":"iana"},"application/vnd.apache.arrow.stream":{"source":"iana"},"application/vnd.apache.thrift.binary":{"source":"iana"},"application/vnd.apache.thrift.compact":{"source":"iana"},"application/vnd.apache.thrift.json":{"source":"iana"},"application/vnd.api+json":{"source":"iana","compressible":true},"application/vnd.aplextor.warrp+json":{"source":"iana","compressible":true},"application/vnd.apothekende.reservation+json":{"source":"iana","compressible":true},"application/vnd.apple.installer+xml":{"source":"iana","compressible":true,"extensions":["mpkg"]},"application/vnd.apple.keynote":{"source":"iana","extensions":["key"]},"application/vnd.apple.mpegurl":{"source":"iana","extensions":["m3u8"]},"application/vnd.apple.numbers":{"source":"iana","extensions":["numbers"]},"application/vnd.apple.pages":{"source":"iana","extensions":["pages"]},"application/vnd.apple.pkpass":{"compressible":false,"extensions":["pkpass"]},"application/vnd.arastra.swi":{"source":"iana"},"application/vnd.aristanetworks.swi":{"source":"iana","extensions":["swi"]},"application/vnd.artisan+json":{"source":"iana","compressible":true},"application/vnd.artsquare":{"source":"iana"},"application/vnd.astraea-software.iota":{"source":"iana","extensions":["iota"]},"application/vnd.audiograph":{"source":"iana","extensions":["aep"]},"application/vnd.autopackage":{"source":"iana"},"application/vnd.avalon+json":{"source":"iana","compressible":true},"application/vnd.avistar+xml":{"source":"iana","compressible":true},"application/vnd.balsamiq.bmml+xml":{"source":"iana","compressible":true,"extensions":["bmml"]},"application/vnd.balsamiq.bmpr":{"source":"iana"},"application/vnd.banana-accounting":{"source":"iana"},"application/vnd.bbf.usp.error":{"source":"iana"},"application/vnd.bbf.usp.msg":{"source":"iana"},"application/vnd.bbf.usp.msg+json":{"source":"iana","compressible":true},"application/vnd.bekitzur-stech+json":{"source":"iana","compressible":true},"application/vnd.bint.med-content":{"source":"iana"},"application/vnd.biopax.rdf+xml":{"source":"iana","compressible":true},"application/vnd.blink-idb-value-wrapper":{"source":"iana"},"application/vnd.blueice.multipass":{"source":"iana","extensions":["mpm"]},"application/vnd.bluetooth.ep.oob":{"source":"iana"},"application/vnd.bluetooth.le.oob":{"source":"iana"},"application/vnd.bmi":{"source":"iana","extensions":["bmi"]},"application/vnd.bpf":{"source":"iana"},"application/vnd.bpf3":{"source":"iana"},"application/vnd.businessobjects":{"source":"iana","extensions":["rep"]},"application/vnd.byu.uapi+json":{"source":"iana","compressible":true},"application/vnd.cab-jscript":{"source":"iana"},"application/vnd.canon-cpdl":{"source":"iana"},"application/vnd.canon-lips":{"source":"iana"},"application/vnd.capasystems-pg+json":{"source":"iana","compressible":true},"application/vnd.cendio.thinlinc.clientconf":{"source":"iana"},"application/vnd.century-systems.tcp_stream":{"source":"iana"},"application/vnd.chemdraw+xml":{"source":"iana","compressible":true,"extensions":["cdxml"]},"application/vnd.chess-pgn":{"source":"iana"},"application/vnd.chipnuts.karaoke-mmd":{"source":"iana","extensions":["mmd"]},"application/vnd.ciedi":{"source":"iana"},"application/vnd.cinderella":{"source":"iana","extensions":["cdy"]},"application/vnd.cirpack.isdn-ext":{"source":"iana"},"application/vnd.citationstyles.style+xml":{"source":"iana","compressible":true,"extensions":["csl"]},"application/vnd.claymore":{"source":"iana","extensions":["cla"]},"application/vnd.cloanto.rp9":{"source":"iana","extensions":["rp9"]},"application/vnd.clonk.c4group":{"source":"iana","extensions":["c4g","c4d","c4f","c4p","c4u"]},"application/vnd.cluetrust.cartomobile-config":{"source":"iana","extensions":["c11amc"]},"application/vnd.cluetrust.cartomobile-config-pkg":{"source":"iana","extensions":["c11amz"]},"application/vnd.coffeescript":{"source":"iana"},"application/vnd.collabio.xodocuments.document":{"source":"iana"},"application/vnd.collabio.xodocuments.document-template":{"source":"iana"},"application/vnd.collabio.xodocuments.presentation":{"source":"iana"},"application/vnd.collabio.xodocuments.presentation-template":{"source":"iana"},"application/vnd.collabio.xodocuments.spreadsheet":{"source":"iana"},"application/vnd.collabio.xodocuments.spreadsheet-template":{"source":"iana"},"application/vnd.collection+json":{"source":"iana","compressible":true},"application/vnd.collection.doc+json":{"source":"iana","compressible":true},"application/vnd.collection.next+json":{"source":"iana","compressible":true},"application/vnd.comicbook+zip":{"source":"iana","compressible":false},"application/vnd.comicbook-rar":{"source":"iana"},"application/vnd.commerce-battelle":{"source":"iana"},"application/vnd.commonspace":{"source":"iana","extensions":["csp"]},"application/vnd.contact.cmsg":{"source":"iana","extensions":["cdbcmsg"]},"application/vnd.coreos.ignition+json":{"source":"iana","compressible":true},"application/vnd.cosmocaller":{"source":"iana","extensions":["cmc"]},"application/vnd.crick.clicker":{"source":"iana","extensions":["clkx"]},"application/vnd.crick.clicker.keyboard":{"source":"iana","extensions":["clkk"]},"application/vnd.crick.clicker.palette":{"source":"iana","extensions":["clkp"]},"application/vnd.crick.clicker.template":{"source":"iana","extensions":["clkt"]},"application/vnd.crick.clicker.wordbank":{"source":"iana","extensions":["clkw"]},"application/vnd.criticaltools.wbs+xml":{"source":"iana","compressible":true,"extensions":["wbs"]},"application/vnd.cryptii.pipe+json":{"source":"iana","compressible":true},"application/vnd.crypto-shade-file":{"source":"iana"},"application/vnd.cryptomator.encrypted":{"source":"iana"},"application/vnd.cryptomator.vault":{"source":"iana"},"application/vnd.ctc-posml":{"source":"iana","extensions":["pml"]},"application/vnd.ctct.ws+xml":{"source":"iana","compressible":true},"application/vnd.cups-pdf":{"source":"iana"},"application/vnd.cups-postscript":{"source":"iana"},"application/vnd.cups-ppd":{"source":"iana","extensions":["ppd"]},"application/vnd.cups-raster":{"source":"iana"},"application/vnd.cups-raw":{"source":"iana"},"application/vnd.curl":{"source":"iana"},"application/vnd.curl.car":{"source":"apache","extensions":["car"]},"application/vnd.curl.pcurl":{"source":"apache","extensions":["pcurl"]},"application/vnd.cyan.dean.root+xml":{"source":"iana","compressible":true},"application/vnd.cybank":{"source":"iana"},"application/vnd.cyclonedx+json":{"source":"iana","compressible":true},"application/vnd.cyclonedx+xml":{"source":"iana","compressible":true},"application/vnd.d2l.coursepackage1p0+zip":{"source":"iana","compressible":false},"application/vnd.d3m-dataset":{"source":"iana"},"application/vnd.d3m-problem":{"source":"iana"},"application/vnd.dart":{"source":"iana","compressible":true,"extensions":["dart"]},"application/vnd.data-vision.rdz":{"source":"iana","extensions":["rdz"]},"application/vnd.datapackage+json":{"source":"iana","compressible":true},"application/vnd.dataresource+json":{"source":"iana","compressible":true},"application/vnd.dbf":{"source":"iana","extensions":["dbf"]},"application/vnd.debian.binary-package":{"source":"iana"},"application/vnd.dece.data":{"source":"iana","extensions":["uvf","uvvf","uvd","uvvd"]},"application/vnd.dece.ttml+xml":{"source":"iana","compressible":true,"extensions":["uvt","uvvt"]},"application/vnd.dece.unspecified":{"source":"iana","extensions":["uvx","uvvx"]},"application/vnd.dece.zip":{"source":"iana","extensions":["uvz","uvvz"]},"application/vnd.denovo.fcselayout-link":{"source":"iana","extensions":["fe_launch"]},"application/vnd.desmume.movie":{"source":"iana"},"application/vnd.dir-bi.plate-dl-nosuffix":{"source":"iana"},"application/vnd.dm.delegation+xml":{"source":"iana","compressible":true},"application/vnd.dna":{"source":"iana","extensions":["dna"]},"application/vnd.document+json":{"source":"iana","compressible":true},"application/vnd.dolby.mlp":{"source":"apache","extensions":["mlp"]},"application/vnd.dolby.mobile.1":{"source":"iana"},"application/vnd.dolby.mobile.2":{"source":"iana"},"application/vnd.doremir.scorecloud-binary-document":{"source":"iana"},"application/vnd.dpgraph":{"source":"iana","extensions":["dpg"]},"application/vnd.dreamfactory":{"source":"iana","extensions":["dfac"]},"application/vnd.drive+json":{"source":"iana","compressible":true},"application/vnd.ds-keypoint":{"source":"apache","extensions":["kpxx"]},"application/vnd.dtg.local":{"source":"iana"},"application/vnd.dtg.local.flash":{"source":"iana"},"application/vnd.dtg.local.html":{"source":"iana"},"application/vnd.dvb.ait":{"source":"iana","extensions":["ait"]},"application/vnd.dvb.dvbisl+xml":{"source":"iana","compressible":true},"application/vnd.dvb.dvbj":{"source":"iana"},"application/vnd.dvb.esgcontainer":{"source":"iana"},"application/vnd.dvb.ipdcdftnotifaccess":{"source":"iana"},"application/vnd.dvb.ipdcesgaccess":{"source":"iana"},"application/vnd.dvb.ipdcesgaccess2":{"source":"iana"},"application/vnd.dvb.ipdcesgpdd":{"source":"iana"},"application/vnd.dvb.ipdcroaming":{"source":"iana"},"application/vnd.dvb.iptv.alfec-base":{"source":"iana"},"application/vnd.dvb.iptv.alfec-enhancement":{"source":"iana"},"application/vnd.dvb.notif-aggregate-root+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-container+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-generic+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-msglist+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-registration-request+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-registration-response+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-init+xml":{"source":"iana","compressible":true},"application/vnd.dvb.pfr":{"source":"iana"},"application/vnd.dvb.service":{"source":"iana","extensions":["svc"]},"application/vnd.dxr":{"source":"iana"},"application/vnd.dynageo":{"source":"iana","extensions":["geo"]},"application/vnd.dzr":{"source":"iana"},"application/vnd.easykaraoke.cdgdownload":{"source":"iana"},"application/vnd.ecdis-update":{"source":"iana"},"application/vnd.ecip.rlp":{"source":"iana"},"application/vnd.eclipse.ditto+json":{"source":"iana","compressible":true},"application/vnd.ecowin.chart":{"source":"iana","extensions":["mag"]},"application/vnd.ecowin.filerequest":{"source":"iana"},"application/vnd.ecowin.fileupdate":{"source":"iana"},"application/vnd.ecowin.series":{"source":"iana"},"application/vnd.ecowin.seriesrequest":{"source":"iana"},"application/vnd.ecowin.seriesupdate":{"source":"iana"},"application/vnd.efi.img":{"source":"iana"},"application/vnd.efi.iso":{"source":"iana"},"application/vnd.emclient.accessrequest+xml":{"source":"iana","compressible":true},"application/vnd.enliven":{"source":"iana","extensions":["nml"]},"application/vnd.enphase.envoy":{"source":"iana"},"application/vnd.eprints.data+xml":{"source":"iana","compressible":true},"application/vnd.epson.esf":{"source":"iana","extensions":["esf"]},"application/vnd.epson.msf":{"source":"iana","extensions":["msf"]},"application/vnd.epson.quickanime":{"source":"iana","extensions":["qam"]},"application/vnd.epson.salt":{"source":"iana","extensions":["slt"]},"application/vnd.epson.ssf":{"source":"iana","extensions":["ssf"]},"application/vnd.ericsson.quickcall":{"source":"iana"},"application/vnd.espass-espass+zip":{"source":"iana","compressible":false},"application/vnd.eszigno3+xml":{"source":"iana","compressible":true,"extensions":["es3","et3"]},"application/vnd.etsi.aoc+xml":{"source":"iana","compressible":true},"application/vnd.etsi.asic-e+zip":{"source":"iana","compressible":false},"application/vnd.etsi.asic-s+zip":{"source":"iana","compressible":false},"application/vnd.etsi.cug+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvcommand+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvdiscovery+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvprofile+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-bc+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-cod+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-npvr+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvservice+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsync+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvueprofile+xml":{"source":"iana","compressible":true},"application/vnd.etsi.mcid+xml":{"source":"iana","compressible":true},"application/vnd.etsi.mheg5":{"source":"iana"},"application/vnd.etsi.overload-control-policy-dataset+xml":{"source":"iana","compressible":true},"application/vnd.etsi.pstn+xml":{"source":"iana","compressible":true},"application/vnd.etsi.sci+xml":{"source":"iana","compressible":true},"application/vnd.etsi.simservs+xml":{"source":"iana","compressible":true},"application/vnd.etsi.timestamp-token":{"source":"iana"},"application/vnd.etsi.tsl+xml":{"source":"iana","compressible":true},"application/vnd.etsi.tsl.der":{"source":"iana"},"application/vnd.eu.kasparian.car+json":{"source":"iana","compressible":true},"application/vnd.eudora.data":{"source":"iana"},"application/vnd.evolv.ecig.profile":{"source":"iana"},"application/vnd.evolv.ecig.settings":{"source":"iana"},"application/vnd.evolv.ecig.theme":{"source":"iana"},"application/vnd.exstream-empower+zip":{"source":"iana","compressible":false},"application/vnd.exstream-package":{"source":"iana"},"application/vnd.ezpix-album":{"source":"iana","extensions":["ez2"]},"application/vnd.ezpix-package":{"source":"iana","extensions":["ez3"]},"application/vnd.f-secure.mobile":{"source":"iana"},"application/vnd.familysearch.gedcom+zip":{"source":"iana","compressible":false},"application/vnd.fastcopy-disk-image":{"source":"iana"},"application/vnd.fdf":{"source":"iana","extensions":["fdf"]},"application/vnd.fdsn.mseed":{"source":"iana","extensions":["mseed"]},"application/vnd.fdsn.seed":{"source":"iana","extensions":["seed","dataless"]},"application/vnd.ffsns":{"source":"iana"},"application/vnd.ficlab.flb+zip":{"source":"iana","compressible":false},"application/vnd.filmit.zfc":{"source":"iana"},"application/vnd.fints":{"source":"iana"},"application/vnd.firemonkeys.cloudcell":{"source":"iana"},"application/vnd.flographit":{"source":"iana","extensions":["gph"]},"application/vnd.fluxtime.clip":{"source":"iana","extensions":["ftc"]},"application/vnd.font-fontforge-sfd":{"source":"iana"},"application/vnd.framemaker":{"source":"iana","extensions":["fm","frame","maker","book"]},"application/vnd.frogans.fnc":{"source":"iana","extensions":["fnc"]},"application/vnd.frogans.ltf":{"source":"iana","extensions":["ltf"]},"application/vnd.fsc.weblaunch":{"source":"iana","extensions":["fsc"]},"application/vnd.fujifilm.fb.docuworks":{"source":"iana"},"application/vnd.fujifilm.fb.docuworks.binder":{"source":"iana"},"application/vnd.fujifilm.fb.docuworks.container":{"source":"iana"},"application/vnd.fujifilm.fb.jfi+xml":{"source":"iana","compressible":true},"application/vnd.fujitsu.oasys":{"source":"iana","extensions":["oas"]},"application/vnd.fujitsu.oasys2":{"source":"iana","extensions":["oa2"]},"application/vnd.fujitsu.oasys3":{"source":"iana","extensions":["oa3"]},"application/vnd.fujitsu.oasysgp":{"source":"iana","extensions":["fg5"]},"application/vnd.fujitsu.oasysprs":{"source":"iana","extensions":["bh2"]},"application/vnd.fujixerox.art-ex":{"source":"iana"},"application/vnd.fujixerox.art4":{"source":"iana"},"application/vnd.fujixerox.ddd":{"source":"iana","extensions":["ddd"]},"application/vnd.fujixerox.docuworks":{"source":"iana","extensions":["xdw"]},"application/vnd.fujixerox.docuworks.binder":{"source":"iana","extensions":["xbd"]},"application/vnd.fujixerox.docuworks.container":{"source":"iana"},"application/vnd.fujixerox.hbpl":{"source":"iana"},"application/vnd.fut-misnet":{"source":"iana"},"application/vnd.futoin+cbor":{"source":"iana"},"application/vnd.futoin+json":{"source":"iana","compressible":true},"application/vnd.fuzzysheet":{"source":"iana","extensions":["fzs"]},"application/vnd.genomatix.tuxedo":{"source":"iana","extensions":["txd"]},"application/vnd.gentics.grd+json":{"source":"iana","compressible":true},"application/vnd.geo+json":{"source":"iana","compressible":true},"application/vnd.geocube+xml":{"source":"iana","compressible":true},"application/vnd.geogebra.file":{"source":"iana","extensions":["ggb"]},"application/vnd.geogebra.slides":{"source":"iana"},"application/vnd.geogebra.tool":{"source":"iana","extensions":["ggt"]},"application/vnd.geometry-explorer":{"source":"iana","extensions":["gex","gre"]},"application/vnd.geonext":{"source":"iana","extensions":["gxt"]},"application/vnd.geoplan":{"source":"iana","extensions":["g2w"]},"application/vnd.geospace":{"source":"iana","extensions":["g3w"]},"application/vnd.gerber":{"source":"iana"},"application/vnd.globalplatform.card-content-mgt":{"source":"iana"},"application/vnd.globalplatform.card-content-mgt-response":{"source":"iana"},"application/vnd.gmx":{"source":"iana","extensions":["gmx"]},"application/vnd.google-apps.document":{"compressible":false,"extensions":["gdoc"]},"application/vnd.google-apps.presentation":{"compressible":false,"extensions":["gslides"]},"application/vnd.google-apps.spreadsheet":{"compressible":false,"extensions":["gsheet"]},"application/vnd.google-earth.kml+xml":{"source":"iana","compressible":true,"extensions":["kml"]},"application/vnd.google-earth.kmz":{"source":"iana","compressible":false,"extensions":["kmz"]},"application/vnd.gov.sk.e-form+xml":{"source":"iana","compressible":true},"application/vnd.gov.sk.e-form+zip":{"source":"iana","compressible":false},"application/vnd.gov.sk.xmldatacontainer+xml":{"source":"iana","compressible":true},"application/vnd.grafeq":{"source":"iana","extensions":["gqf","gqs"]},"application/vnd.gridmp":{"source":"iana"},"application/vnd.groove-account":{"source":"iana","extensions":["gac"]},"application/vnd.groove-help":{"source":"iana","extensions":["ghf"]},"application/vnd.groove-identity-message":{"source":"iana","extensions":["gim"]},"application/vnd.groove-injector":{"source":"iana","extensions":["grv"]},"application/vnd.groove-tool-message":{"source":"iana","extensions":["gtm"]},"application/vnd.groove-tool-template":{"source":"iana","extensions":["tpl"]},"application/vnd.groove-vcard":{"source":"iana","extensions":["vcg"]},"application/vnd.hal+json":{"source":"iana","compressible":true},"application/vnd.hal+xml":{"source":"iana","compressible":true,"extensions":["hal"]},"application/vnd.handheld-entertainment+xml":{"source":"iana","compressible":true,"extensions":["zmm"]},"application/vnd.hbci":{"source":"iana","extensions":["hbci"]},"application/vnd.hc+json":{"source":"iana","compressible":true},"application/vnd.hcl-bireports":{"source":"iana"},"application/vnd.hdt":{"source":"iana"},"application/vnd.heroku+json":{"source":"iana","compressible":true},"application/vnd.hhe.lesson-player":{"source":"iana","extensions":["les"]},"application/vnd.hl7cda+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.hl7v2+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.hp-hpgl":{"source":"iana","extensions":["hpgl"]},"application/vnd.hp-hpid":{"source":"iana","extensions":["hpid"]},"application/vnd.hp-hps":{"source":"iana","extensions":["hps"]},"application/vnd.hp-jlyt":{"source":"iana","extensions":["jlt"]},"application/vnd.hp-pcl":{"source":"iana","extensions":["pcl"]},"application/vnd.hp-pclxl":{"source":"iana","extensions":["pclxl"]},"application/vnd.httphone":{"source":"iana"},"application/vnd.hydrostatix.sof-data":{"source":"iana","extensions":["sfd-hdstx"]},"application/vnd.hyper+json":{"source":"iana","compressible":true},"application/vnd.hyper-item+json":{"source":"iana","compressible":true},"application/vnd.hyperdrive+json":{"source":"iana","compressible":true},"application/vnd.hzn-3d-crossword":{"source":"iana"},"application/vnd.ibm.afplinedata":{"source":"iana"},"application/vnd.ibm.electronic-media":{"source":"iana"},"application/vnd.ibm.minipay":{"source":"iana","extensions":["mpy"]},"application/vnd.ibm.modcap":{"source":"iana","extensions":["afp","listafp","list3820"]},"application/vnd.ibm.rights-management":{"source":"iana","extensions":["irm"]},"application/vnd.ibm.secure-container":{"source":"iana","extensions":["sc"]},"application/vnd.iccprofile":{"source":"iana","extensions":["icc","icm"]},"application/vnd.ieee.1905":{"source":"iana"},"application/vnd.igloader":{"source":"iana","extensions":["igl"]},"application/vnd.imagemeter.folder+zip":{"source":"iana","compressible":false},"application/vnd.imagemeter.image+zip":{"source":"iana","compressible":false},"application/vnd.immervision-ivp":{"source":"iana","extensions":["ivp"]},"application/vnd.immervision-ivu":{"source":"iana","extensions":["ivu"]},"application/vnd.ims.imsccv1p1":{"source":"iana"},"application/vnd.ims.imsccv1p2":{"source":"iana"},"application/vnd.ims.imsccv1p3":{"source":"iana"},"application/vnd.ims.lis.v2.result+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolconsumerprofile+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolproxy+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolproxy.id+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolsettings+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolsettings.simple+json":{"source":"iana","compressible":true},"application/vnd.informedcontrol.rms+xml":{"source":"iana","compressible":true},"application/vnd.informix-visionary":{"source":"iana"},"application/vnd.infotech.project":{"source":"iana"},"application/vnd.infotech.project+xml":{"source":"iana","compressible":true},"application/vnd.innopath.wamp.notification":{"source":"iana"},"application/vnd.insors.igm":{"source":"iana","extensions":["igm"]},"application/vnd.intercon.formnet":{"source":"iana","extensions":["xpw","xpx"]},"application/vnd.intergeo":{"source":"iana","extensions":["i2g"]},"application/vnd.intertrust.digibox":{"source":"iana"},"application/vnd.intertrust.nncp":{"source":"iana"},"application/vnd.intu.qbo":{"source":"iana","extensions":["qbo"]},"application/vnd.intu.qfx":{"source":"iana","extensions":["qfx"]},"application/vnd.iptc.g2.catalogitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.conceptitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.knowledgeitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.newsitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.newsmessage+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.packageitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.planningitem+xml":{"source":"iana","compressible":true},"application/vnd.ipunplugged.rcprofile":{"source":"iana","extensions":["rcprofile"]},"application/vnd.irepository.package+xml":{"source":"iana","compressible":true,"extensions":["irp"]},"application/vnd.is-xpr":{"source":"iana","extensions":["xpr"]},"application/vnd.isac.fcs":{"source":"iana","extensions":["fcs"]},"application/vnd.iso11783-10+zip":{"source":"iana","compressible":false},"application/vnd.jam":{"source":"iana","extensions":["jam"]},"application/vnd.japannet-directory-service":{"source":"iana"},"application/vnd.japannet-jpnstore-wakeup":{"source":"iana"},"application/vnd.japannet-payment-wakeup":{"source":"iana"},"application/vnd.japannet-registration":{"source":"iana"},"application/vnd.japannet-registration-wakeup":{"source":"iana"},"application/vnd.japannet-setstore-wakeup":{"source":"iana"},"application/vnd.japannet-verification":{"source":"iana"},"application/vnd.japannet-verification-wakeup":{"source":"iana"},"application/vnd.jcp.javame.midlet-rms":{"source":"iana","extensions":["rms"]},"application/vnd.jisp":{"source":"iana","extensions":["jisp"]},"application/vnd.joost.joda-archive":{"source":"iana","extensions":["joda"]},"application/vnd.jsk.isdn-ngn":{"source":"iana"},"application/vnd.kahootz":{"source":"iana","extensions":["ktz","ktr"]},"application/vnd.kde.karbon":{"source":"iana","extensions":["karbon"]},"application/vnd.kde.kchart":{"source":"iana","extensions":["chrt"]},"application/vnd.kde.kformula":{"source":"iana","extensions":["kfo"]},"application/vnd.kde.kivio":{"source":"iana","extensions":["flw"]},"application/vnd.kde.kontour":{"source":"iana","extensions":["kon"]},"application/vnd.kde.kpresenter":{"source":"iana","extensions":["kpr","kpt"]},"application/vnd.kde.kspread":{"source":"iana","extensions":["ksp"]},"application/vnd.kde.kword":{"source":"iana","extensions":["kwd","kwt"]},"application/vnd.kenameaapp":{"source":"iana","extensions":["htke"]},"application/vnd.kidspiration":{"source":"iana","extensions":["kia"]},"application/vnd.kinar":{"source":"iana","extensions":["kne","knp"]},"application/vnd.koan":{"source":"iana","extensions":["skp","skd","skt","skm"]},"application/vnd.kodak-descriptor":{"source":"iana","extensions":["sse"]},"application/vnd.las":{"source":"iana"},"application/vnd.las.las+json":{"source":"iana","compressible":true},"application/vnd.las.las+xml":{"source":"iana","compressible":true,"extensions":["lasxml"]},"application/vnd.laszip":{"source":"iana"},"application/vnd.leap+json":{"source":"iana","compressible":true},"application/vnd.liberty-request+xml":{"source":"iana","compressible":true},"application/vnd.llamagraphics.life-balance.desktop":{"source":"iana","extensions":["lbd"]},"application/vnd.llamagraphics.life-balance.exchange+xml":{"source":"iana","compressible":true,"extensions":["lbe"]},"application/vnd.logipipe.circuit+zip":{"source":"iana","compressible":false},"application/vnd.loom":{"source":"iana"},"application/vnd.lotus-1-2-3":{"source":"iana","extensions":["123"]},"application/vnd.lotus-approach":{"source":"iana","extensions":["apr"]},"application/vnd.lotus-freelance":{"source":"iana","extensions":["pre"]},"application/vnd.lotus-notes":{"source":"iana","extensions":["nsf"]},"application/vnd.lotus-organizer":{"source":"iana","extensions":["org"]},"application/vnd.lotus-screencam":{"source":"iana","extensions":["scm"]},"application/vnd.lotus-wordpro":{"source":"iana","extensions":["lwp"]},"application/vnd.macports.portpkg":{"source":"iana","extensions":["portpkg"]},"application/vnd.mapbox-vector-tile":{"source":"iana","extensions":["mvt"]},"application/vnd.marlin.drm.actiontoken+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.conftoken+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.license+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.mdcf":{"source":"iana"},"application/vnd.mason+json":{"source":"iana","compressible":true},"application/vnd.maxar.archive.3tz+zip":{"source":"iana","compressible":false},"application/vnd.maxmind.maxmind-db":{"source":"iana"},"application/vnd.mcd":{"source":"iana","extensions":["mcd"]},"application/vnd.medcalcdata":{"source":"iana","extensions":["mc1"]},"application/vnd.mediastation.cdkey":{"source":"iana","extensions":["cdkey"]},"application/vnd.meridian-slingshot":{"source":"iana"},"application/vnd.mfer":{"source":"iana","extensions":["mwf"]},"application/vnd.mfmp":{"source":"iana","extensions":["mfm"]},"application/vnd.micro+json":{"source":"iana","compressible":true},"application/vnd.micrografx.flo":{"source":"iana","extensions":["flo"]},"application/vnd.micrografx.igx":{"source":"iana","extensions":["igx"]},"application/vnd.microsoft.portable-executable":{"source":"iana"},"application/vnd.microsoft.windows.thumbnail-cache":{"source":"iana"},"application/vnd.miele+json":{"source":"iana","compressible":true},"application/vnd.mif":{"source":"iana","extensions":["mif"]},"application/vnd.minisoft-hp3000-save":{"source":"iana"},"application/vnd.mitsubishi.misty-guard.trustweb":{"source":"iana"},"application/vnd.mobius.daf":{"source":"iana","extensions":["daf"]},"application/vnd.mobius.dis":{"source":"iana","extensions":["dis"]},"application/vnd.mobius.mbk":{"source":"iana","extensions":["mbk"]},"application/vnd.mobius.mqy":{"source":"iana","extensions":["mqy"]},"application/vnd.mobius.msl":{"source":"iana","extensions":["msl"]},"application/vnd.mobius.plc":{"source":"iana","extensions":["plc"]},"application/vnd.mobius.txf":{"source":"iana","extensions":["txf"]},"application/vnd.mophun.application":{"source":"iana","extensions":["mpn"]},"application/vnd.mophun.certificate":{"source":"iana","extensions":["mpc"]},"application/vnd.motorola.flexsuite":{"source":"iana"},"application/vnd.motorola.flexsuite.adsi":{"source":"iana"},"application/vnd.motorola.flexsuite.fis":{"source":"iana"},"application/vnd.motorola.flexsuite.gotap":{"source":"iana"},"application/vnd.motorola.flexsuite.kmr":{"source":"iana"},"application/vnd.motorola.flexsuite.ttc":{"source":"iana"},"application/vnd.motorola.flexsuite.wem":{"source":"iana"},"application/vnd.motorola.iprm":{"source":"iana"},"application/vnd.mozilla.xul+xml":{"source":"iana","compressible":true,"extensions":["xul"]},"application/vnd.ms-3mfdocument":{"source":"iana"},"application/vnd.ms-artgalry":{"source":"iana","extensions":["cil"]},"application/vnd.ms-asf":{"source":"iana"},"application/vnd.ms-cab-compressed":{"source":"iana","extensions":["cab"]},"application/vnd.ms-color.iccprofile":{"source":"apache"},"application/vnd.ms-excel":{"source":"iana","compressible":false,"extensions":["xls","xlm","xla","xlc","xlt","xlw"]},"application/vnd.ms-excel.addin.macroenabled.12":{"source":"iana","extensions":["xlam"]},"application/vnd.ms-excel.sheet.binary.macroenabled.12":{"source":"iana","extensions":["xlsb"]},"application/vnd.ms-excel.sheet.macroenabled.12":{"source":"iana","extensions":["xlsm"]},"application/vnd.ms-excel.template.macroenabled.12":{"source":"iana","extensions":["xltm"]},"application/vnd.ms-fontobject":{"source":"iana","compressible":true,"extensions":["eot"]},"application/vnd.ms-htmlhelp":{"source":"iana","extensions":["chm"]},"application/vnd.ms-ims":{"source":"iana","extensions":["ims"]},"application/vnd.ms-lrm":{"source":"iana","extensions":["lrm"]},"application/vnd.ms-office.activex+xml":{"source":"iana","compressible":true},"application/vnd.ms-officetheme":{"source":"iana","extensions":["thmx"]},"application/vnd.ms-opentype":{"source":"apache","compressible":true},"application/vnd.ms-outlook":{"compressible":false,"extensions":["msg"]},"application/vnd.ms-package.obfuscated-opentype":{"source":"apache"},"application/vnd.ms-pki.seccat":{"source":"apache","extensions":["cat"]},"application/vnd.ms-pki.stl":{"source":"apache","extensions":["stl"]},"application/vnd.ms-playready.initiator+xml":{"source":"iana","compressible":true},"application/vnd.ms-powerpoint":{"source":"iana","compressible":false,"extensions":["ppt","pps","pot"]},"application/vnd.ms-powerpoint.addin.macroenabled.12":{"source":"iana","extensions":["ppam"]},"application/vnd.ms-powerpoint.presentation.macroenabled.12":{"source":"iana","extensions":["pptm"]},"application/vnd.ms-powerpoint.slide.macroenabled.12":{"source":"iana","extensions":["sldm"]},"application/vnd.ms-powerpoint.slideshow.macroenabled.12":{"source":"iana","extensions":["ppsm"]},"application/vnd.ms-powerpoint.template.macroenabled.12":{"source":"iana","extensions":["potm"]},"application/vnd.ms-printdevicecapabilities+xml":{"source":"iana","compressible":true},"application/vnd.ms-printing.printticket+xml":{"source":"apache","compressible":true},"application/vnd.ms-printschematicket+xml":{"source":"iana","compressible":true},"application/vnd.ms-project":{"source":"iana","extensions":["mpp","mpt"]},"application/vnd.ms-tnef":{"source":"iana"},"application/vnd.ms-windows.devicepairing":{"source":"iana"},"application/vnd.ms-windows.nwprinting.oob":{"source":"iana"},"application/vnd.ms-windows.printerpairing":{"source":"iana"},"application/vnd.ms-windows.wsd.oob":{"source":"iana"},"application/vnd.ms-wmdrm.lic-chlg-req":{"source":"iana"},"application/vnd.ms-wmdrm.lic-resp":{"source":"iana"},"application/vnd.ms-wmdrm.meter-chlg-req":{"source":"iana"},"application/vnd.ms-wmdrm.meter-resp":{"source":"iana"},"application/vnd.ms-word.document.macroenabled.12":{"source":"iana","extensions":["docm"]},"application/vnd.ms-word.template.macroenabled.12":{"source":"iana","extensions":["dotm"]},"application/vnd.ms-works":{"source":"iana","extensions":["wps","wks","wcm","wdb"]},"application/vnd.ms-wpl":{"source":"iana","extensions":["wpl"]},"application/vnd.ms-xpsdocument":{"source":"iana","compressible":false,"extensions":["xps"]},"application/vnd.msa-disk-image":{"source":"iana"},"application/vnd.mseq":{"source":"iana","extensions":["mseq"]},"application/vnd.msign":{"source":"iana"},"application/vnd.multiad.creator":{"source":"iana"},"application/vnd.multiad.creator.cif":{"source":"iana"},"application/vnd.music-niff":{"source":"iana"},"application/vnd.musician":{"source":"iana","extensions":["mus"]},"application/vnd.muvee.style":{"source":"iana","extensions":["msty"]},"application/vnd.mynfc":{"source":"iana","extensions":["taglet"]},"application/vnd.nacamar.ybrid+json":{"source":"iana","compressible":true},"application/vnd.ncd.control":{"source":"iana"},"application/vnd.ncd.reference":{"source":"iana"},"application/vnd.nearst.inv+json":{"source":"iana","compressible":true},"application/vnd.nebumind.line":{"source":"iana"},"application/vnd.nervana":{"source":"iana"},"application/vnd.netfpx":{"source":"iana"},"application/vnd.neurolanguage.nlu":{"source":"iana","extensions":["nlu"]},"application/vnd.nimn":{"source":"iana"},"application/vnd.nintendo.nitro.rom":{"source":"iana"},"application/vnd.nintendo.snes.rom":{"source":"iana"},"application/vnd.nitf":{"source":"iana","extensions":["ntf","nitf"]},"application/vnd.noblenet-directory":{"source":"iana","extensions":["nnd"]},"application/vnd.noblenet-sealer":{"source":"iana","extensions":["nns"]},"application/vnd.noblenet-web":{"source":"iana","extensions":["nnw"]},"application/vnd.nokia.catalogs":{"source":"iana"},"application/vnd.nokia.conml+wbxml":{"source":"iana"},"application/vnd.nokia.conml+xml":{"source":"iana","compressible":true},"application/vnd.nokia.iptv.config+xml":{"source":"iana","compressible":true},"application/vnd.nokia.isds-radio-presets":{"source":"iana"},"application/vnd.nokia.landmark+wbxml":{"source":"iana"},"application/vnd.nokia.landmark+xml":{"source":"iana","compressible":true},"application/vnd.nokia.landmarkcollection+xml":{"source":"iana","compressible":true},"application/vnd.nokia.n-gage.ac+xml":{"source":"iana","compressible":true,"extensions":["ac"]},"application/vnd.nokia.n-gage.data":{"source":"iana","extensions":["ngdat"]},"application/vnd.nokia.n-gage.symbian.install":{"source":"iana","extensions":["n-gage"]},"application/vnd.nokia.ncd":{"source":"iana"},"application/vnd.nokia.pcd+wbxml":{"source":"iana"},"application/vnd.nokia.pcd+xml":{"source":"iana","compressible":true},"application/vnd.nokia.radio-preset":{"source":"iana","extensions":["rpst"]},"application/vnd.nokia.radio-presets":{"source":"iana","extensions":["rpss"]},"application/vnd.novadigm.edm":{"source":"iana","extensions":["edm"]},"application/vnd.novadigm.edx":{"source":"iana","extensions":["edx"]},"application/vnd.novadigm.ext":{"source":"iana","extensions":["ext"]},"application/vnd.ntt-local.content-share":{"source":"iana"},"application/vnd.ntt-local.file-transfer":{"source":"iana"},"application/vnd.ntt-local.ogw_remote-access":{"source":"iana"},"application/vnd.ntt-local.sip-ta_remote":{"source":"iana"},"application/vnd.ntt-local.sip-ta_tcp_stream":{"source":"iana"},"application/vnd.oasis.opendocument.chart":{"source":"iana","extensions":["odc"]},"application/vnd.oasis.opendocument.chart-template":{"source":"iana","extensions":["otc"]},"application/vnd.oasis.opendocument.database":{"source":"iana","extensions":["odb"]},"application/vnd.oasis.opendocument.formula":{"source":"iana","extensions":["odf"]},"application/vnd.oasis.opendocument.formula-template":{"source":"iana","extensions":["odft"]},"application/vnd.oasis.opendocument.graphics":{"source":"iana","compressible":false,"extensions":["odg"]},"application/vnd.oasis.opendocument.graphics-template":{"source":"iana","extensions":["otg"]},"application/vnd.oasis.opendocument.image":{"source":"iana","extensions":["odi"]},"application/vnd.oasis.opendocument.image-template":{"source":"iana","extensions":["oti"]},"application/vnd.oasis.opendocument.presentation":{"source":"iana","compressible":false,"extensions":["odp"]},"application/vnd.oasis.opendocument.presentation-template":{"source":"iana","extensions":["otp"]},"application/vnd.oasis.opendocument.spreadsheet":{"source":"iana","compressible":false,"extensions":["ods"]},"application/vnd.oasis.opendocument.spreadsheet-template":{"source":"iana","extensions":["ots"]},"application/vnd.oasis.opendocument.text":{"source":"iana","compressible":false,"extensions":["odt"]},"application/vnd.oasis.opendocument.text-master":{"source":"iana","extensions":["odm"]},"application/vnd.oasis.opendocument.text-template":{"source":"iana","extensions":["ott"]},"application/vnd.oasis.opendocument.text-web":{"source":"iana","extensions":["oth"]},"application/vnd.obn":{"source":"iana"},"application/vnd.ocf+cbor":{"source":"iana"},"application/vnd.oci.image.manifest.v1+json":{"source":"iana","compressible":true},"application/vnd.oftn.l10n+json":{"source":"iana","compressible":true},"application/vnd.oipf.contentaccessdownload+xml":{"source":"iana","compressible":true},"application/vnd.oipf.contentaccessstreaming+xml":{"source":"iana","compressible":true},"application/vnd.oipf.cspg-hexbinary":{"source":"iana"},"application/vnd.oipf.dae.svg+xml":{"source":"iana","compressible":true},"application/vnd.oipf.dae.xhtml+xml":{"source":"iana","compressible":true},"application/vnd.oipf.mippvcontrolmessage+xml":{"source":"iana","compressible":true},"application/vnd.oipf.pae.gem":{"source":"iana"},"application/vnd.oipf.spdiscovery+xml":{"source":"iana","compressible":true},"application/vnd.oipf.spdlist+xml":{"source":"iana","compressible":true},"application/vnd.oipf.ueprofile+xml":{"source":"iana","compressible":true},"application/vnd.oipf.userprofile+xml":{"source":"iana","compressible":true},"application/vnd.olpc-sugar":{"source":"iana","extensions":["xo"]},"application/vnd.oma-scws-config":{"source":"iana"},"application/vnd.oma-scws-http-request":{"source":"iana"},"application/vnd.oma-scws-http-response":{"source":"iana"},"application/vnd.oma.bcast.associated-procedure-parameter+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.drm-trigger+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.imd+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.ltkm":{"source":"iana"},"application/vnd.oma.bcast.notification+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.provisioningtrigger":{"source":"iana"},"application/vnd.oma.bcast.sgboot":{"source":"iana"},"application/vnd.oma.bcast.sgdd+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.sgdu":{"source":"iana"},"application/vnd.oma.bcast.simple-symbol-container":{"source":"iana"},"application/vnd.oma.bcast.smartcard-trigger+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.sprov+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.stkm":{"source":"iana"},"application/vnd.oma.cab-address-book+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-feature-handler+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-pcc+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-subs-invite+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-user-prefs+xml":{"source":"iana","compressible":true},"application/vnd.oma.dcd":{"source":"iana"},"application/vnd.oma.dcdc":{"source":"iana"},"application/vnd.oma.dd2+xml":{"source":"iana","compressible":true,"extensions":["dd2"]},"application/vnd.oma.drm.risd+xml":{"source":"iana","compressible":true},"application/vnd.oma.group-usage-list+xml":{"source":"iana","compressible":true},"application/vnd.oma.lwm2m+cbor":{"source":"iana"},"application/vnd.oma.lwm2m+json":{"source":"iana","compressible":true},"application/vnd.oma.lwm2m+tlv":{"source":"iana"},"application/vnd.oma.pal+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.detailed-progress-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.final-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.groups+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.invocation-descriptor+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.optimized-progress-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.push":{"source":"iana"},"application/vnd.oma.scidm.messages+xml":{"source":"iana","compressible":true},"application/vnd.oma.xcap-directory+xml":{"source":"iana","compressible":true},"application/vnd.omads-email+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omads-file+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omads-folder+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omaloc-supl-init":{"source":"iana"},"application/vnd.onepager":{"source":"iana"},"application/vnd.onepagertamp":{"source":"iana"},"application/vnd.onepagertamx":{"source":"iana"},"application/vnd.onepagertat":{"source":"iana"},"application/vnd.onepagertatp":{"source":"iana"},"application/vnd.onepagertatx":{"source":"iana"},"application/vnd.openblox.game+xml":{"source":"iana","compressible":true,"extensions":["obgx"]},"application/vnd.openblox.game-binary":{"source":"iana"},"application/vnd.openeye.oeb":{"source":"iana"},"application/vnd.openofficeorg.extension":{"source":"apache","extensions":["oxt"]},"application/vnd.openstreetmap.data+xml":{"source":"iana","compressible":true,"extensions":["osm"]},"application/vnd.opentimestamps.ots":{"source":"iana"},"application/vnd.openxmlformats-officedocument.custom-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.customxmlproperties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawing+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.chart+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.chartshapes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramcolors+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramdata+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramlayout+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramstyle+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.extended-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.commentauthors+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.handoutmaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.notesmaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.notesslide+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.presentation":{"source":"iana","compressible":false,"extensions":["pptx"]},"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.presprops+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slide":{"source":"iana","extensions":["sldx"]},"application/vnd.openxmlformats-officedocument.presentationml.slide+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slidelayout+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slidemaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slideshow":{"source":"iana","extensions":["ppsx"]},"application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slideupdateinfo+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.tablestyles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.tags+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.template":{"source":"iana","extensions":["potx"]},"application/vnd.openxmlformats-officedocument.presentationml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.viewprops+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.calcchain+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.connections+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.dialogsheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.externallink+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivotcachedefinition+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivotcacherecords+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivottable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.querytable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.revisionheaders+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.revisionlog+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedstrings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":{"source":"iana","compressible":false,"extensions":["xlsx"]},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheetmetadata+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.tablesinglecells+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.template":{"source":"iana","extensions":["xltx"]},"application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.usernames+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.volatiledependencies+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.theme+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.themeoverride+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.vmldrawing":{"source":"iana"},"application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.document":{"source":"iana","compressible":false,"extensions":["docx"]},"application/vnd.openxmlformats-officedocument.wordprocessingml.document.glossary+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.fonttable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.template":{"source":"iana","extensions":["dotx"]},"application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.websettings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.core-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.digital-signature-xmlsignature+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.relationships+xml":{"source":"iana","compressible":true},"application/vnd.oracle.resource+json":{"source":"iana","compressible":true},"application/vnd.orange.indata":{"source":"iana"},"application/vnd.osa.netdeploy":{"source":"iana"},"application/vnd.osgeo.mapguide.package":{"source":"iana","extensions":["mgp"]},"application/vnd.osgi.bundle":{"source":"iana"},"application/vnd.osgi.dp":{"source":"iana","extensions":["dp"]},"application/vnd.osgi.subsystem":{"source":"iana","extensions":["esa"]},"application/vnd.otps.ct-kip+xml":{"source":"iana","compressible":true},"application/vnd.oxli.countgraph":{"source":"iana"},"application/vnd.pagerduty+json":{"source":"iana","compressible":true},"application/vnd.palm":{"source":"iana","extensions":["pdb","pqa","oprc"]},"application/vnd.panoply":{"source":"iana"},"application/vnd.paos.xml":{"source":"iana"},"application/vnd.patentdive":{"source":"iana"},"application/vnd.patientecommsdoc":{"source":"iana"},"application/vnd.pawaafile":{"source":"iana","extensions":["paw"]},"application/vnd.pcos":{"source":"iana"},"application/vnd.pg.format":{"source":"iana","extensions":["str"]},"application/vnd.pg.osasli":{"source":"iana","extensions":["ei6"]},"application/vnd.piaccess.application-licence":{"source":"iana"},"application/vnd.picsel":{"source":"iana","extensions":["efif"]},"application/vnd.pmi.widget":{"source":"iana","extensions":["wg"]},"application/vnd.poc.group-advertisement+xml":{"source":"iana","compressible":true},"application/vnd.pocketlearn":{"source":"iana","extensions":["plf"]},"application/vnd.powerbuilder6":{"source":"iana","extensions":["pbd"]},"application/vnd.powerbuilder6-s":{"source":"iana"},"application/vnd.powerbuilder7":{"source":"iana"},"application/vnd.powerbuilder7-s":{"source":"iana"},"application/vnd.powerbuilder75":{"source":"iana"},"application/vnd.powerbuilder75-s":{"source":"iana"},"application/vnd.preminet":{"source":"iana"},"application/vnd.previewsystems.box":{"source":"iana","extensions":["box"]},"application/vnd.proteus.magazine":{"source":"iana","extensions":["mgz"]},"application/vnd.psfs":{"source":"iana"},"application/vnd.publishare-delta-tree":{"source":"iana","extensions":["qps"]},"application/vnd.pvi.ptid1":{"source":"iana","extensions":["ptid"]},"application/vnd.pwg-multiplexed":{"source":"iana"},"application/vnd.pwg-xhtml-print+xml":{"source":"iana","compressible":true},"application/vnd.qualcomm.brew-app-res":{"source":"iana"},"application/vnd.quarantainenet":{"source":"iana"},"application/vnd.quark.quarkxpress":{"source":"iana","extensions":["qxd","qxt","qwd","qwt","qxl","qxb"]},"application/vnd.quobject-quoxdocument":{"source":"iana"},"application/vnd.radisys.moml+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-conf+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-conn+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-dialog+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-stream+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-conf+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-base+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-fax-detect+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-fax-sendrecv+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-group+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-speech+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-transform+xml":{"source":"iana","compressible":true},"application/vnd.rainstor.data":{"source":"iana"},"application/vnd.rapid":{"source":"iana"},"application/vnd.rar":{"source":"iana","extensions":["rar"]},"application/vnd.realvnc.bed":{"source":"iana","extensions":["bed"]},"application/vnd.recordare.musicxml":{"source":"iana","extensions":["mxl"]},"application/vnd.recordare.musicxml+xml":{"source":"iana","compressible":true,"extensions":["musicxml"]},"application/vnd.renlearn.rlprint":{"source":"iana"},"application/vnd.resilient.logic":{"source":"iana"},"application/vnd.restful+json":{"source":"iana","compressible":true},"application/vnd.rig.cryptonote":{"source":"iana","extensions":["cryptonote"]},"application/vnd.rim.cod":{"source":"apache","extensions":["cod"]},"application/vnd.rn-realmedia":{"source":"apache","extensions":["rm"]},"application/vnd.rn-realmedia-vbr":{"source":"apache","extensions":["rmvb"]},"application/vnd.route66.link66+xml":{"source":"iana","compressible":true,"extensions":["link66"]},"application/vnd.rs-274x":{"source":"iana"},"application/vnd.ruckus.download":{"source":"iana"},"application/vnd.s3sms":{"source":"iana"},"application/vnd.sailingtracker.track":{"source":"iana","extensions":["st"]},"application/vnd.sar":{"source":"iana"},"application/vnd.sbm.cid":{"source":"iana"},"application/vnd.sbm.mid2":{"source":"iana"},"application/vnd.scribus":{"source":"iana"},"application/vnd.sealed.3df":{"source":"iana"},"application/vnd.sealed.csf":{"source":"iana"},"application/vnd.sealed.doc":{"source":"iana"},"application/vnd.sealed.eml":{"source":"iana"},"application/vnd.sealed.mht":{"source":"iana"},"application/vnd.sealed.net":{"source":"iana"},"application/vnd.sealed.ppt":{"source":"iana"},"application/vnd.sealed.tiff":{"source":"iana"},"application/vnd.sealed.xls":{"source":"iana"},"application/vnd.sealedmedia.softseal.html":{"source":"iana"},"application/vnd.sealedmedia.softseal.pdf":{"source":"iana"},"application/vnd.seemail":{"source":"iana","extensions":["see"]},"application/vnd.seis+json":{"source":"iana","compressible":true},"application/vnd.sema":{"source":"iana","extensions":["sema"]},"application/vnd.semd":{"source":"iana","extensions":["semd"]},"application/vnd.semf":{"source":"iana","extensions":["semf"]},"application/vnd.shade-save-file":{"source":"iana"},"application/vnd.shana.informed.formdata":{"source":"iana","extensions":["ifm"]},"application/vnd.shana.informed.formtemplate":{"source":"iana","extensions":["itp"]},"application/vnd.shana.informed.interchange":{"source":"iana","extensions":["iif"]},"application/vnd.shana.informed.package":{"source":"iana","extensions":["ipk"]},"application/vnd.shootproof+json":{"source":"iana","compressible":true},"application/vnd.shopkick+json":{"source":"iana","compressible":true},"application/vnd.shp":{"source":"iana"},"application/vnd.shx":{"source":"iana"},"application/vnd.sigrok.session":{"source":"iana"},"application/vnd.simtech-mindmapper":{"source":"iana","extensions":["twd","twds"]},"application/vnd.siren+json":{"source":"iana","compressible":true},"application/vnd.smaf":{"source":"iana","extensions":["mmf"]},"application/vnd.smart.notebook":{"source":"iana"},"application/vnd.smart.teacher":{"source":"iana","extensions":["teacher"]},"application/vnd.snesdev-page-table":{"source":"iana"},"application/vnd.software602.filler.form+xml":{"source":"iana","compressible":true,"extensions":["fo"]},"application/vnd.software602.filler.form-xml-zip":{"source":"iana"},"application/vnd.solent.sdkm+xml":{"source":"iana","compressible":true,"extensions":["sdkm","sdkd"]},"application/vnd.spotfire.dxp":{"source":"iana","extensions":["dxp"]},"application/vnd.spotfire.sfs":{"source":"iana","extensions":["sfs"]},"application/vnd.sqlite3":{"source":"iana"},"application/vnd.sss-cod":{"source":"iana"},"application/vnd.sss-dtf":{"source":"iana"},"application/vnd.sss-ntf":{"source":"iana"},"application/vnd.stardivision.calc":{"source":"apache","extensions":["sdc"]},"application/vnd.stardivision.draw":{"source":"apache","extensions":["sda"]},"application/vnd.stardivision.impress":{"source":"apache","extensions":["sdd"]},"application/vnd.stardivision.math":{"source":"apache","extensions":["smf"]},"application/vnd.stardivision.writer":{"source":"apache","extensions":["sdw","vor"]},"application/vnd.stardivision.writer-global":{"source":"apache","extensions":["sgl"]},"application/vnd.stepmania.package":{"source":"iana","extensions":["smzip"]},"application/vnd.stepmania.stepchart":{"source":"iana","extensions":["sm"]},"application/vnd.street-stream":{"source":"iana"},"application/vnd.sun.wadl+xml":{"source":"iana","compressible":true,"extensions":["wadl"]},"application/vnd.sun.xml.calc":{"source":"apache","extensions":["sxc"]},"application/vnd.sun.xml.calc.template":{"source":"apache","extensions":["stc"]},"application/vnd.sun.xml.draw":{"source":"apache","extensions":["sxd"]},"application/vnd.sun.xml.draw.template":{"source":"apache","extensions":["std"]},"application/vnd.sun.xml.impress":{"source":"apache","extensions":["sxi"]},"application/vnd.sun.xml.impress.template":{"source":"apache","extensions":["sti"]},"application/vnd.sun.xml.math":{"source":"apache","extensions":["sxm"]},"application/vnd.sun.xml.writer":{"source":"apache","extensions":["sxw"]},"application/vnd.sun.xml.writer.global":{"source":"apache","extensions":["sxg"]},"application/vnd.sun.xml.writer.template":{"source":"apache","extensions":["stw"]},"application/vnd.sus-calendar":{"source":"iana","extensions":["sus","susp"]},"application/vnd.svd":{"source":"iana","extensions":["svd"]},"application/vnd.swiftview-ics":{"source":"iana"},"application/vnd.sycle+xml":{"source":"iana","compressible":true},"application/vnd.syft+json":{"source":"iana","compressible":true},"application/vnd.symbian.install":{"source":"apache","extensions":["sis","sisx"]},"application/vnd.syncml+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["xsm"]},"application/vnd.syncml.dm+wbxml":{"source":"iana","charset":"UTF-8","extensions":["bdm"]},"application/vnd.syncml.dm+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["xdm"]},"application/vnd.syncml.dm.notification":{"source":"iana"},"application/vnd.syncml.dmddf+wbxml":{"source":"iana"},"application/vnd.syncml.dmddf+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["ddf"]},"application/vnd.syncml.dmtnds+wbxml":{"source":"iana"},"application/vnd.syncml.dmtnds+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.syncml.ds.notification":{"source":"iana"},"application/vnd.tableschema+json":{"source":"iana","compressible":true},"application/vnd.tao.intent-module-archive":{"source":"iana","extensions":["tao"]},"application/vnd.tcpdump.pcap":{"source":"iana","extensions":["pcap","cap","dmp"]},"application/vnd.think-cell.ppttc+json":{"source":"iana","compressible":true},"application/vnd.tmd.mediaflex.api+xml":{"source":"iana","compressible":true},"application/vnd.tml":{"source":"iana"},"application/vnd.tmobile-livetv":{"source":"iana","extensions":["tmo"]},"application/vnd.tri.onesource":{"source":"iana"},"application/vnd.trid.tpt":{"source":"iana","extensions":["tpt"]},"application/vnd.triscape.mxs":{"source":"iana","extensions":["mxs"]},"application/vnd.trueapp":{"source":"iana","extensions":["tra"]},"application/vnd.truedoc":{"source":"iana"},"application/vnd.ubisoft.webplayer":{"source":"iana"},"application/vnd.ufdl":{"source":"iana","extensions":["ufd","ufdl"]},"application/vnd.uiq.theme":{"source":"iana","extensions":["utz"]},"application/vnd.umajin":{"source":"iana","extensions":["umj"]},"application/vnd.unity":{"source":"iana","extensions":["unityweb"]},"application/vnd.uoml+xml":{"source":"iana","compressible":true,"extensions":["uoml"]},"application/vnd.uplanet.alert":{"source":"iana"},"application/vnd.uplanet.alert-wbxml":{"source":"iana"},"application/vnd.uplanet.bearer-choice":{"source":"iana"},"application/vnd.uplanet.bearer-choice-wbxml":{"source":"iana"},"application/vnd.uplanet.cacheop":{"source":"iana"},"application/vnd.uplanet.cacheop-wbxml":{"source":"iana"},"application/vnd.uplanet.channel":{"source":"iana"},"application/vnd.uplanet.channel-wbxml":{"source":"iana"},"application/vnd.uplanet.list":{"source":"iana"},"application/vnd.uplanet.list-wbxml":{"source":"iana"},"application/vnd.uplanet.listcmd":{"source":"iana"},"application/vnd.uplanet.listcmd-wbxml":{"source":"iana"},"application/vnd.uplanet.signal":{"source":"iana"},"application/vnd.uri-map":{"source":"iana"},"application/vnd.valve.source.material":{"source":"iana"},"application/vnd.vcx":{"source":"iana","extensions":["vcx"]},"application/vnd.vd-study":{"source":"iana"},"application/vnd.vectorworks":{"source":"iana"},"application/vnd.vel+json":{"source":"iana","compressible":true},"application/vnd.verimatrix.vcas":{"source":"iana"},"application/vnd.veritone.aion+json":{"source":"iana","compressible":true},"application/vnd.veryant.thin":{"source":"iana"},"application/vnd.ves.encrypted":{"source":"iana"},"application/vnd.vidsoft.vidconference":{"source":"iana"},"application/vnd.visio":{"source":"iana","extensions":["vsd","vst","vss","vsw"]},"application/vnd.visionary":{"source":"iana","extensions":["vis"]},"application/vnd.vividence.scriptfile":{"source":"iana"},"application/vnd.vsf":{"source":"iana","extensions":["vsf"]},"application/vnd.wap.sic":{"source":"iana"},"application/vnd.wap.slc":{"source":"iana"},"application/vnd.wap.wbxml":{"source":"iana","charset":"UTF-8","extensions":["wbxml"]},"application/vnd.wap.wmlc":{"source":"iana","extensions":["wmlc"]},"application/vnd.wap.wmlscriptc":{"source":"iana","extensions":["wmlsc"]},"application/vnd.webturbo":{"source":"iana","extensions":["wtb"]},"application/vnd.wfa.dpp":{"source":"iana"},"application/vnd.wfa.p2p":{"source":"iana"},"application/vnd.wfa.wsc":{"source":"iana"},"application/vnd.windows.devicepairing":{"source":"iana"},"application/vnd.wmc":{"source":"iana"},"application/vnd.wmf.bootstrap":{"source":"iana"},"application/vnd.wolfram.mathematica":{"source":"iana"},"application/vnd.wolfram.mathematica.package":{"source":"iana"},"application/vnd.wolfram.player":{"source":"iana","extensions":["nbp"]},"application/vnd.wordperfect":{"source":"iana","extensions":["wpd"]},"application/vnd.wqd":{"source":"iana","extensions":["wqd"]},"application/vnd.wrq-hp3000-labelled":{"source":"iana"},"application/vnd.wt.stf":{"source":"iana","extensions":["stf"]},"application/vnd.wv.csp+wbxml":{"source":"iana"},"application/vnd.wv.csp+xml":{"source":"iana","compressible":true},"application/vnd.wv.ssp+xml":{"source":"iana","compressible":true},"application/vnd.xacml+json":{"source":"iana","compressible":true},"application/vnd.xara":{"source":"iana","extensions":["xar"]},"application/vnd.xfdl":{"source":"iana","extensions":["xfdl"]},"application/vnd.xfdl.webform":{"source":"iana"},"application/vnd.xmi+xml":{"source":"iana","compressible":true},"application/vnd.xmpie.cpkg":{"source":"iana"},"application/vnd.xmpie.dpkg":{"source":"iana"},"application/vnd.xmpie.plan":{"source":"iana"},"application/vnd.xmpie.ppkg":{"source":"iana"},"application/vnd.xmpie.xlim":{"source":"iana"},"application/vnd.yamaha.hv-dic":{"source":"iana","extensions":["hvd"]},"application/vnd.yamaha.hv-script":{"source":"iana","extensions":["hvs"]},"application/vnd.yamaha.hv-voice":{"source":"iana","extensions":["hvp"]},"application/vnd.yamaha.openscoreformat":{"source":"iana","extensions":["osf"]},"application/vnd.yamaha.openscoreformat.osfpvg+xml":{"source":"iana","compressible":true,"extensions":["osfpvg"]},"application/vnd.yamaha.remote-setup":{"source":"iana"},"application/vnd.yamaha.smaf-audio":{"source":"iana","extensions":["saf"]},"application/vnd.yamaha.smaf-phrase":{"source":"iana","extensions":["spf"]},"application/vnd.yamaha.through-ngn":{"source":"iana"},"application/vnd.yamaha.tunnel-udpencap":{"source":"iana"},"application/vnd.yaoweme":{"source":"iana"},"application/vnd.yellowriver-custom-menu":{"source":"iana","extensions":["cmp"]},"application/vnd.youtube.yt":{"source":"iana"},"application/vnd.zul":{"source":"iana","extensions":["zir","zirz"]},"application/vnd.zzazz.deck+xml":{"source":"iana","compressible":true,"extensions":["zaz"]},"application/voicexml+xml":{"source":"iana","compressible":true,"extensions":["vxml"]},"application/voucher-cms+json":{"source":"iana","compressible":true},"application/vq-rtcpxr":{"source":"iana"},"application/wasm":{"source":"iana","compressible":true,"extensions":["wasm"]},"application/watcherinfo+xml":{"source":"iana","compressible":true,"extensions":["wif"]},"application/webpush-options+json":{"source":"iana","compressible":true},"application/whoispp-query":{"source":"iana"},"application/whoispp-response":{"source":"iana"},"application/widget":{"source":"iana","extensions":["wgt"]},"application/winhlp":{"source":"apache","extensions":["hlp"]},"application/wita":{"source":"iana"},"application/wordperfect5.1":{"source":"iana"},"application/wsdl+xml":{"source":"iana","compressible":true,"extensions":["wsdl"]},"application/wspolicy+xml":{"source":"iana","compressible":true,"extensions":["wspolicy"]},"application/x-7z-compressed":{"source":"apache","compressible":false,"extensions":["7z"]},"application/x-abiword":{"source":"apache","extensions":["abw"]},"application/x-ace-compressed":{"source":"apache","extensions":["ace"]},"application/x-amf":{"source":"apache"},"application/x-apple-diskimage":{"source":"apache","extensions":["dmg"]},"application/x-arj":{"compressible":false,"extensions":["arj"]},"application/x-authorware-bin":{"source":"apache","extensions":["aab","x32","u32","vox"]},"application/x-authorware-map":{"source":"apache","extensions":["aam"]},"application/x-authorware-seg":{"source":"apache","extensions":["aas"]},"application/x-bcpio":{"source":"apache","extensions":["bcpio"]},"application/x-bdoc":{"compressible":false,"extensions":["bdoc"]},"application/x-bittorrent":{"source":"apache","extensions":["torrent"]},"application/x-blorb":{"source":"apache","extensions":["blb","blorb"]},"application/x-bzip":{"source":"apache","compressible":false,"extensions":["bz"]},"application/x-bzip2":{"source":"apache","compressible":false,"extensions":["bz2","boz"]},"application/x-cbr":{"source":"apache","extensions":["cbr","cba","cbt","cbz","cb7"]},"application/x-cdlink":{"source":"apache","extensions":["vcd"]},"application/x-cfs-compressed":{"source":"apache","extensions":["cfs"]},"application/x-chat":{"source":"apache","extensions":["chat"]},"application/x-chess-pgn":{"source":"apache","extensions":["pgn"]},"application/x-chrome-extension":{"extensions":["crx"]},"application/x-cocoa":{"source":"nginx","extensions":["cco"]},"application/x-compress":{"source":"apache"},"application/x-conference":{"source":"apache","extensions":["nsc"]},"application/x-cpio":{"source":"apache","extensions":["cpio"]},"application/x-csh":{"source":"apache","extensions":["csh"]},"application/x-deb":{"compressible":false},"application/x-debian-package":{"source":"apache","extensions":["deb","udeb"]},"application/x-dgc-compressed":{"source":"apache","extensions":["dgc"]},"application/x-director":{"source":"apache","extensions":["dir","dcr","dxr","cst","cct","cxt","w3d","fgd","swa"]},"application/x-doom":{"source":"apache","extensions":["wad"]},"application/x-dtbncx+xml":{"source":"apache","compressible":true,"extensions":["ncx"]},"application/x-dtbook+xml":{"source":"apache","compressible":true,"extensions":["dtb"]},"application/x-dtbresource+xml":{"source":"apache","compressible":true,"extensions":["res"]},"application/x-dvi":{"source":"apache","compressible":false,"extensions":["dvi"]},"application/x-envoy":{"source":"apache","extensions":["evy"]},"application/x-eva":{"source":"apache","extensions":["eva"]},"application/x-font-bdf":{"source":"apache","extensions":["bdf"]},"application/x-font-dos":{"source":"apache"},"application/x-font-framemaker":{"source":"apache"},"application/x-font-ghostscript":{"source":"apache","extensions":["gsf"]},"application/x-font-libgrx":{"source":"apache"},"application/x-font-linux-psf":{"source":"apache","extensions":["psf"]},"application/x-font-pcf":{"source":"apache","extensions":["pcf"]},"application/x-font-snf":{"source":"apache","extensions":["snf"]},"application/x-font-speedo":{"source":"apache"},"application/x-font-sunos-news":{"source":"apache"},"application/x-font-type1":{"source":"apache","extensions":["pfa","pfb","pfm","afm"]},"application/x-font-vfont":{"source":"apache"},"application/x-freearc":{"source":"apache","extensions":["arc"]},"application/x-futuresplash":{"source":"apache","extensions":["spl"]},"application/x-gca-compressed":{"source":"apache","extensions":["gca"]},"application/x-glulx":{"source":"apache","extensions":["ulx"]},"application/x-gnumeric":{"source":"apache","extensions":["gnumeric"]},"application/x-gramps-xml":{"source":"apache","extensions":["gramps"]},"application/x-gtar":{"source":"apache","extensions":["gtar"]},"application/x-gzip":{"source":"apache"},"application/x-hdf":{"source":"apache","extensions":["hdf"]},"application/x-httpd-php":{"compressible":true,"extensions":["php"]},"application/x-install-instructions":{"source":"apache","extensions":["install"]},"application/x-iso9660-image":{"source":"apache","extensions":["iso"]},"application/x-iwork-keynote-sffkey":{"extensions":["key"]},"application/x-iwork-numbers-sffnumbers":{"extensions":["numbers"]},"application/x-iwork-pages-sffpages":{"extensions":["pages"]},"application/x-java-archive-diff":{"source":"nginx","extensions":["jardiff"]},"application/x-java-jnlp-file":{"source":"apache","compressible":false,"extensions":["jnlp"]},"application/x-javascript":{"compressible":true},"application/x-keepass2":{"extensions":["kdbx"]},"application/x-latex":{"source":"apache","compressible":false,"extensions":["latex"]},"application/x-lua-bytecode":{"extensions":["luac"]},"application/x-lzh-compressed":{"source":"apache","extensions":["lzh","lha"]},"application/x-makeself":{"source":"nginx","extensions":["run"]},"application/x-mie":{"source":"apache","extensions":["mie"]},"application/x-mobipocket-ebook":{"source":"apache","extensions":["prc","mobi"]},"application/x-mpegurl":{"compressible":false},"application/x-ms-application":{"source":"apache","extensions":["application"]},"application/x-ms-shortcut":{"source":"apache","extensions":["lnk"]},"application/x-ms-wmd":{"source":"apache","extensions":["wmd"]},"application/x-ms-wmz":{"source":"apache","extensions":["wmz"]},"application/x-ms-xbap":{"source":"apache","extensions":["xbap"]},"application/x-msaccess":{"source":"apache","extensions":["mdb"]},"application/x-msbinder":{"source":"apache","extensions":["obd"]},"application/x-mscardfile":{"source":"apache","extensions":["crd"]},"application/x-msclip":{"source":"apache","extensions":["clp"]},"application/x-msdos-program":{"extensions":["exe"]},"application/x-msdownload":{"source":"apache","extensions":["exe","dll","com","bat","msi"]},"application/x-msmediaview":{"source":"apache","extensions":["mvb","m13","m14"]},"application/x-msmetafile":{"source":"apache","extensions":["wmf","wmz","emf","emz"]},"application/x-msmoney":{"source":"apache","extensions":["mny"]},"application/x-mspublisher":{"source":"apache","extensions":["pub"]},"application/x-msschedule":{"source":"apache","extensions":["scd"]},"application/x-msterminal":{"source":"apache","extensions":["trm"]},"application/x-mswrite":{"source":"apache","extensions":["wri"]},"application/x-netcdf":{"source":"apache","extensions":["nc","cdf"]},"application/x-ns-proxy-autoconfig":{"compressible":true,"extensions":["pac"]},"application/x-nzb":{"source":"apache","extensions":["nzb"]},"application/x-perl":{"source":"nginx","extensions":["pl","pm"]},"application/x-pilot":{"source":"nginx","extensions":["prc","pdb"]},"application/x-pkcs12":{"source":"apache","compressible":false,"extensions":["p12","pfx"]},"application/x-pkcs7-certificates":{"source":"apache","extensions":["p7b","spc"]},"application/x-pkcs7-certreqresp":{"source":"apache","extensions":["p7r"]},"application/x-pki-message":{"source":"iana"},"application/x-rar-compressed":{"source":"apache","compressible":false,"extensions":["rar"]},"application/x-redhat-package-manager":{"source":"nginx","extensions":["rpm"]},"application/x-research-info-systems":{"source":"apache","extensions":["ris"]},"application/x-sea":{"source":"nginx","extensions":["sea"]},"application/x-sh":{"source":"apache","compressible":true,"extensions":["sh"]},"application/x-shar":{"source":"apache","extensions":["shar"]},"application/x-shockwave-flash":{"source":"apache","compressible":false,"extensions":["swf"]},"application/x-silverlight-app":{"source":"apache","extensions":["xap"]},"application/x-sql":{"source":"apache","extensions":["sql"]},"application/x-stuffit":{"source":"apache","compressible":false,"extensions":["sit"]},"application/x-stuffitx":{"source":"apache","extensions":["sitx"]},"application/x-subrip":{"source":"apache","extensions":["srt"]},"application/x-sv4cpio":{"source":"apache","extensions":["sv4cpio"]},"application/x-sv4crc":{"source":"apache","extensions":["sv4crc"]},"application/x-t3vm-image":{"source":"apache","extensions":["t3"]},"application/x-tads":{"source":"apache","extensions":["gam"]},"application/x-tar":{"source":"apache","compressible":true,"extensions":["tar"]},"application/x-tcl":{"source":"apache","extensions":["tcl","tk"]},"application/x-tex":{"source":"apache","extensions":["tex"]},"application/x-tex-tfm":{"source":"apache","extensions":["tfm"]},"application/x-texinfo":{"source":"apache","extensions":["texinfo","texi"]},"application/x-tgif":{"source":"apache","extensions":["obj"]},"application/x-ustar":{"source":"apache","extensions":["ustar"]},"application/x-virtualbox-hdd":{"compressible":true,"extensions":["hdd"]},"application/x-virtualbox-ova":{"compressible":true,"extensions":["ova"]},"application/x-virtualbox-ovf":{"compressible":true,"extensions":["ovf"]},"application/x-virtualbox-vbox":{"compressible":true,"extensions":["vbox"]},"application/x-virtualbox-vbox-extpack":{"compressible":false,"extensions":["vbox-extpack"]},"application/x-virtualbox-vdi":{"compressible":true,"extensions":["vdi"]},"application/x-virtualbox-vhd":{"compressible":true,"extensions":["vhd"]},"application/x-virtualbox-vmdk":{"compressible":true,"extensions":["vmdk"]},"application/x-wais-source":{"source":"apache","extensions":["src"]},"application/x-web-app-manifest+json":{"compressible":true,"extensions":["webapp"]},"application/x-www-form-urlencoded":{"source":"iana","compressible":true},"application/x-x509-ca-cert":{"source":"iana","extensions":["der","crt","pem"]},"application/x-x509-ca-ra-cert":{"source":"iana"},"application/x-x509-next-ca-cert":{"source":"iana"},"application/x-xfig":{"source":"apache","extensions":["fig"]},"application/x-xliff+xml":{"source":"apache","compressible":true,"extensions":["xlf"]},"application/x-xpinstall":{"source":"apache","compressible":false,"extensions":["xpi"]},"application/x-xz":{"source":"apache","extensions":["xz"]},"application/x-zmachine":{"source":"apache","extensions":["z1","z2","z3","z4","z5","z6","z7","z8"]},"application/x400-bp":{"source":"iana"},"application/xacml+xml":{"source":"iana","compressible":true},"application/xaml+xml":{"source":"apache","compressible":true,"extensions":["xaml"]},"application/xcap-att+xml":{"source":"iana","compressible":true,"extensions":["xav"]},"application/xcap-caps+xml":{"source":"iana","compressible":true,"extensions":["xca"]},"application/xcap-diff+xml":{"source":"iana","compressible":true,"extensions":["xdf"]},"application/xcap-el+xml":{"source":"iana","compressible":true,"extensions":["xel"]},"application/xcap-error+xml":{"source":"iana","compressible":true},"application/xcap-ns+xml":{"source":"iana","compressible":true,"extensions":["xns"]},"application/xcon-conference-info+xml":{"source":"iana","compressible":true},"application/xcon-conference-info-diff+xml":{"source":"iana","compressible":true},"application/xenc+xml":{"source":"iana","compressible":true,"extensions":["xenc"]},"application/xhtml+xml":{"source":"iana","compressible":true,"extensions":["xhtml","xht"]},"application/xhtml-voice+xml":{"source":"apache","compressible":true},"application/xliff+xml":{"source":"iana","compressible":true,"extensions":["xlf"]},"application/xml":{"source":"iana","compressible":true,"extensions":["xml","xsl","xsd","rng"]},"application/xml-dtd":{"source":"iana","compressible":true,"extensions":["dtd"]},"application/xml-external-parsed-entity":{"source":"iana"},"application/xml-patch+xml":{"source":"iana","compressible":true},"application/xmpp+xml":{"source":"iana","compressible":true},"application/xop+xml":{"source":"iana","compressible":true,"extensions":["xop"]},"application/xproc+xml":{"source":"apache","compressible":true,"extensions":["xpl"]},"application/xslt+xml":{"source":"iana","compressible":true,"extensions":["xsl","xslt"]},"application/xspf+xml":{"source":"apache","compressible":true,"extensions":["xspf"]},"application/xv+xml":{"source":"iana","compressible":true,"extensions":["mxml","xhvml","xvml","xvm"]},"application/yang":{"source":"iana","extensions":["yang"]},"application/yang-data+json":{"source":"iana","compressible":true},"application/yang-data+xml":{"source":"iana","compressible":true},"application/yang-patch+json":{"source":"iana","compressible":true},"application/yang-patch+xml":{"source":"iana","compressible":true},"application/yin+xml":{"source":"iana","compressible":true,"extensions":["yin"]},"application/zip":{"source":"iana","compressible":false,"extensions":["zip"]},"application/zlib":{"source":"iana"},"application/zstd":{"source":"iana"},"audio/1d-interleaved-parityfec":{"source":"iana"},"audio/32kadpcm":{"source":"iana"},"audio/3gpp":{"source":"iana","compressible":false,"extensions":["3gpp"]},"audio/3gpp2":{"source":"iana"},"audio/aac":{"source":"iana"},"audio/ac3":{"source":"iana"},"audio/adpcm":{"source":"apache","extensions":["adp"]},"audio/amr":{"source":"iana","extensions":["amr"]},"audio/amr-wb":{"source":"iana"},"audio/amr-wb+":{"source":"iana"},"audio/aptx":{"source":"iana"},"audio/asc":{"source":"iana"},"audio/atrac-advanced-lossless":{"source":"iana"},"audio/atrac-x":{"source":"iana"},"audio/atrac3":{"source":"iana"},"audio/basic":{"source":"iana","compressible":false,"extensions":["au","snd"]},"audio/bv16":{"source":"iana"},"audio/bv32":{"source":"iana"},"audio/clearmode":{"source":"iana"},"audio/cn":{"source":"iana"},"audio/dat12":{"source":"iana"},"audio/dls":{"source":"iana"},"audio/dsr-es201108":{"source":"iana"},"audio/dsr-es202050":{"source":"iana"},"audio/dsr-es202211":{"source":"iana"},"audio/dsr-es202212":{"source":"iana"},"audio/dv":{"source":"iana"},"audio/dvi4":{"source":"iana"},"audio/eac3":{"source":"iana"},"audio/encaprtp":{"source":"iana"},"audio/evrc":{"source":"iana"},"audio/evrc-qcp":{"source":"iana"},"audio/evrc0":{"source":"iana"},"audio/evrc1":{"source":"iana"},"audio/evrcb":{"source":"iana"},"audio/evrcb0":{"source":"iana"},"audio/evrcb1":{"source":"iana"},"audio/evrcnw":{"source":"iana"},"audio/evrcnw0":{"source":"iana"},"audio/evrcnw1":{"source":"iana"},"audio/evrcwb":{"source":"iana"},"audio/evrcwb0":{"source":"iana"},"audio/evrcwb1":{"source":"iana"},"audio/evs":{"source":"iana"},"audio/flexfec":{"source":"iana"},"audio/fwdred":{"source":"iana"},"audio/g711-0":{"source":"iana"},"audio/g719":{"source":"iana"},"audio/g722":{"source":"iana"},"audio/g7221":{"source":"iana"},"audio/g723":{"source":"iana"},"audio/g726-16":{"source":"iana"},"audio/g726-24":{"source":"iana"},"audio/g726-32":{"source":"iana"},"audio/g726-40":{"source":"iana"},"audio/g728":{"source":"iana"},"audio/g729":{"source":"iana"},"audio/g7291":{"source":"iana"},"audio/g729d":{"source":"iana"},"audio/g729e":{"source":"iana"},"audio/gsm":{"source":"iana"},"audio/gsm-efr":{"source":"iana"},"audio/gsm-hr-08":{"source":"iana"},"audio/ilbc":{"source":"iana"},"audio/ip-mr_v2.5":{"source":"iana"},"audio/isac":{"source":"apache"},"audio/l16":{"source":"iana"},"audio/l20":{"source":"iana"},"audio/l24":{"source":"iana","compressible":false},"audio/l8":{"source":"iana"},"audio/lpc":{"source":"iana"},"audio/melp":{"source":"iana"},"audio/melp1200":{"source":"iana"},"audio/melp2400":{"source":"iana"},"audio/melp600":{"source":"iana"},"audio/mhas":{"source":"iana"},"audio/midi":{"source":"apache","extensions":["mid","midi","kar","rmi"]},"audio/mobile-xmf":{"source":"iana","extensions":["mxmf"]},"audio/mp3":{"compressible":false,"extensions":["mp3"]},"audio/mp4":{"source":"iana","compressible":false,"extensions":["m4a","mp4a"]},"audio/mp4a-latm":{"source":"iana"},"audio/mpa":{"source":"iana"},"audio/mpa-robust":{"source":"iana"},"audio/mpeg":{"source":"iana","compressible":false,"extensions":["mpga","mp2","mp2a","mp3","m2a","m3a"]},"audio/mpeg4-generic":{"source":"iana"},"audio/musepack":{"source":"apache"},"audio/ogg":{"source":"iana","compressible":false,"extensions":["oga","ogg","spx","opus"]},"audio/opus":{"source":"iana"},"audio/parityfec":{"source":"iana"},"audio/pcma":{"source":"iana"},"audio/pcma-wb":{"source":"iana"},"audio/pcmu":{"source":"iana"},"audio/pcmu-wb":{"source":"iana"},"audio/prs.sid":{"source":"iana"},"audio/qcelp":{"source":"iana"},"audio/raptorfec":{"source":"iana"},"audio/red":{"source":"iana"},"audio/rtp-enc-aescm128":{"source":"iana"},"audio/rtp-midi":{"source":"iana"},"audio/rtploopback":{"source":"iana"},"audio/rtx":{"source":"iana"},"audio/s3m":{"source":"apache","extensions":["s3m"]},"audio/scip":{"source":"iana"},"audio/silk":{"source":"apache","extensions":["sil"]},"audio/smv":{"source":"iana"},"audio/smv-qcp":{"source":"iana"},"audio/smv0":{"source":"iana"},"audio/sofa":{"source":"iana"},"audio/sp-midi":{"source":"iana"},"audio/speex":{"source":"iana"},"audio/t140c":{"source":"iana"},"audio/t38":{"source":"iana"},"audio/telephone-event":{"source":"iana"},"audio/tetra_acelp":{"source":"iana"},"audio/tetra_acelp_bb":{"source":"iana"},"audio/tone":{"source":"iana"},"audio/tsvcis":{"source":"iana"},"audio/uemclip":{"source":"iana"},"audio/ulpfec":{"source":"iana"},"audio/usac":{"source":"iana"},"audio/vdvi":{"source":"iana"},"audio/vmr-wb":{"source":"iana"},"audio/vnd.3gpp.iufp":{"source":"iana"},"audio/vnd.4sb":{"source":"iana"},"audio/vnd.audiokoz":{"source":"iana"},"audio/vnd.celp":{"source":"iana"},"audio/vnd.cisco.nse":{"source":"iana"},"audio/vnd.cmles.radio-events":{"source":"iana"},"audio/vnd.cns.anp1":{"source":"iana"},"audio/vnd.cns.inf1":{"source":"iana"},"audio/vnd.dece.audio":{"source":"iana","extensions":["uva","uvva"]},"audio/vnd.digital-winds":{"source":"iana","extensions":["eol"]},"audio/vnd.dlna.adts":{"source":"iana"},"audio/vnd.dolby.heaac.1":{"source":"iana"},"audio/vnd.dolby.heaac.2":{"source":"iana"},"audio/vnd.dolby.mlp":{"source":"iana"},"audio/vnd.dolby.mps":{"source":"iana"},"audio/vnd.dolby.pl2":{"source":"iana"},"audio/vnd.dolby.pl2x":{"source":"iana"},"audio/vnd.dolby.pl2z":{"source":"iana"},"audio/vnd.dolby.pulse.1":{"source":"iana"},"audio/vnd.dra":{"source":"iana","extensions":["dra"]},"audio/vnd.dts":{"source":"iana","extensions":["dts"]},"audio/vnd.dts.hd":{"source":"iana","extensions":["dtshd"]},"audio/vnd.dts.uhd":{"source":"iana"},"audio/vnd.dvb.file":{"source":"iana"},"audio/vnd.everad.plj":{"source":"iana"},"audio/vnd.hns.audio":{"source":"iana"},"audio/vnd.lucent.voice":{"source":"iana","extensions":["lvp"]},"audio/vnd.ms-playready.media.pya":{"source":"iana","extensions":["pya"]},"audio/vnd.nokia.mobile-xmf":{"source":"iana"},"audio/vnd.nortel.vbk":{"source":"iana"},"audio/vnd.nuera.ecelp4800":{"source":"iana","extensions":["ecelp4800"]},"audio/vnd.nuera.ecelp7470":{"source":"iana","extensions":["ecelp7470"]},"audio/vnd.nuera.ecelp9600":{"source":"iana","extensions":["ecelp9600"]},"audio/vnd.octel.sbc":{"source":"iana"},"audio/vnd.presonus.multitrack":{"source":"iana"},"audio/vnd.qcelp":{"source":"iana"},"audio/vnd.rhetorex.32kadpcm":{"source":"iana"},"audio/vnd.rip":{"source":"iana","extensions":["rip"]},"audio/vnd.rn-realaudio":{"compressible":false},"audio/vnd.sealedmedia.softseal.mpeg":{"source":"iana"},"audio/vnd.vmx.cvsd":{"source":"iana"},"audio/vnd.wave":{"compressible":false},"audio/vorbis":{"source":"iana","compressible":false},"audio/vorbis-config":{"source":"iana"},"audio/wav":{"compressible":false,"extensions":["wav"]},"audio/wave":{"compressible":false,"extensions":["wav"]},"audio/webm":{"source":"apache","compressible":false,"extensions":["weba"]},"audio/x-aac":{"source":"apache","compressible":false,"extensions":["aac"]},"audio/x-aiff":{"source":"apache","extensions":["aif","aiff","aifc"]},"audio/x-caf":{"source":"apache","compressible":false,"extensions":["caf"]},"audio/x-flac":{"source":"apache","extensions":["flac"]},"audio/x-m4a":{"source":"nginx","extensions":["m4a"]},"audio/x-matroska":{"source":"apache","extensions":["mka"]},"audio/x-mpegurl":{"source":"apache","extensions":["m3u"]},"audio/x-ms-wax":{"source":"apache","extensions":["wax"]},"audio/x-ms-wma":{"source":"apache","extensions":["wma"]},"audio/x-pn-realaudio":{"source":"apache","extensions":["ram","ra"]},"audio/x-pn-realaudio-plugin":{"source":"apache","extensions":["rmp"]},"audio/x-realaudio":{"source":"nginx","extensions":["ra"]},"audio/x-tta":{"source":"apache"},"audio/x-wav":{"source":"apache","extensions":["wav"]},"audio/xm":{"source":"apache","extensions":["xm"]},"chemical/x-cdx":{"source":"apache","extensions":["cdx"]},"chemical/x-cif":{"source":"apache","extensions":["cif"]},"chemical/x-cmdf":{"source":"apache","extensions":["cmdf"]},"chemical/x-cml":{"source":"apache","extensions":["cml"]},"chemical/x-csml":{"source":"apache","extensions":["csml"]},"chemical/x-pdb":{"source":"apache"},"chemical/x-xyz":{"source":"apache","extensions":["xyz"]},"font/collection":{"source":"iana","extensions":["ttc"]},"font/otf":{"source":"iana","compressible":true,"extensions":["otf"]},"font/sfnt":{"source":"iana"},"font/ttf":{"source":"iana","compressible":true,"extensions":["ttf"]},"font/woff":{"source":"iana","extensions":["woff"]},"font/woff2":{"source":"iana","extensions":["woff2"]},"image/aces":{"source":"iana","extensions":["exr"]},"image/apng":{"compressible":false,"extensions":["apng"]},"image/avci":{"source":"iana","extensions":["avci"]},"image/avcs":{"source":"iana","extensions":["avcs"]},"image/avif":{"source":"iana","compressible":false,"extensions":["avif"]},"image/bmp":{"source":"iana","compressible":true,"extensions":["bmp"]},"image/cgm":{"source":"iana","extensions":["cgm"]},"image/dicom-rle":{"source":"iana","extensions":["drle"]},"image/emf":{"source":"iana","extensions":["emf"]},"image/fits":{"source":"iana","extensions":["fits"]},"image/g3fax":{"source":"iana","extensions":["g3"]},"image/gif":{"source":"iana","compressible":false,"extensions":["gif"]},"image/heic":{"source":"iana","extensions":["heic"]},"image/heic-sequence":{"source":"iana","extensions":["heics"]},"image/heif":{"source":"iana","extensions":["heif"]},"image/heif-sequence":{"source":"iana","extensions":["heifs"]},"image/hej2k":{"source":"iana","extensions":["hej2"]},"image/hsj2":{"source":"iana","extensions":["hsj2"]},"image/ief":{"source":"iana","extensions":["ief"]},"image/jls":{"source":"iana","extensions":["jls"]},"image/jp2":{"source":"iana","compressible":false,"extensions":["jp2","jpg2"]},"image/jpeg":{"source":"iana","compressible":false,"extensions":["jpeg","jpg","jpe"]},"image/jph":{"source":"iana","extensions":["jph"]},"image/jphc":{"source":"iana","extensions":["jhc"]},"image/jpm":{"source":"iana","compressible":false,"extensions":["jpm"]},"image/jpx":{"source":"iana","compressible":false,"extensions":["jpx","jpf"]},"image/jxr":{"source":"iana","extensions":["jxr"]},"image/jxra":{"source":"iana","extensions":["jxra"]},"image/jxrs":{"source":"iana","extensions":["jxrs"]},"image/jxs":{"source":"iana","extensions":["jxs"]},"image/jxsc":{"source":"iana","extensions":["jxsc"]},"image/jxsi":{"source":"iana","extensions":["jxsi"]},"image/jxss":{"source":"iana","extensions":["jxss"]},"image/ktx":{"source":"iana","extensions":["ktx"]},"image/ktx2":{"source":"iana","extensions":["ktx2"]},"image/naplps":{"source":"iana"},"image/pjpeg":{"compressible":false},"image/png":{"source":"iana","compressible":false,"extensions":["png"]},"image/prs.btif":{"source":"iana","extensions":["btif"]},"image/prs.pti":{"source":"iana","extensions":["pti"]},"image/pwg-raster":{"source":"iana"},"image/sgi":{"source":"apache","extensions":["sgi"]},"image/svg+xml":{"source":"iana","compressible":true,"extensions":["svg","svgz"]},"image/t38":{"source":"iana","extensions":["t38"]},"image/tiff":{"source":"iana","compressible":false,"extensions":["tif","tiff"]},"image/tiff-fx":{"source":"iana","extensions":["tfx"]},"image/vnd.adobe.photoshop":{"source":"iana","compressible":true,"extensions":["psd"]},"image/vnd.airzip.accelerator.azv":{"source":"iana","extensions":["azv"]},"image/vnd.cns.inf2":{"source":"iana"},"image/vnd.dece.graphic":{"source":"iana","extensions":["uvi","uvvi","uvg","uvvg"]},"image/vnd.djvu":{"source":"iana","extensions":["djvu","djv"]},"image/vnd.dvb.subtitle":{"source":"iana","extensions":["sub"]},"image/vnd.dwg":{"source":"iana","extensions":["dwg"]},"image/vnd.dxf":{"source":"iana","extensions":["dxf"]},"image/vnd.fastbidsheet":{"source":"iana","extensions":["fbs"]},"image/vnd.fpx":{"source":"iana","extensions":["fpx"]},"image/vnd.fst":{"source":"iana","extensions":["fst"]},"image/vnd.fujixerox.edmics-mmr":{"source":"iana","extensions":["mmr"]},"image/vnd.fujixerox.edmics-rlc":{"source":"iana","extensions":["rlc"]},"image/vnd.globalgraphics.pgb":{"source":"iana"},"image/vnd.microsoft.icon":{"source":"iana","compressible":true,"extensions":["ico"]},"image/vnd.mix":{"source":"iana"},"image/vnd.mozilla.apng":{"source":"iana"},"image/vnd.ms-dds":{"compressible":true,"extensions":["dds"]},"image/vnd.ms-modi":{"source":"iana","extensions":["mdi"]},"image/vnd.ms-photo":{"source":"apache","extensions":["wdp"]},"image/vnd.net-fpx":{"source":"iana","extensions":["npx"]},"image/vnd.pco.b16":{"source":"iana","extensions":["b16"]},"image/vnd.radiance":{"source":"iana"},"image/vnd.sealed.png":{"source":"iana"},"image/vnd.sealedmedia.softseal.gif":{"source":"iana"},"image/vnd.sealedmedia.softseal.jpg":{"source":"iana"},"image/vnd.svf":{"source":"iana"},"image/vnd.tencent.tap":{"source":"iana","extensions":["tap"]},"image/vnd.valve.source.texture":{"source":"iana","extensions":["vtf"]},"image/vnd.wap.wbmp":{"source":"iana","extensions":["wbmp"]},"image/vnd.xiff":{"source":"iana","extensions":["xif"]},"image/vnd.zbrush.pcx":{"source":"iana","extensions":["pcx"]},"image/webp":{"source":"apache","extensions":["webp"]},"image/wmf":{"source":"iana","extensions":["wmf"]},"image/x-3ds":{"source":"apache","extensions":["3ds"]},"image/x-cmu-raster":{"source":"apache","extensions":["ras"]},"image/x-cmx":{"source":"apache","extensions":["cmx"]},"image/x-freehand":{"source":"apache","extensions":["fh","fhc","fh4","fh5","fh7"]},"image/x-icon":{"source":"apache","compressible":true,"extensions":["ico"]},"image/x-jng":{"source":"nginx","extensions":["jng"]},"image/x-mrsid-image":{"source":"apache","extensions":["sid"]},"image/x-ms-bmp":{"source":"nginx","compressible":true,"extensions":["bmp"]},"image/x-pcx":{"source":"apache","extensions":["pcx"]},"image/x-pict":{"source":"apache","extensions":["pic","pct"]},"image/x-portable-anymap":{"source":"apache","extensions":["pnm"]},"image/x-portable-bitmap":{"source":"apache","extensions":["pbm"]},"image/x-portable-graymap":{"source":"apache","extensions":["pgm"]},"image/x-portable-pixmap":{"source":"apache","extensions":["ppm"]},"image/x-rgb":{"source":"apache","extensions":["rgb"]},"image/x-tga":{"source":"apache","extensions":["tga"]},"image/x-xbitmap":{"source":"apache","extensions":["xbm"]},"image/x-xcf":{"compressible":false},"image/x-xpixmap":{"source":"apache","extensions":["xpm"]},"image/x-xwindowdump":{"source":"apache","extensions":["xwd"]},"message/cpim":{"source":"iana"},"message/delivery-status":{"source":"iana"},"message/disposition-notification":{"source":"iana","extensions":["disposition-notification"]},"message/external-body":{"source":"iana"},"message/feedback-report":{"source":"iana"},"message/global":{"source":"iana","extensions":["u8msg"]},"message/global-delivery-status":{"source":"iana","extensions":["u8dsn"]},"message/global-disposition-notification":{"source":"iana","extensions":["u8mdn"]},"message/global-headers":{"source":"iana","extensions":["u8hdr"]},"message/http":{"source":"iana","compressible":false},"message/imdn+xml":{"source":"iana","compressible":true},"message/news":{"source":"iana"},"message/partial":{"source":"iana","compressible":false},"message/rfc822":{"source":"iana","compressible":true,"extensions":["eml","mime"]},"message/s-http":{"source":"iana"},"message/sip":{"source":"iana"},"message/sipfrag":{"source":"iana"},"message/tracking-status":{"source":"iana"},"message/vnd.si.simp":{"source":"iana"},"message/vnd.wfa.wsc":{"source":"iana","extensions":["wsc"]},"model/3mf":{"source":"iana","extensions":["3mf"]},"model/e57":{"source":"iana"},"model/gltf+json":{"source":"iana","compressible":true,"extensions":["gltf"]},"model/gltf-binary":{"source":"iana","compressible":true,"extensions":["glb"]},"model/iges":{"source":"iana","compressible":false,"extensions":["igs","iges"]},"model/mesh":{"source":"iana","compressible":false,"extensions":["msh","mesh","silo"]},"model/mtl":{"source":"iana","extensions":["mtl"]},"model/obj":{"source":"iana","extensions":["obj"]},"model/step":{"source":"iana"},"model/step+xml":{"source":"iana","compressible":true,"extensions":["stpx"]},"model/step+zip":{"source":"iana","compressible":false,"extensions":["stpz"]},"model/step-xml+zip":{"source":"iana","compressible":false,"extensions":["stpxz"]},"model/stl":{"source":"iana","extensions":["stl"]},"model/vnd.collada+xml":{"source":"iana","compressible":true,"extensions":["dae"]},"model/vnd.dwf":{"source":"iana","extensions":["dwf"]},"model/vnd.flatland.3dml":{"source":"iana"},"model/vnd.gdl":{"source":"iana","extensions":["gdl"]},"model/vnd.gs-gdl":{"source":"apache"},"model/vnd.gs.gdl":{"source":"iana"},"model/vnd.gtw":{"source":"iana","extensions":["gtw"]},"model/vnd.moml+xml":{"source":"iana","compressible":true},"model/vnd.mts":{"source":"iana","extensions":["mts"]},"model/vnd.opengex":{"source":"iana","extensions":["ogex"]},"model/vnd.parasolid.transmit.binary":{"source":"iana","extensions":["x_b"]},"model/vnd.parasolid.transmit.text":{"source":"iana","extensions":["x_t"]},"model/vnd.pytha.pyox":{"source":"iana"},"model/vnd.rosette.annotated-data-model":{"source":"iana"},"model/vnd.sap.vds":{"source":"iana","extensions":["vds"]},"model/vnd.usdz+zip":{"source":"iana","compressible":false,"extensions":["usdz"]},"model/vnd.valve.source.compiled-map":{"source":"iana","extensions":["bsp"]},"model/vnd.vtu":{"source":"iana","extensions":["vtu"]},"model/vrml":{"source":"iana","compressible":false,"extensions":["wrl","vrml"]},"model/x3d+binary":{"source":"apache","compressible":false,"extensions":["x3db","x3dbz"]},"model/x3d+fastinfoset":{"source":"iana","extensions":["x3db"]},"model/x3d+vrml":{"source":"apache","compressible":false,"extensions":["x3dv","x3dvz"]},"model/x3d+xml":{"source":"iana","compressible":true,"extensions":["x3d","x3dz"]},"model/x3d-vrml":{"source":"iana","extensions":["x3dv"]},"multipart/alternative":{"source":"iana","compressible":false},"multipart/appledouble":{"source":"iana"},"multipart/byteranges":{"source":"iana"},"multipart/digest":{"source":"iana"},"multipart/encrypted":{"source":"iana","compressible":false},"multipart/form-data":{"source":"iana","compressible":false},"multipart/header-set":{"source":"iana"},"multipart/mixed":{"source":"iana"},"multipart/multilingual":{"source":"iana"},"multipart/parallel":{"source":"iana"},"multipart/related":{"source":"iana","compressible":false},"multipart/report":{"source":"iana"},"multipart/signed":{"source":"iana","compressible":false},"multipart/vnd.bint.med-plus":{"source":"iana"},"multipart/voice-message":{"source":"iana"},"multipart/x-mixed-replace":{"source":"iana"},"text/1d-interleaved-parityfec":{"source":"iana"},"text/cache-manifest":{"source":"iana","compressible":true,"extensions":["appcache","manifest"]},"text/calendar":{"source":"iana","extensions":["ics","ifb"]},"text/calender":{"compressible":true},"text/cmd":{"compressible":true},"text/coffeescript":{"extensions":["coffee","litcoffee"]},"text/cql":{"source":"iana"},"text/cql-expression":{"source":"iana"},"text/cql-identifier":{"source":"iana"},"text/css":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["css"]},"text/csv":{"source":"iana","compressible":true,"extensions":["csv"]},"text/csv-schema":{"source":"iana"},"text/directory":{"source":"iana"},"text/dns":{"source":"iana"},"text/ecmascript":{"source":"iana"},"text/encaprtp":{"source":"iana"},"text/enriched":{"source":"iana"},"text/fhirpath":{"source":"iana"},"text/flexfec":{"source":"iana"},"text/fwdred":{"source":"iana"},"text/gff3":{"source":"iana"},"text/grammar-ref-list":{"source":"iana"},"text/html":{"source":"iana","compressible":true,"extensions":["html","htm","shtml"]},"text/jade":{"extensions":["jade"]},"text/javascript":{"source":"iana","compressible":true},"text/jcr-cnd":{"source":"iana"},"text/jsx":{"compressible":true,"extensions":["jsx"]},"text/less":{"compressible":true,"extensions":["less"]},"text/markdown":{"source":"iana","compressible":true,"extensions":["markdown","md"]},"text/mathml":{"source":"nginx","extensions":["mml"]},"text/mdx":{"compressible":true,"extensions":["mdx"]},"text/mizar":{"source":"iana"},"text/n3":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["n3"]},"text/parameters":{"source":"iana","charset":"UTF-8"},"text/parityfec":{"source":"iana"},"text/plain":{"source":"iana","compressible":true,"extensions":["txt","text","conf","def","list","log","in","ini"]},"text/provenance-notation":{"source":"iana","charset":"UTF-8"},"text/prs.fallenstein.rst":{"source":"iana"},"text/prs.lines.tag":{"source":"iana","extensions":["dsc"]},"text/prs.prop.logic":{"source":"iana"},"text/raptorfec":{"source":"iana"},"text/red":{"source":"iana"},"text/rfc822-headers":{"source":"iana"},"text/richtext":{"source":"iana","compressible":true,"extensions":["rtx"]},"text/rtf":{"source":"iana","compressible":true,"extensions":["rtf"]},"text/rtp-enc-aescm128":{"source":"iana"},"text/rtploopback":{"source":"iana"},"text/rtx":{"source":"iana"},"text/sgml":{"source":"iana","extensions":["sgml","sgm"]},"text/shaclc":{"source":"iana"},"text/shex":{"source":"iana","extensions":["shex"]},"text/slim":{"extensions":["slim","slm"]},"text/spdx":{"source":"iana","extensions":["spdx"]},"text/strings":{"source":"iana"},"text/stylus":{"extensions":["stylus","styl"]},"text/t140":{"source":"iana"},"text/tab-separated-values":{"source":"iana","compressible":true,"extensions":["tsv"]},"text/troff":{"source":"iana","extensions":["t","tr","roff","man","me","ms"]},"text/turtle":{"source":"iana","charset":"UTF-8","extensions":["ttl"]},"text/ulpfec":{"source":"iana"},"text/uri-list":{"source":"iana","compressible":true,"extensions":["uri","uris","urls"]},"text/vcard":{"source":"iana","compressible":true,"extensions":["vcard"]},"text/vnd.a":{"source":"iana"},"text/vnd.abc":{"source":"iana"},"text/vnd.ascii-art":{"source":"iana"},"text/vnd.curl":{"source":"iana","extensions":["curl"]},"text/vnd.curl.dcurl":{"source":"apache","extensions":["dcurl"]},"text/vnd.curl.mcurl":{"source":"apache","extensions":["mcurl"]},"text/vnd.curl.scurl":{"source":"apache","extensions":["scurl"]},"text/vnd.debian.copyright":{"source":"iana","charset":"UTF-8"},"text/vnd.dmclientscript":{"source":"iana"},"text/vnd.dvb.subtitle":{"source":"iana","extensions":["sub"]},"text/vnd.esmertec.theme-descriptor":{"source":"iana","charset":"UTF-8"},"text/vnd.familysearch.gedcom":{"source":"iana","extensions":["ged"]},"text/vnd.ficlab.flt":{"source":"iana"},"text/vnd.fly":{"source":"iana","extensions":["fly"]},"text/vnd.fmi.flexstor":{"source":"iana","extensions":["flx"]},"text/vnd.gml":{"source":"iana"},"text/vnd.graphviz":{"source":"iana","extensions":["gv"]},"text/vnd.hans":{"source":"iana"},"text/vnd.hgl":{"source":"iana"},"text/vnd.in3d.3dml":{"source":"iana","extensions":["3dml"]},"text/vnd.in3d.spot":{"source":"iana","extensions":["spot"]},"text/vnd.iptc.newsml":{"source":"iana"},"text/vnd.iptc.nitf":{"source":"iana"},"text/vnd.latex-z":{"source":"iana"},"text/vnd.motorola.reflex":{"source":"iana"},"text/vnd.ms-mediapackage":{"source":"iana"},"text/vnd.net2phone.commcenter.command":{"source":"iana"},"text/vnd.radisys.msml-basic-layout":{"source":"iana"},"text/vnd.senx.warpscript":{"source":"iana"},"text/vnd.si.uricatalogue":{"source":"iana"},"text/vnd.sosi":{"source":"iana"},"text/vnd.sun.j2me.app-descriptor":{"source":"iana","charset":"UTF-8","extensions":["jad"]},"text/vnd.trolltech.linguist":{"source":"iana","charset":"UTF-8"},"text/vnd.wap.si":{"source":"iana"},"text/vnd.wap.sl":{"source":"iana"},"text/vnd.wap.wml":{"source":"iana","extensions":["wml"]},"text/vnd.wap.wmlscript":{"source":"iana","extensions":["wmls"]},"text/vtt":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["vtt"]},"text/x-asm":{"source":"apache","extensions":["s","asm"]},"text/x-c":{"source":"apache","extensions":["c","cc","cxx","cpp","h","hh","dic"]},"text/x-component":{"source":"nginx","extensions":["htc"]},"text/x-fortran":{"source":"apache","extensions":["f","for","f77","f90"]},"text/x-gwt-rpc":{"compressible":true},"text/x-handlebars-template":{"extensions":["hbs"]},"text/x-java-source":{"source":"apache","extensions":["java"]},"text/x-jquery-tmpl":{"compressible":true},"text/x-lua":{"extensions":["lua"]},"text/x-markdown":{"compressible":true,"extensions":["mkd"]},"text/x-nfo":{"source":"apache","extensions":["nfo"]},"text/x-opml":{"source":"apache","extensions":["opml"]},"text/x-org":{"compressible":true,"extensions":["org"]},"text/x-pascal":{"source":"apache","extensions":["p","pas"]},"text/x-processing":{"compressible":true,"extensions":["pde"]},"text/x-sass":{"extensions":["sass"]},"text/x-scss":{"extensions":["scss"]},"text/x-setext":{"source":"apache","extensions":["etx"]},"text/x-sfv":{"source":"apache","extensions":["sfv"]},"text/x-suse-ymp":{"compressible":true,"extensions":["ymp"]},"text/x-uuencode":{"source":"apache","extensions":["uu"]},"text/x-vcalendar":{"source":"apache","extensions":["vcs"]},"text/x-vcard":{"source":"apache","extensions":["vcf"]},"text/xml":{"source":"iana","compressible":true,"extensions":["xml"]},"text/xml-external-parsed-entity":{"source":"iana"},"text/yaml":{"compressible":true,"extensions":["yaml","yml"]},"video/1d-interleaved-parityfec":{"source":"iana"},"video/3gpp":{"source":"iana","extensions":["3gp","3gpp"]},"video/3gpp-tt":{"source":"iana"},"video/3gpp2":{"source":"iana","extensions":["3g2"]},"video/av1":{"source":"iana"},"video/bmpeg":{"source":"iana"},"video/bt656":{"source":"iana"},"video/celb":{"source":"iana"},"video/dv":{"source":"iana"},"video/encaprtp":{"source":"iana"},"video/ffv1":{"source":"iana"},"video/flexfec":{"source":"iana"},"video/h261":{"source":"iana","extensions":["h261"]},"video/h263":{"source":"iana","extensions":["h263"]},"video/h263-1998":{"source":"iana"},"video/h263-2000":{"source":"iana"},"video/h264":{"source":"iana","extensions":["h264"]},"video/h264-rcdo":{"source":"iana"},"video/h264-svc":{"source":"iana"},"video/h265":{"source":"iana"},"video/iso.segment":{"source":"iana","extensions":["m4s"]},"video/jpeg":{"source":"iana","extensions":["jpgv"]},"video/jpeg2000":{"source":"iana"},"video/jpm":{"source":"apache","extensions":["jpm","jpgm"]},"video/jxsv":{"source":"iana"},"video/mj2":{"source":"iana","extensions":["mj2","mjp2"]},"video/mp1s":{"source":"iana"},"video/mp2p":{"source":"iana"},"video/mp2t":{"source":"iana","extensions":["ts"]},"video/mp4":{"source":"iana","compressible":false,"extensions":["mp4","mp4v","mpg4"]},"video/mp4v-es":{"source":"iana"},"video/mpeg":{"source":"iana","compressible":false,"extensions":["mpeg","mpg","mpe","m1v","m2v"]},"video/mpeg4-generic":{"source":"iana"},"video/mpv":{"source":"iana"},"video/nv":{"source":"iana"},"video/ogg":{"source":"iana","compressible":false,"extensions":["ogv"]},"video/parityfec":{"source":"iana"},"video/pointer":{"source":"iana"},"video/quicktime":{"source":"iana","compressible":false,"extensions":["qt","mov"]},"video/raptorfec":{"source":"iana"},"video/raw":{"source":"iana"},"video/rtp-enc-aescm128":{"source":"iana"},"video/rtploopback":{"source":"iana"},"video/rtx":{"source":"iana"},"video/scip":{"source":"iana"},"video/smpte291":{"source":"iana"},"video/smpte292m":{"source":"iana"},"video/ulpfec":{"source":"iana"},"video/vc1":{"source":"iana"},"video/vc2":{"source":"iana"},"video/vnd.cctv":{"source":"iana"},"video/vnd.dece.hd":{"source":"iana","extensions":["uvh","uvvh"]},"video/vnd.dece.mobile":{"source":"iana","extensions":["uvm","uvvm"]},"video/vnd.dece.mp4":{"source":"iana"},"video/vnd.dece.pd":{"source":"iana","extensions":["uvp","uvvp"]},"video/vnd.dece.sd":{"source":"iana","extensions":["uvs","uvvs"]},"video/vnd.dece.video":{"source":"iana","extensions":["uvv","uvvv"]},"video/vnd.directv.mpeg":{"source":"iana"},"video/vnd.directv.mpeg-tts":{"source":"iana"},"video/vnd.dlna.mpeg-tts":{"source":"iana"},"video/vnd.dvb.file":{"source":"iana","extensions":["dvb"]},"video/vnd.fvt":{"source":"iana","extensions":["fvt"]},"video/vnd.hns.video":{"source":"iana"},"video/vnd.iptvforum.1dparityfec-1010":{"source":"iana"},"video/vnd.iptvforum.1dparityfec-2005":{"source":"iana"},"video/vnd.iptvforum.2dparityfec-1010":{"source":"iana"},"video/vnd.iptvforum.2dparityfec-2005":{"source":"iana"},"video/vnd.iptvforum.ttsavc":{"source":"iana"},"video/vnd.iptvforum.ttsmpeg2":{"source":"iana"},"video/vnd.motorola.video":{"source":"iana"},"video/vnd.motorola.videop":{"source":"iana"},"video/vnd.mpegurl":{"source":"iana","extensions":["mxu","m4u"]},"video/vnd.ms-playready.media.pyv":{"source":"iana","extensions":["pyv"]},"video/vnd.nokia.interleaved-multimedia":{"source":"iana"},"video/vnd.nokia.mp4vr":{"source":"iana"},"video/vnd.nokia.videovoip":{"source":"iana"},"video/vnd.objectvideo":{"source":"iana"},"video/vnd.radgamettools.bink":{"source":"iana"},"video/vnd.radgamettools.smacker":{"source":"iana"},"video/vnd.sealed.mpeg1":{"source":"iana"},"video/vnd.sealed.mpeg4":{"source":"iana"},"video/vnd.sealed.swf":{"source":"iana"},"video/vnd.sealedmedia.softseal.mov":{"source":"iana"},"video/vnd.uvvu.mp4":{"source":"iana","extensions":["uvu","uvvu"]},"video/vnd.vivo":{"source":"iana","extensions":["viv"]},"video/vnd.youtube.yt":{"source":"iana"},"video/vp8":{"source":"iana"},"video/vp9":{"source":"iana"},"video/webm":{"source":"apache","compressible":false,"extensions":["webm"]},"video/x-f4v":{"source":"apache","extensions":["f4v"]},"video/x-fli":{"source":"apache","extensions":["fli"]},"video/x-flv":{"source":"apache","compressible":false,"extensions":["flv"]},"video/x-m4v":{"source":"apache","extensions":["m4v"]},"video/x-matroska":{"source":"apache","compressible":false,"extensions":["mkv","mk3d","mks"]},"video/x-mng":{"source":"apache","extensions":["mng"]},"video/x-ms-asf":{"source":"apache","extensions":["asf","asx"]},"video/x-ms-vob":{"source":"apache","extensions":["vob"]},"video/x-ms-wm":{"source":"apache","extensions":["wm"]},"video/x-ms-wmv":{"source":"apache","compressible":false,"extensions":["wmv"]},"video/x-ms-wmx":{"source":"apache","extensions":["wmx"]},"video/x-ms-wvx":{"source":"apache","extensions":["wvx"]},"video/x-msvideo":{"source":"apache","extensions":["avi"]},"video/x-sgi-movie":{"source":"apache","extensions":["movie"]},"video/x-smv":{"source":"apache","extensions":["smv"]},"x-conference/x-cooltalk":{"source":"apache","extensions":["ice"]},"x-shader/x-fragment":{"compressible":true},"x-shader/x-vertex":{"compressible":true}};
 
 /***/ }),
 /* 513 */,
@@ -40422,7 +38365,51 @@ module.exports = {"application/1d-interleaved-parityfec":{"source":"iana"},"appl
 /* 516 */,
 /* 517 */,
 /* 518 */,
-/* 519 */,
+/* 519 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+/*!
+ * Copyright (c) 2018, Salesforce.com, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of Salesforce.com nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+const psl = __webpack_require__(632);
+
+function getPublicSuffix(domain) {
+  return psl.get(domain);
+}
+
+exports.getPublicSuffix = getPublicSuffix;
+
+
+/***/ }),
 /* 520 */,
 /* 521 */,
 /* 522 */,
@@ -40581,71 +38568,35 @@ exports.unregisterGlobal = unregisterGlobal;
 /* 536 */,
 /* 537 */,
 /* 538 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
+/***/ (function(module) {
 
-"use strict";
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+var byteToHex = [];
+for (var i = 0; i < 256; ++i) {
+  byteToHex[i] = (i + 0x100).toString(16).substr(1);
+}
 
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const core = __importStar(__webpack_require__(470));
-/**
- * Returns a copy of the upload options with defaults filled in.
- *
- * @param copy the original upload options
- */
-function getUploadOptions(copy) {
-    const result = {
-        uploadConcurrency: 4,
-        uploadChunkSize: 32 * 1024 * 1024
-    };
-    if (copy) {
-        if (typeof copy.uploadConcurrency === 'number') {
-            result.uploadConcurrency = copy.uploadConcurrency;
-        }
-        if (typeof copy.uploadChunkSize === 'number') {
-            result.uploadChunkSize = copy.uploadChunkSize;
-        }
-    }
-    core.debug(`Upload concurrency: ${result.uploadConcurrency}`);
-    core.debug(`Upload chunk size: ${result.uploadChunkSize}`);
-    return result;
+function bytesToUuid(buf, offset) {
+  var i = offset || 0;
+  var bth = byteToHex;
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]]
+  ]).join('');
 }
-exports.getUploadOptions = getUploadOptions;
-/**
- * Returns a copy of the download options with defaults filled in.
- *
- * @param copy the original download options
- */
-function getDownloadOptions(copy) {
-    const result = {
-        useAzureSdk: true,
-        downloadConcurrency: 8,
-        timeoutInMs: 30000
-    };
-    if (copy) {
-        if (typeof copy.useAzureSdk === 'boolean') {
-            result.useAzureSdk = copy.useAzureSdk;
-        }
-        if (typeof copy.downloadConcurrency === 'number') {
-            result.downloadConcurrency = copy.downloadConcurrency;
-        }
-        if (typeof copy.timeoutInMs === 'number') {
-            result.timeoutInMs = copy.timeoutInMs;
-        }
-    }
-    core.debug(`Use Azure SDK: ${result.useAzureSdk}`);
-    core.debug(`Download concurrency: ${result.downloadConcurrency}`);
-    core.debug(`Request timeout (ms): ${result.timeoutInMs}`);
-    return result;
-}
-exports.getDownloadOptions = getDownloadOptions;
-//# sourceMappingURL=options.js.map
+
+module.exports = bytesToUuid;
+
 
 /***/ }),
 /* 539 */
@@ -41536,7 +39487,7 @@ CombinedStream.prototype._emitError = function(err) {
 
   XMLDOMConfiguration = __webpack_require__(524);
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   NodeType = __webpack_require__(683);
 
@@ -41799,51 +39750,7 @@ exports.baggageEntryMetadataSymbol = Symbol('BaggageEntryMetadata');
 //# sourceMappingURL=symbol.js.map
 
 /***/ }),
-/* 562 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-/*!
- * Copyright (c) 2018, Salesforce.com, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- * this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of Salesforce.com nor the names of its contributors may
- * be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-const psl = __webpack_require__(632);
-
-function getPublicSuffix(domain) {
-  return psl.get(domain);
-}
-
-exports.getPublicSuffix = getPublicSuffix;
-
-
-/***/ }),
+/* 562 */,
 /* 563 */,
 /* 564 */,
 /* 565 */,
@@ -41988,91 +39895,7 @@ function clean(key)
 /***/ }),
 /* 583 */,
 /* 584 */,
-/* 585 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-Object.defineProperty(exports, "v1", {
-  enumerable: true,
-  get: function () {
-    return _v.default;
-  }
-});
-Object.defineProperty(exports, "v3", {
-  enumerable: true,
-  get: function () {
-    return _v2.default;
-  }
-});
-Object.defineProperty(exports, "v4", {
-  enumerable: true,
-  get: function () {
-    return _v3.default;
-  }
-});
-Object.defineProperty(exports, "v5", {
-  enumerable: true,
-  get: function () {
-    return _v4.default;
-  }
-});
-Object.defineProperty(exports, "NIL", {
-  enumerable: true,
-  get: function () {
-    return _nil.default;
-  }
-});
-Object.defineProperty(exports, "version", {
-  enumerable: true,
-  get: function () {
-    return _version.default;
-  }
-});
-Object.defineProperty(exports, "validate", {
-  enumerable: true,
-  get: function () {
-    return _validate.default;
-  }
-});
-Object.defineProperty(exports, "stringify", {
-  enumerable: true,
-  get: function () {
-    return _stringify.default;
-  }
-});
-Object.defineProperty(exports, "parse", {
-  enumerable: true,
-  get: function () {
-    return _parse.default;
-  }
-});
-
-var _v = _interopRequireDefault(__webpack_require__(173));
-
-var _v2 = _interopRequireDefault(__webpack_require__(298));
-
-var _v3 = _interopRequireDefault(__webpack_require__(606));
-
-var _v4 = _interopRequireDefault(__webpack_require__(90));
-
-var _nil = _interopRequireDefault(__webpack_require__(24));
-
-var _version = _interopRequireDefault(__webpack_require__(104));
-
-var _validate = _interopRequireDefault(__webpack_require__(676));
-
-var _stringify = _interopRequireDefault(__webpack_require__(855));
-
-var _parse = _interopRequireDefault(__webpack_require__(197));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/***/ }),
+/* 585 */,
 /* 586 */
 /***/ (function(__unusedmodule, exports) {
 
@@ -42520,49 +40343,7 @@ exports.getOptions = getOptions;
 module.exports = require("http");
 
 /***/ }),
-/* 606 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _rng = _interopRequireDefault(__webpack_require__(733));
-
-var _stringify = _interopRequireDefault(__webpack_require__(855));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function v4(options, buf, offset) {
-  options = options || {};
-
-  const rnds = options.random || (options.rng || _rng.default)(); // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
-
-
-  rnds[6] = rnds[6] & 0x0f | 0x40;
-  rnds[8] = rnds[8] & 0x3f | 0x80; // Copy bytes to buffer, if provided
-
-  if (buf) {
-    offset = offset || 0;
-
-    for (let i = 0; i < 16; ++i) {
-      buf[offset + i] = rnds[i];
-    }
-
-    return buf;
-  }
-
-  return (0, _stringify.default)(rnds);
-}
-
-var _default = v4;
-exports.default = _default;
-
-/***/ }),
+/* 606 */,
 /* 607 */
 /***/ (function(__unusedmodule, exports) {
 
@@ -42587,318 +40368,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //# sourceMappingURL=span_context.js.map
 
 /***/ }),
-/* 608 */
-/***/ (function(module) {
-
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global global, define, System, Reflect, Promise */
-var __extends;
-var __assign;
-var __rest;
-var __decorate;
-var __param;
-var __metadata;
-var __awaiter;
-var __generator;
-var __exportStar;
-var __values;
-var __read;
-var __spread;
-var __spreadArrays;
-var __spreadArray;
-var __await;
-var __asyncGenerator;
-var __asyncDelegator;
-var __asyncValues;
-var __makeTemplateObject;
-var __importStar;
-var __importDefault;
-var __classPrivateFieldGet;
-var __classPrivateFieldSet;
-var __createBinding;
-(function (factory) {
-    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
-    if (typeof define === "function" && define.amd) {
-        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
-    }
-    else if ( true && typeof module.exports === "object") {
-        factory(createExporter(root, createExporter(module.exports)));
-    }
-    else {
-        factory(createExporter(root));
-    }
-    function createExporter(exports, previous) {
-        if (exports !== root) {
-            if (typeof Object.create === "function") {
-                Object.defineProperty(exports, "__esModule", { value: true });
-            }
-            else {
-                exports.__esModule = true;
-            }
-        }
-        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
-    }
-})
-(function (exporter) {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-
-    __extends = function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-
-    __assign = Object.assign || function (t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-
-    __rest = function (s, e) {
-        var t = {};
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-            t[p] = s[p];
-        if (s != null && typeof Object.getOwnPropertySymbols === "function")
-            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                    t[p[i]] = s[p[i]];
-            }
-        return t;
-    };
-
-    __decorate = function (decorators, target, key, desc) {
-        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-        return c > 3 && r && Object.defineProperty(target, key, r), r;
-    };
-
-    __param = function (paramIndex, decorator) {
-        return function (target, key) { decorator(target, key, paramIndex); }
-    };
-
-    __metadata = function (metadataKey, metadataValue) {
-        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
-    };
-
-    __awaiter = function (thisArg, _arguments, P, generator) {
-        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-        return new (P || (P = Promise))(function (resolve, reject) {
-            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-            step((generator = generator.apply(thisArg, _arguments || [])).next());
-        });
-    };
-
-    __generator = function (thisArg, body) {
-        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-        function verb(n) { return function (v) { return step([n, v]); }; }
-        function step(op) {
-            if (f) throw new TypeError("Generator is already executing.");
-            while (_) try {
-                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-                if (y = 0, t) op = [op[0] & 2, t.value];
-                switch (op[0]) {
-                    case 0: case 1: t = op; break;
-                    case 4: _.label++; return { value: op[1], done: false };
-                    case 5: _.label++; y = op[1]; op = [0]; continue;
-                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                    default:
-                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                        if (t[2]) _.ops.pop();
-                        _.trys.pop(); continue;
-                }
-                op = body.call(thisArg, _);
-            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-        }
-    };
-
-    __exportStar = function(m, o) {
-        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
-    };
-
-    __createBinding = Object.create ? (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-    }) : (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-    });
-
-    __values = function (o) {
-        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-        if (m) return m.call(o);
-        if (o && typeof o.length === "number") return {
-            next: function () {
-                if (o && i >= o.length) o = void 0;
-                return { value: o && o[i++], done: !o };
-            }
-        };
-        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-    };
-
-    __read = function (o, n) {
-        var m = typeof Symbol === "function" && o[Symbol.iterator];
-        if (!m) return o;
-        var i = m.call(o), r, ar = [], e;
-        try {
-            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-        }
-        catch (error) { e = { error: error }; }
-        finally {
-            try {
-                if (r && !r.done && (m = i["return"])) m.call(i);
-            }
-            finally { if (e) throw e.error; }
-        }
-        return ar;
-    };
-
-    /** @deprecated */
-    __spread = function () {
-        for (var ar = [], i = 0; i < arguments.length; i++)
-            ar = ar.concat(__read(arguments[i]));
-        return ar;
-    };
-
-    /** @deprecated */
-    __spreadArrays = function () {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-        for (var r = Array(s), k = 0, i = 0; i < il; i++)
-            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-                r[k] = a[j];
-        return r;
-    };
-
-    __spreadArray = function (to, from, pack) {
-        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-            if (ar || !(i in from)) {
-                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-                ar[i] = from[i];
-            }
-        }
-        return to.concat(ar || Array.prototype.slice.call(from));
-    };
-
-    __await = function (v) {
-        return this instanceof __await ? (this.v = v, this) : new __await(v);
-    };
-
-    __asyncGenerator = function (thisArg, _arguments, generator) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var g = generator.apply(thisArg, _arguments || []), i, q = [];
-        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
-        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
-        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
-        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
-        function fulfill(value) { resume("next", value); }
-        function reject(value) { resume("throw", value); }
-        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
-    };
-
-    __asyncDelegator = function (o) {
-        var i, p;
-        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
-        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
-    };
-
-    __asyncValues = function (o) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var m = o[Symbol.asyncIterator], i;
-        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-    };
-
-    __makeTemplateObject = function (cooked, raw) {
-        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
-        return cooked;
-    };
-
-    var __setModuleDefault = Object.create ? (function(o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-    }) : function(o, v) {
-        o["default"] = v;
-    };
-
-    __importStar = function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-
-    __importDefault = function (mod) {
-        return (mod && mod.__esModule) ? mod : { "default": mod };
-    };
-
-    __classPrivateFieldGet = function (receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-    };
-
-    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
-        if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-    };
-
-    exporter("__extends", __extends);
-    exporter("__assign", __assign);
-    exporter("__rest", __rest);
-    exporter("__decorate", __decorate);
-    exporter("__param", __param);
-    exporter("__metadata", __metadata);
-    exporter("__awaiter", __awaiter);
-    exporter("__generator", __generator);
-    exporter("__exportStar", __exportStar);
-    exporter("__createBinding", __createBinding);
-    exporter("__values", __values);
-    exporter("__read", __read);
-    exporter("__spread", __spread);
-    exporter("__spreadArrays", __spreadArrays);
-    exporter("__spreadArray", __spreadArray);
-    exporter("__await", __await);
-    exporter("__asyncGenerator", __asyncGenerator);
-    exporter("__asyncDelegator", __asyncDelegator);
-    exporter("__asyncValues", __asyncValues);
-    exporter("__makeTemplateObject", __makeTemplateObject);
-    exporter("__importStar", __importStar);
-    exporter("__importDefault", __importDefault);
-    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
-    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
-});
-
-
-/***/ }),
+/* 608 */,
 /* 609 */,
 /* 610 */,
 /* 611 */,
@@ -42911,35 +40381,7 @@ module.exports = require("events");
 
 /***/ }),
 /* 615 */,
-/* 616 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _crypto = _interopRequireDefault(__webpack_require__(417));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function sha1(bytes) {
-  if (Array.isArray(bytes)) {
-    bytes = Buffer.from(bytes);
-  } else if (typeof bytes === 'string') {
-    bytes = Buffer.from(bytes, 'utf8');
-  }
-
-  return _crypto.default.createHash('sha1').update(bytes).digest();
-}
-
-var _default = sha1;
-exports.default = _default;
-
-/***/ }),
+/* 616 */,
 /* 617 */,
 /* 618 */,
 /* 619 */,
@@ -43023,7 +40465,89 @@ module.exports = require("path");
 /* 624 */,
 /* 625 */,
 /* 626 */,
-/* 627 */,
+/* 627 */
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+/*!
+ * Copyright (c) 2015, Salesforce.com, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of Salesforce.com nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*jshint unused:false */
+
+class Store {
+  constructor() {
+    this.synchronous = false;
+  }
+
+  findCookie(domain, path, key, cb) {
+    throw new Error("findCookie is not implemented");
+  }
+
+  findCookies(domain, path, allowSpecialUseDomain, cb) {
+    throw new Error("findCookies is not implemented");
+  }
+
+  putCookie(cookie, cb) {
+    throw new Error("putCookie is not implemented");
+  }
+
+  updateCookie(oldCookie, newCookie, cb) {
+    // recommended default implementation:
+    // return this.putCookie(newCookie, cb);
+    throw new Error("updateCookie is not implemented");
+  }
+
+  removeCookie(domain, path, key, cb) {
+    throw new Error("removeCookie is not implemented");
+  }
+
+  removeCookies(domain, path, cb) {
+    throw new Error("removeCookies is not implemented");
+  }
+
+  removeAllCookies(cb) {
+    throw new Error("removeAllCookies is not implemented");
+  }
+
+  getAllCookies(cb) {
+    throw new Error(
+      "getAllCookies is not implemented (therefore jar cannot be serialized)"
+    );
+  }
+}
+
+exports.Store = Store;
+
+
+/***/ }),
 /* 628 */,
 /* 629 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
@@ -43378,7 +40902,7 @@ exports.isValid = function (domain) {
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   module.exports = XMLCharacterData = (function(superClass) {
     extend(XMLCharacterData, superClass);
@@ -43454,318 +40978,7 @@ exports.isValid = function (domain) {
 
 
 /***/ }),
-/* 640 */
-/***/ (function(module) {
-
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global global, define, System, Reflect, Promise */
-var __extends;
-var __assign;
-var __rest;
-var __decorate;
-var __param;
-var __metadata;
-var __awaiter;
-var __generator;
-var __exportStar;
-var __values;
-var __read;
-var __spread;
-var __spreadArrays;
-var __spreadArray;
-var __await;
-var __asyncGenerator;
-var __asyncDelegator;
-var __asyncValues;
-var __makeTemplateObject;
-var __importStar;
-var __importDefault;
-var __classPrivateFieldGet;
-var __classPrivateFieldSet;
-var __createBinding;
-(function (factory) {
-    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
-    if (typeof define === "function" && define.amd) {
-        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
-    }
-    else if ( true && typeof module.exports === "object") {
-        factory(createExporter(root, createExporter(module.exports)));
-    }
-    else {
-        factory(createExporter(root));
-    }
-    function createExporter(exports, previous) {
-        if (exports !== root) {
-            if (typeof Object.create === "function") {
-                Object.defineProperty(exports, "__esModule", { value: true });
-            }
-            else {
-                exports.__esModule = true;
-            }
-        }
-        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
-    }
-})
-(function (exporter) {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-
-    __extends = function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-
-    __assign = Object.assign || function (t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-
-    __rest = function (s, e) {
-        var t = {};
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-            t[p] = s[p];
-        if (s != null && typeof Object.getOwnPropertySymbols === "function")
-            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                    t[p[i]] = s[p[i]];
-            }
-        return t;
-    };
-
-    __decorate = function (decorators, target, key, desc) {
-        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-        return c > 3 && r && Object.defineProperty(target, key, r), r;
-    };
-
-    __param = function (paramIndex, decorator) {
-        return function (target, key) { decorator(target, key, paramIndex); }
-    };
-
-    __metadata = function (metadataKey, metadataValue) {
-        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
-    };
-
-    __awaiter = function (thisArg, _arguments, P, generator) {
-        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-        return new (P || (P = Promise))(function (resolve, reject) {
-            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-            step((generator = generator.apply(thisArg, _arguments || [])).next());
-        });
-    };
-
-    __generator = function (thisArg, body) {
-        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-        function verb(n) { return function (v) { return step([n, v]); }; }
-        function step(op) {
-            if (f) throw new TypeError("Generator is already executing.");
-            while (_) try {
-                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-                if (y = 0, t) op = [op[0] & 2, t.value];
-                switch (op[0]) {
-                    case 0: case 1: t = op; break;
-                    case 4: _.label++; return { value: op[1], done: false };
-                    case 5: _.label++; y = op[1]; op = [0]; continue;
-                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                    default:
-                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                        if (t[2]) _.ops.pop();
-                        _.trys.pop(); continue;
-                }
-                op = body.call(thisArg, _);
-            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-        }
-    };
-
-    __exportStar = function(m, o) {
-        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
-    };
-
-    __createBinding = Object.create ? (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-    }) : (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-    });
-
-    __values = function (o) {
-        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-        if (m) return m.call(o);
-        if (o && typeof o.length === "number") return {
-            next: function () {
-                if (o && i >= o.length) o = void 0;
-                return { value: o && o[i++], done: !o };
-            }
-        };
-        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-    };
-
-    __read = function (o, n) {
-        var m = typeof Symbol === "function" && o[Symbol.iterator];
-        if (!m) return o;
-        var i = m.call(o), r, ar = [], e;
-        try {
-            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-        }
-        catch (error) { e = { error: error }; }
-        finally {
-            try {
-                if (r && !r.done && (m = i["return"])) m.call(i);
-            }
-            finally { if (e) throw e.error; }
-        }
-        return ar;
-    };
-
-    /** @deprecated */
-    __spread = function () {
-        for (var ar = [], i = 0; i < arguments.length; i++)
-            ar = ar.concat(__read(arguments[i]));
-        return ar;
-    };
-
-    /** @deprecated */
-    __spreadArrays = function () {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-        for (var r = Array(s), k = 0, i = 0; i < il; i++)
-            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-                r[k] = a[j];
-        return r;
-    };
-
-    __spreadArray = function (to, from, pack) {
-        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-            if (ar || !(i in from)) {
-                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-                ar[i] = from[i];
-            }
-        }
-        return to.concat(ar || Array.prototype.slice.call(from));
-    };
-
-    __await = function (v) {
-        return this instanceof __await ? (this.v = v, this) : new __await(v);
-    };
-
-    __asyncGenerator = function (thisArg, _arguments, generator) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var g = generator.apply(thisArg, _arguments || []), i, q = [];
-        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
-        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
-        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
-        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
-        function fulfill(value) { resume("next", value); }
-        function reject(value) { resume("throw", value); }
-        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
-    };
-
-    __asyncDelegator = function (o) {
-        var i, p;
-        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
-        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
-    };
-
-    __asyncValues = function (o) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var m = o[Symbol.asyncIterator], i;
-        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-    };
-
-    __makeTemplateObject = function (cooked, raw) {
-        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
-        return cooked;
-    };
-
-    var __setModuleDefault = Object.create ? (function(o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-    }) : function(o, v) {
-        o["default"] = v;
-    };
-
-    __importStar = function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-
-    __importDefault = function (mod) {
-        return (mod && mod.__esModule) ? mod : { "default": mod };
-    };
-
-    __classPrivateFieldGet = function (receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-    };
-
-    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
-        if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-    };
-
-    exporter("__extends", __extends);
-    exporter("__assign", __assign);
-    exporter("__rest", __rest);
-    exporter("__decorate", __decorate);
-    exporter("__param", __param);
-    exporter("__metadata", __metadata);
-    exporter("__awaiter", __awaiter);
-    exporter("__generator", __generator);
-    exporter("__exportStar", __exportStar);
-    exporter("__createBinding", __createBinding);
-    exporter("__values", __values);
-    exporter("__read", __read);
-    exporter("__spread", __spread);
-    exporter("__spreadArrays", __spreadArrays);
-    exporter("__spreadArray", __spreadArray);
-    exporter("__await", __await);
-    exporter("__asyncGenerator", __asyncGenerator);
-    exporter("__asyncDelegator", __asyncDelegator);
-    exporter("__asyncValues", __asyncValues);
-    exporter("__makeTemplateObject", __makeTemplateObject);
-    exporter("__importStar", __importStar);
-    exporter("__importDefault", __importDefault);
-    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
-    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
-});
-
-
-/***/ }),
+/* 640 */,
 /* 641 */,
 /* 642 */,
 /* 643 */,
@@ -45433,7 +42646,7 @@ module.exports.implForWrapper = function (wrapper) {
 
   NodeType = __webpack_require__(683);
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   module.exports = XMLRaw = (function(superClass) {
     extend(XMLRaw, superClass);
@@ -45474,7 +42687,7 @@ module.exports.implForWrapper = function (wrapper) {
 
   isObject = __webpack_require__(582).isObject;
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   NodeType = __webpack_require__(683);
 
@@ -45700,318 +42913,7 @@ var SpanKind;
 //# sourceMappingURL=span_kind.js.map
 
 /***/ }),
-/* 671 */
-/***/ (function(module) {
-
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global global, define, System, Reflect, Promise */
-var __extends;
-var __assign;
-var __rest;
-var __decorate;
-var __param;
-var __metadata;
-var __awaiter;
-var __generator;
-var __exportStar;
-var __values;
-var __read;
-var __spread;
-var __spreadArrays;
-var __spreadArray;
-var __await;
-var __asyncGenerator;
-var __asyncDelegator;
-var __asyncValues;
-var __makeTemplateObject;
-var __importStar;
-var __importDefault;
-var __classPrivateFieldGet;
-var __classPrivateFieldSet;
-var __createBinding;
-(function (factory) {
-    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
-    if (typeof define === "function" && define.amd) {
-        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
-    }
-    else if ( true && typeof module.exports === "object") {
-        factory(createExporter(root, createExporter(module.exports)));
-    }
-    else {
-        factory(createExporter(root));
-    }
-    function createExporter(exports, previous) {
-        if (exports !== root) {
-            if (typeof Object.create === "function") {
-                Object.defineProperty(exports, "__esModule", { value: true });
-            }
-            else {
-                exports.__esModule = true;
-            }
-        }
-        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
-    }
-})
-(function (exporter) {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-
-    __extends = function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-
-    __assign = Object.assign || function (t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-
-    __rest = function (s, e) {
-        var t = {};
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-            t[p] = s[p];
-        if (s != null && typeof Object.getOwnPropertySymbols === "function")
-            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                    t[p[i]] = s[p[i]];
-            }
-        return t;
-    };
-
-    __decorate = function (decorators, target, key, desc) {
-        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-        return c > 3 && r && Object.defineProperty(target, key, r), r;
-    };
-
-    __param = function (paramIndex, decorator) {
-        return function (target, key) { decorator(target, key, paramIndex); }
-    };
-
-    __metadata = function (metadataKey, metadataValue) {
-        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
-    };
-
-    __awaiter = function (thisArg, _arguments, P, generator) {
-        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-        return new (P || (P = Promise))(function (resolve, reject) {
-            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-            step((generator = generator.apply(thisArg, _arguments || [])).next());
-        });
-    };
-
-    __generator = function (thisArg, body) {
-        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-        function verb(n) { return function (v) { return step([n, v]); }; }
-        function step(op) {
-            if (f) throw new TypeError("Generator is already executing.");
-            while (_) try {
-                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-                if (y = 0, t) op = [op[0] & 2, t.value];
-                switch (op[0]) {
-                    case 0: case 1: t = op; break;
-                    case 4: _.label++; return { value: op[1], done: false };
-                    case 5: _.label++; y = op[1]; op = [0]; continue;
-                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                    default:
-                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                        if (t[2]) _.ops.pop();
-                        _.trys.pop(); continue;
-                }
-                op = body.call(thisArg, _);
-            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-        }
-    };
-
-    __exportStar = function(m, o) {
-        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
-    };
-
-    __createBinding = Object.create ? (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-    }) : (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-    });
-
-    __values = function (o) {
-        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-        if (m) return m.call(o);
-        if (o && typeof o.length === "number") return {
-            next: function () {
-                if (o && i >= o.length) o = void 0;
-                return { value: o && o[i++], done: !o };
-            }
-        };
-        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-    };
-
-    __read = function (o, n) {
-        var m = typeof Symbol === "function" && o[Symbol.iterator];
-        if (!m) return o;
-        var i = m.call(o), r, ar = [], e;
-        try {
-            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-        }
-        catch (error) { e = { error: error }; }
-        finally {
-            try {
-                if (r && !r.done && (m = i["return"])) m.call(i);
-            }
-            finally { if (e) throw e.error; }
-        }
-        return ar;
-    };
-
-    /** @deprecated */
-    __spread = function () {
-        for (var ar = [], i = 0; i < arguments.length; i++)
-            ar = ar.concat(__read(arguments[i]));
-        return ar;
-    };
-
-    /** @deprecated */
-    __spreadArrays = function () {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-        for (var r = Array(s), k = 0, i = 0; i < il; i++)
-            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-                r[k] = a[j];
-        return r;
-    };
-
-    __spreadArray = function (to, from, pack) {
-        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-            if (ar || !(i in from)) {
-                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-                ar[i] = from[i];
-            }
-        }
-        return to.concat(ar || Array.prototype.slice.call(from));
-    };
-
-    __await = function (v) {
-        return this instanceof __await ? (this.v = v, this) : new __await(v);
-    };
-
-    __asyncGenerator = function (thisArg, _arguments, generator) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var g = generator.apply(thisArg, _arguments || []), i, q = [];
-        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
-        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
-        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
-        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
-        function fulfill(value) { resume("next", value); }
-        function reject(value) { resume("throw", value); }
-        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
-    };
-
-    __asyncDelegator = function (o) {
-        var i, p;
-        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
-        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
-    };
-
-    __asyncValues = function (o) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var m = o[Symbol.asyncIterator], i;
-        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-    };
-
-    __makeTemplateObject = function (cooked, raw) {
-        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
-        return cooked;
-    };
-
-    var __setModuleDefault = Object.create ? (function(o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-    }) : function(o, v) {
-        o["default"] = v;
-    };
-
-    __importStar = function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-
-    __importDefault = function (mod) {
-        return (mod && mod.__esModule) ? mod : { "default": mod };
-    };
-
-    __classPrivateFieldGet = function (receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-    };
-
-    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
-        if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-    };
-
-    exporter("__extends", __extends);
-    exporter("__assign", __assign);
-    exporter("__rest", __rest);
-    exporter("__decorate", __decorate);
-    exporter("__param", __param);
-    exporter("__metadata", __metadata);
-    exporter("__awaiter", __awaiter);
-    exporter("__generator", __generator);
-    exporter("__exportStar", __exportStar);
-    exporter("__createBinding", __createBinding);
-    exporter("__values", __values);
-    exporter("__read", __read);
-    exporter("__spread", __spread);
-    exporter("__spreadArrays", __spreadArrays);
-    exporter("__spreadArray", __spreadArray);
-    exporter("__await", __await);
-    exporter("__asyncGenerator", __asyncGenerator);
-    exporter("__asyncDelegator", __asyncDelegator);
-    exporter("__asyncValues", __asyncValues);
-    exporter("__makeTemplateObject", __makeTemplateObject);
-    exporter("__importStar", __importStar);
-    exporter("__importDefault", __importDefault);
-    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
-    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
-});
-
-
-/***/ }),
+/* 671 */,
 /* 672 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -46249,26 +43151,35 @@ exports.createLogLevelDiagLogger = createLogLevelDiagLogger;
 /* 674 */,
 /* 675 */,
 /* 676 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
+/***/ (function(__unusedmodule, exports) {
 
 "use strict";
 
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var _regex = _interopRequireDefault(__webpack_require__(238));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function validate(uuid) {
-  return typeof uuid === 'string' && _regex.default.test(uuid);
+exports.fromCallback = function (fn) {
+  return Object.defineProperty(function () {
+    if (typeof arguments[arguments.length - 1] === 'function') fn.apply(this, arguments)
+    else {
+      return new Promise((resolve, reject) => {
+        arguments[arguments.length] = (err, res) => {
+          if (err) return reject(err)
+          resolve(res)
+        }
+        arguments.length++
+        fn.apply(this, arguments)
+      })
+    }
+  }, 'name', { value: fn.name })
 }
 
-var _default = validate;
-exports.default = _default;
+exports.fromPromise = function (fn) {
+  return Object.defineProperty(function () {
+    const cb = arguments[arguments.length - 1]
+    if (typeof cb !== 'function') return fn.apply(this, arguments)
+    else fn.apply(this, arguments).then(r => cb(null, r), cb)
+  }, 'name', { value: fn.name })
+}
+
 
 /***/ }),
 /* 677 */,
@@ -46529,27 +43440,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 /***/ }),
 /* 695 */
-/***/ (function(__unusedmodule, exports) {
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
 
-/*
- * Copyright The OpenTelemetry Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-Object.defineProperty(exports, "__esModule", { value: true });
-//# sourceMappingURL=tracer.js.map
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _validate = _interopRequireDefault(__webpack_require__(78));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function version(uuid) {
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Invalid UUID');
+  }
+
+  return parseInt(uuid.substr(14, 1), 16);
+}
+
+var _default = version;
+exports.default = _default;
 
 /***/ }),
 /* 696 */,
@@ -46557,7 +43471,1684 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /* 698 */,
 /* 699 */,
 /* 700 */,
-/* 701 */,
+/* 701 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+/*!
+ * Copyright (c) 2015, Salesforce.com, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of Salesforce.com nor the names of its contributors may
+ * be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+const punycode = __webpack_require__(815);
+const urlParse = __webpack_require__(835).parse;
+const util = __webpack_require__(669);
+const pubsuffix = __webpack_require__(519);
+const Store = __webpack_require__(627).Store;
+const MemoryCookieStore = __webpack_require__(349).MemoryCookieStore;
+const pathMatch = __webpack_require__(54).pathMatch;
+const VERSION = __webpack_require__(459);
+const { fromCallback } = __webpack_require__(676);
+
+// From RFC6265 S4.1.1
+// note that it excludes \x3B ";"
+const COOKIE_OCTETS = /^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]+$/;
+
+const CONTROL_CHARS = /[\x00-\x1F]/;
+
+// From Chromium // '\r', '\n' and '\0' should be treated as a terminator in
+// the "relaxed" mode, see:
+// https://github.com/ChromiumWebApps/chromium/blob/b3d3b4da8bb94c1b2e061600df106d590fda3620/net/cookies/parsed_cookie.cc#L60
+const TERMINATORS = ["\n", "\r", "\0"];
+
+// RFC6265 S4.1.1 defines path value as 'any CHAR except CTLs or ";"'
+// Note ';' is \x3B
+const PATH_VALUE = /[\x20-\x3A\x3C-\x7E]+/;
+
+// date-time parsing constants (RFC6265 S5.1.1)
+
+const DATE_DELIM = /[\x09\x20-\x2F\x3B-\x40\x5B-\x60\x7B-\x7E]/;
+
+const MONTH_TO_NUM = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11
+};
+
+const MAX_TIME = 2147483647000; // 31-bit max
+const MIN_TIME = 0; // 31-bit min
+const SAME_SITE_CONTEXT_VAL_ERR =
+  'Invalid sameSiteContext option for getCookies(); expected one of "strict", "lax", or "none"';
+
+function checkSameSiteContext(value) {
+  const context = String(value).toLowerCase();
+  if (context === "none" || context === "lax" || context === "strict") {
+    return context;
+  } else {
+    return null;
+  }
+}
+
+const PrefixSecurityEnum = Object.freeze({
+  SILENT: "silent",
+  STRICT: "strict",
+  DISABLED: "unsafe-disabled"
+});
+
+// Dumped from ip-regex@4.0.0, with the following changes:
+// * all capturing groups converted to non-capturing -- "(?:)"
+// * support for IPv6 Scoped Literal ("%eth1") removed
+// * lowercase hexadecimal only
+var IP_REGEX_LOWERCASE =/(?:^(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}$)|(?:^(?:(?:[a-f\d]{1,4}:){7}(?:[a-f\d]{1,4}|:)|(?:[a-f\d]{1,4}:){6}(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|:[a-f\d]{1,4}|:)|(?:[a-f\d]{1,4}:){5}(?::(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,2}|:)|(?:[a-f\d]{1,4}:){4}(?:(?::[a-f\d]{1,4}){0,1}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,3}|:)|(?:[a-f\d]{1,4}:){3}(?:(?::[a-f\d]{1,4}){0,2}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,4}|:)|(?:[a-f\d]{1,4}:){2}(?:(?::[a-f\d]{1,4}){0,3}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,5}|:)|(?:[a-f\d]{1,4}:){1}(?:(?::[a-f\d]{1,4}){0,4}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,6}|:)|(?::(?:(?::[a-f\d]{1,4}){0,5}:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}|(?::[a-f\d]{1,4}){1,7}|:)))$)/;
+
+/*
+ * Parses a Natural number (i.e., non-negative integer) with either the
+ *    <min>*<max>DIGIT ( non-digit *OCTET )
+ * or
+ *    <min>*<max>DIGIT
+ * grammar (RFC6265 S5.1.1).
+ *
+ * The "trailingOK" boolean controls if the grammar accepts a
+ * "( non-digit *OCTET )" trailer.
+ */
+function parseDigits(token, minDigits, maxDigits, trailingOK) {
+  let count = 0;
+  while (count < token.length) {
+    const c = token.charCodeAt(count);
+    // "non-digit = %x00-2F / %x3A-FF"
+    if (c <= 0x2f || c >= 0x3a) {
+      break;
+    }
+    count++;
+  }
+
+  // constrain to a minimum and maximum number of digits.
+  if (count < minDigits || count > maxDigits) {
+    return null;
+  }
+
+  if (!trailingOK && count != token.length) {
+    return null;
+  }
+
+  return parseInt(token.substr(0, count), 10);
+}
+
+function parseTime(token) {
+  const parts = token.split(":");
+  const result = [0, 0, 0];
+
+  /* RF6256 S5.1.1:
+   *      time            = hms-time ( non-digit *OCTET )
+   *      hms-time        = time-field ":" time-field ":" time-field
+   *      time-field      = 1*2DIGIT
+   */
+
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  for (let i = 0; i < 3; i++) {
+    // "time-field" must be strictly "1*2DIGIT", HOWEVER, "hms-time" can be
+    // followed by "( non-digit *OCTET )" so therefore the last time-field can
+    // have a trailer
+    const trailingOK = i == 2;
+    const num = parseDigits(parts[i], 1, 2, trailingOK);
+    if (num === null) {
+      return null;
+    }
+    result[i] = num;
+  }
+
+  return result;
+}
+
+function parseMonth(token) {
+  token = String(token)
+    .substr(0, 3)
+    .toLowerCase();
+  const num = MONTH_TO_NUM[token];
+  return num >= 0 ? num : null;
+}
+
+/*
+ * RFC6265 S5.1.1 date parser (see RFC for full grammar)
+ */
+function parseDate(str) {
+  if (!str) {
+    return;
+  }
+
+  /* RFC6265 S5.1.1:
+   * 2. Process each date-token sequentially in the order the date-tokens
+   * appear in the cookie-date
+   */
+  const tokens = str.split(DATE_DELIM);
+  if (!tokens) {
+    return;
+  }
+
+  let hour = null;
+  let minute = null;
+  let second = null;
+  let dayOfMonth = null;
+  let month = null;
+  let year = null;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i].trim();
+    if (!token.length) {
+      continue;
+    }
+
+    let result;
+
+    /* 2.1. If the found-time flag is not set and the token matches the time
+     * production, set the found-time flag and set the hour- value,
+     * minute-value, and second-value to the numbers denoted by the digits in
+     * the date-token, respectively.  Skip the remaining sub-steps and continue
+     * to the next date-token.
+     */
+    if (second === null) {
+      result = parseTime(token);
+      if (result) {
+        hour = result[0];
+        minute = result[1];
+        second = result[2];
+        continue;
+      }
+    }
+
+    /* 2.2. If the found-day-of-month flag is not set and the date-token matches
+     * the day-of-month production, set the found-day-of- month flag and set
+     * the day-of-month-value to the number denoted by the date-token.  Skip
+     * the remaining sub-steps and continue to the next date-token.
+     */
+    if (dayOfMonth === null) {
+      // "day-of-month = 1*2DIGIT ( non-digit *OCTET )"
+      result = parseDigits(token, 1, 2, true);
+      if (result !== null) {
+        dayOfMonth = result;
+        continue;
+      }
+    }
+
+    /* 2.3. If the found-month flag is not set and the date-token matches the
+     * month production, set the found-month flag and set the month-value to
+     * the month denoted by the date-token.  Skip the remaining sub-steps and
+     * continue to the next date-token.
+     */
+    if (month === null) {
+      result = parseMonth(token);
+      if (result !== null) {
+        month = result;
+        continue;
+      }
+    }
+
+    /* 2.4. If the found-year flag is not set and the date-token matches the
+     * year production, set the found-year flag and set the year-value to the
+     * number denoted by the date-token.  Skip the remaining sub-steps and
+     * continue to the next date-token.
+     */
+    if (year === null) {
+      // "year = 2*4DIGIT ( non-digit *OCTET )"
+      result = parseDigits(token, 2, 4, true);
+      if (result !== null) {
+        year = result;
+        /* From S5.1.1:
+         * 3.  If the year-value is greater than or equal to 70 and less
+         * than or equal to 99, increment the year-value by 1900.
+         * 4.  If the year-value is greater than or equal to 0 and less
+         * than or equal to 69, increment the year-value by 2000.
+         */
+        if (year >= 70 && year <= 99) {
+          year += 1900;
+        } else if (year >= 0 && year <= 69) {
+          year += 2000;
+        }
+      }
+    }
+  }
+
+  /* RFC 6265 S5.1.1
+   * "5. Abort these steps and fail to parse the cookie-date if:
+   *     *  at least one of the found-day-of-month, found-month, found-
+   *        year, or found-time flags is not set,
+   *     *  the day-of-month-value is less than 1 or greater than 31,
+   *     *  the year-value is less than 1601,
+   *     *  the hour-value is greater than 23,
+   *     *  the minute-value is greater than 59, or
+   *     *  the second-value is greater than 59.
+   *     (Note that leap seconds cannot be represented in this syntax.)"
+   *
+   * So, in order as above:
+   */
+  if (
+    dayOfMonth === null ||
+    month === null ||
+    year === null ||
+    second === null ||
+    dayOfMonth < 1 ||
+    dayOfMonth > 31 ||
+    year < 1601 ||
+    hour > 23 ||
+    minute > 59 ||
+    second > 59
+  ) {
+    return;
+  }
+
+  return new Date(Date.UTC(year, month, dayOfMonth, hour, minute, second));
+}
+
+function formatDate(date) {
+  return date.toUTCString();
+}
+
+// S5.1.2 Canonicalized Host Names
+function canonicalDomain(str) {
+  if (str == null) {
+    return null;
+  }
+  str = str.trim().replace(/^\./, ""); // S4.1.2.3 & S5.2.3: ignore leading .
+
+  // convert to IDN if any non-ASCII characters
+  if (punycode && /[^\u0001-\u007f]/.test(str)) {
+    str = punycode.toASCII(str);
+  }
+
+  return str.toLowerCase();
+}
+
+// S5.1.3 Domain Matching
+function domainMatch(str, domStr, canonicalize) {
+  if (str == null || domStr == null) {
+    return null;
+  }
+  if (canonicalize !== false) {
+    str = canonicalDomain(str);
+    domStr = canonicalDomain(domStr);
+  }
+
+  /*
+   * S5.1.3:
+   * "A string domain-matches a given domain string if at least one of the
+   * following conditions hold:"
+   *
+   * " o The domain string and the string are identical. (Note that both the
+   * domain string and the string will have been canonicalized to lower case at
+   * this point)"
+   */
+  if (str == domStr) {
+    return true;
+  }
+
+  /* " o All of the following [three] conditions hold:" */
+
+  /* "* The domain string is a suffix of the string" */
+  const idx = str.indexOf(domStr);
+  if (idx <= 0) {
+    return false; // it's a non-match (-1) or prefix (0)
+  }
+
+  // next, check it's a proper suffix
+  // e.g., "a.b.c".indexOf("b.c") === 2
+  // 5 === 3+2
+  if (str.length !== domStr.length + idx) {
+    return false; // it's not a suffix
+  }
+
+  /* "  * The last character of the string that is not included in the
+   * domain string is a %x2E (".") character." */
+  if (str.substr(idx-1,1) !== '.') {
+    return false; // doesn't align on "."
+  }
+
+  /* "  * The string is a host name (i.e., not an IP address)." */
+  if (IP_REGEX_LOWERCASE.test(str)) {
+    return false; // it's an IP address
+  }
+
+  return true;
+}
+
+// RFC6265 S5.1.4 Paths and Path-Match
+
+/*
+ * "The user agent MUST use an algorithm equivalent to the following algorithm
+ * to compute the default-path of a cookie:"
+ *
+ * Assumption: the path (and not query part or absolute uri) is passed in.
+ */
+function defaultPath(path) {
+  // "2. If the uri-path is empty or if the first character of the uri-path is not
+  // a %x2F ("/") character, output %x2F ("/") and skip the remaining steps.
+  if (!path || path.substr(0, 1) !== "/") {
+    return "/";
+  }
+
+  // "3. If the uri-path contains no more than one %x2F ("/") character, output
+  // %x2F ("/") and skip the remaining step."
+  if (path === "/") {
+    return path;
+  }
+
+  const rightSlash = path.lastIndexOf("/");
+  if (rightSlash === 0) {
+    return "/";
+  }
+
+  // "4. Output the characters of the uri-path from the first character up to,
+  // but not including, the right-most %x2F ("/")."
+  return path.slice(0, rightSlash);
+}
+
+function trimTerminator(str) {
+  for (let t = 0; t < TERMINATORS.length; t++) {
+    const terminatorIdx = str.indexOf(TERMINATORS[t]);
+    if (terminatorIdx !== -1) {
+      str = str.substr(0, terminatorIdx);
+    }
+  }
+
+  return str;
+}
+
+function parseCookiePair(cookiePair, looseMode) {
+  cookiePair = trimTerminator(cookiePair);
+
+  let firstEq = cookiePair.indexOf("=");
+  if (looseMode) {
+    if (firstEq === 0) {
+      // '=' is immediately at start
+      cookiePair = cookiePair.substr(1);
+      firstEq = cookiePair.indexOf("="); // might still need to split on '='
+    }
+  } else {
+    // non-loose mode
+    if (firstEq <= 0) {
+      // no '=' or is at start
+      return; // needs to have non-empty "cookie-name"
+    }
+  }
+
+  let cookieName, cookieValue;
+  if (firstEq <= 0) {
+    cookieName = "";
+    cookieValue = cookiePair.trim();
+  } else {
+    cookieName = cookiePair.substr(0, firstEq).trim();
+    cookieValue = cookiePair.substr(firstEq + 1).trim();
+  }
+
+  if (CONTROL_CHARS.test(cookieName) || CONTROL_CHARS.test(cookieValue)) {
+    return;
+  }
+
+  const c = new Cookie();
+  c.key = cookieName;
+  c.value = cookieValue;
+  return c;
+}
+
+function parse(str, options) {
+  if (!options || typeof options !== "object") {
+    options = {};
+  }
+  str = str.trim();
+
+  // We use a regex to parse the "name-value-pair" part of S5.2
+  const firstSemi = str.indexOf(";"); // S5.2 step 1
+  const cookiePair = firstSemi === -1 ? str : str.substr(0, firstSemi);
+  const c = parseCookiePair(cookiePair, !!options.loose);
+  if (!c) {
+    return;
+  }
+
+  if (firstSemi === -1) {
+    return c;
+  }
+
+  // S5.2.3 "unparsed-attributes consist of the remainder of the set-cookie-string
+  // (including the %x3B (";") in question)." plus later on in the same section
+  // "discard the first ";" and trim".
+  const unparsed = str.slice(firstSemi + 1).trim();
+
+  // "If the unparsed-attributes string is empty, skip the rest of these
+  // steps."
+  if (unparsed.length === 0) {
+    return c;
+  }
+
+  /*
+   * S5.2 says that when looping over the items "[p]rocess the attribute-name
+   * and attribute-value according to the requirements in the following
+   * subsections" for every item.  Plus, for many of the individual attributes
+   * in S5.3 it says to use the "attribute-value of the last attribute in the
+   * cookie-attribute-list".  Therefore, in this implementation, we overwrite
+   * the previous value.
+   */
+  const cookie_avs = unparsed.split(";");
+  while (cookie_avs.length) {
+    const av = cookie_avs.shift().trim();
+    if (av.length === 0) {
+      // happens if ";;" appears
+      continue;
+    }
+    const av_sep = av.indexOf("=");
+    let av_key, av_value;
+
+    if (av_sep === -1) {
+      av_key = av;
+      av_value = null;
+    } else {
+      av_key = av.substr(0, av_sep);
+      av_value = av.substr(av_sep + 1);
+    }
+
+    av_key = av_key.trim().toLowerCase();
+
+    if (av_value) {
+      av_value = av_value.trim();
+    }
+
+    switch (av_key) {
+      case "expires": // S5.2.1
+        if (av_value) {
+          const exp = parseDate(av_value);
+          // "If the attribute-value failed to parse as a cookie date, ignore the
+          // cookie-av."
+          if (exp) {
+            // over and underflow not realistically a concern: V8's getTime() seems to
+            // store something larger than a 32-bit time_t (even with 32-bit node)
+            c.expires = exp;
+          }
+        }
+        break;
+
+      case "max-age": // S5.2.2
+        if (av_value) {
+          // "If the first character of the attribute-value is not a DIGIT or a "-"
+          // character ...[or]... If the remainder of attribute-value contains a
+          // non-DIGIT character, ignore the cookie-av."
+          if (/^-?[0-9]+$/.test(av_value)) {
+            const delta = parseInt(av_value, 10);
+            // "If delta-seconds is less than or equal to zero (0), let expiry-time
+            // be the earliest representable date and time."
+            c.setMaxAge(delta);
+          }
+        }
+        break;
+
+      case "domain": // S5.2.3
+        // "If the attribute-value is empty, the behavior is undefined.  However,
+        // the user agent SHOULD ignore the cookie-av entirely."
+        if (av_value) {
+          // S5.2.3 "Let cookie-domain be the attribute-value without the leading %x2E
+          // (".") character."
+          const domain = av_value.trim().replace(/^\./, "");
+          if (domain) {
+            // "Convert the cookie-domain to lower case."
+            c.domain = domain.toLowerCase();
+          }
+        }
+        break;
+
+      case "path": // S5.2.4
+        /*
+         * "If the attribute-value is empty or if the first character of the
+         * attribute-value is not %x2F ("/"):
+         *   Let cookie-path be the default-path.
+         * Otherwise:
+         *   Let cookie-path be the attribute-value."
+         *
+         * We'll represent the default-path as null since it depends on the
+         * context of the parsing.
+         */
+        c.path = av_value && av_value[0] === "/" ? av_value : null;
+        break;
+
+      case "secure": // S5.2.5
+        /*
+         * "If the attribute-name case-insensitively matches the string "Secure",
+         * the user agent MUST append an attribute to the cookie-attribute-list
+         * with an attribute-name of Secure and an empty attribute-value."
+         */
+        c.secure = true;
+        break;
+
+      case "httponly": // S5.2.6 -- effectively the same as 'secure'
+        c.httpOnly = true;
+        break;
+
+      case "samesite": // RFC6265bis-02 S5.3.7
+        const enforcement = av_value ? av_value.toLowerCase() : "";
+        switch (enforcement) {
+          case "strict":
+            c.sameSite = "strict";
+            break;
+          case "lax":
+            c.sameSite = "lax";
+            break;
+          default:
+            // RFC6265bis-02 S5.3.7 step 1:
+            // "If cookie-av's attribute-value is not a case-insensitive match
+            //  for "Strict" or "Lax", ignore the "cookie-av"."
+            // This effectively sets it to 'none' from the prototype.
+            break;
+        }
+        break;
+
+      default:
+        c.extensions = c.extensions || [];
+        c.extensions.push(av);
+        break;
+    }
+  }
+
+  return c;
+}
+
+/**
+ *  If the cookie-name begins with a case-sensitive match for the
+ *  string "__Secure-", abort these steps and ignore the cookie
+ *  entirely unless the cookie's secure-only-flag is true.
+ * @param cookie
+ * @returns boolean
+ */
+function isSecurePrefixConditionMet(cookie) {
+  return !cookie.key.startsWith("__Secure-") || cookie.secure;
+}
+
+/**
+ *  If the cookie-name begins with a case-sensitive match for the
+ *  string "__Host-", abort these steps and ignore the cookie
+ *  entirely unless the cookie meets all the following criteria:
+ *    1.  The cookie's secure-only-flag is true.
+ *    2.  The cookie's host-only-flag is true.
+ *    3.  The cookie-attribute-list contains an attribute with an
+ *        attribute-name of "Path", and the cookie's path is "/".
+ * @param cookie
+ * @returns boolean
+ */
+function isHostPrefixConditionMet(cookie) {
+  return (
+    !cookie.key.startsWith("__Host-") ||
+    (cookie.secure &&
+      cookie.hostOnly &&
+      cookie.path != null &&
+      cookie.path === "/")
+  );
+}
+
+// avoid the V8 deoptimization monster!
+function jsonParse(str) {
+  let obj;
+  try {
+    obj = JSON.parse(str);
+  } catch (e) {
+    return e;
+  }
+  return obj;
+}
+
+function fromJSON(str) {
+  if (!str) {
+    return null;
+  }
+
+  let obj;
+  if (typeof str === "string") {
+    obj = jsonParse(str);
+    if (obj instanceof Error) {
+      return null;
+    }
+  } else {
+    // assume it's an Object
+    obj = str;
+  }
+
+  const c = new Cookie();
+  for (let i = 0; i < Cookie.serializableProperties.length; i++) {
+    const prop = Cookie.serializableProperties[i];
+    if (obj[prop] === undefined || obj[prop] === cookieDefaults[prop]) {
+      continue; // leave as prototype default
+    }
+
+    if (prop === "expires" || prop === "creation" || prop === "lastAccessed") {
+      if (obj[prop] === null) {
+        c[prop] = null;
+      } else {
+        c[prop] = obj[prop] == "Infinity" ? "Infinity" : new Date(obj[prop]);
+      }
+    } else {
+      c[prop] = obj[prop];
+    }
+  }
+
+  return c;
+}
+
+/* Section 5.4 part 2:
+ * "*  Cookies with longer paths are listed before cookies with
+ *     shorter paths.
+ *
+ *  *  Among cookies that have equal-length path fields, cookies with
+ *     earlier creation-times are listed before cookies with later
+ *     creation-times."
+ */
+
+function cookieCompare(a, b) {
+  let cmp = 0;
+
+  // descending for length: b CMP a
+  const aPathLen = a.path ? a.path.length : 0;
+  const bPathLen = b.path ? b.path.length : 0;
+  cmp = bPathLen - aPathLen;
+  if (cmp !== 0) {
+    return cmp;
+  }
+
+  // ascending for time: a CMP b
+  const aTime = a.creation ? a.creation.getTime() : MAX_TIME;
+  const bTime = b.creation ? b.creation.getTime() : MAX_TIME;
+  cmp = aTime - bTime;
+  if (cmp !== 0) {
+    return cmp;
+  }
+
+  // break ties for the same millisecond (precision of JavaScript's clock)
+  cmp = a.creationIndex - b.creationIndex;
+
+  return cmp;
+}
+
+// Gives the permutation of all possible pathMatch()es of a given path. The
+// array is in longest-to-shortest order.  Handy for indexing.
+function permutePath(path) {
+  if (path === "/") {
+    return ["/"];
+  }
+  const permutations = [path];
+  while (path.length > 1) {
+    const lindex = path.lastIndexOf("/");
+    if (lindex === 0) {
+      break;
+    }
+    path = path.substr(0, lindex);
+    permutations.push(path);
+  }
+  permutations.push("/");
+  return permutations;
+}
+
+function getCookieContext(url) {
+  if (url instanceof Object) {
+    return url;
+  }
+  // NOTE: decodeURI will throw on malformed URIs (see GH-32).
+  // Therefore, we will just skip decoding for such URIs.
+  try {
+    url = decodeURI(url);
+  } catch (err) {
+    // Silently swallow error
+  }
+
+  return urlParse(url);
+}
+
+const cookieDefaults = {
+  // the order in which the RFC has them:
+  key: "",
+  value: "",
+  expires: "Infinity",
+  maxAge: null,
+  domain: null,
+  path: null,
+  secure: false,
+  httpOnly: false,
+  extensions: null,
+  // set by the CookieJar:
+  hostOnly: null,
+  pathIsDefault: null,
+  creation: null,
+  lastAccessed: null,
+  sameSite: "none"
+};
+
+class Cookie {
+  constructor(options = {}) {
+    if (util.inspect.custom) {
+      this[util.inspect.custom] = this.inspect;
+    }
+
+    Object.assign(this, cookieDefaults, options);
+    this.creation = this.creation || new Date();
+
+    // used to break creation ties in cookieCompare():
+    Object.defineProperty(this, "creationIndex", {
+      configurable: false,
+      enumerable: false, // important for assert.deepEqual checks
+      writable: true,
+      value: ++Cookie.cookiesCreated
+    });
+  }
+
+  inspect() {
+    const now = Date.now();
+    const hostOnly = this.hostOnly != null ? this.hostOnly : "?";
+    const createAge = this.creation
+      ? `${now - this.creation.getTime()}ms`
+      : "?";
+    const accessAge = this.lastAccessed
+      ? `${now - this.lastAccessed.getTime()}ms`
+      : "?";
+    return `Cookie="${this.toString()}; hostOnly=${hostOnly}; aAge=${accessAge}; cAge=${createAge}"`;
+  }
+
+  toJSON() {
+    const obj = {};
+
+    for (const prop of Cookie.serializableProperties) {
+      if (this[prop] === cookieDefaults[prop]) {
+        continue; // leave as prototype default
+      }
+
+      if (
+        prop === "expires" ||
+        prop === "creation" ||
+        prop === "lastAccessed"
+      ) {
+        if (this[prop] === null) {
+          obj[prop] = null;
+        } else {
+          obj[prop] =
+            this[prop] == "Infinity" // intentionally not ===
+              ? "Infinity"
+              : this[prop].toISOString();
+        }
+      } else if (prop === "maxAge") {
+        if (this[prop] !== null) {
+          // again, intentionally not ===
+          obj[prop] =
+            this[prop] == Infinity || this[prop] == -Infinity
+              ? this[prop].toString()
+              : this[prop];
+        }
+      } else {
+        if (this[prop] !== cookieDefaults[prop]) {
+          obj[prop] = this[prop];
+        }
+      }
+    }
+
+    return obj;
+  }
+
+  clone() {
+    return fromJSON(this.toJSON());
+  }
+
+  validate() {
+    if (!COOKIE_OCTETS.test(this.value)) {
+      return false;
+    }
+    if (
+      this.expires != Infinity &&
+      !(this.expires instanceof Date) &&
+      !parseDate(this.expires)
+    ) {
+      return false;
+    }
+    if (this.maxAge != null && this.maxAge <= 0) {
+      return false; // "Max-Age=" non-zero-digit *DIGIT
+    }
+    if (this.path != null && !PATH_VALUE.test(this.path)) {
+      return false;
+    }
+
+    const cdomain = this.cdomain();
+    if (cdomain) {
+      if (cdomain.match(/\.$/)) {
+        return false; // S4.1.2.3 suggests that this is bad. domainMatch() tests confirm this
+      }
+      const suffix = pubsuffix.getPublicSuffix(cdomain);
+      if (suffix == null) {
+        // it's a public suffix
+        return false;
+      }
+    }
+    return true;
+  }
+
+  setExpires(exp) {
+    if (exp instanceof Date) {
+      this.expires = exp;
+    } else {
+      this.expires = parseDate(exp) || "Infinity";
+    }
+  }
+
+  setMaxAge(age) {
+    if (age === Infinity || age === -Infinity) {
+      this.maxAge = age.toString(); // so JSON.stringify() works
+    } else {
+      this.maxAge = age;
+    }
+  }
+
+  cookieString() {
+    let val = this.value;
+    if (val == null) {
+      val = "";
+    }
+    if (this.key === "") {
+      return val;
+    }
+    return `${this.key}=${val}`;
+  }
+
+  // gives Set-Cookie header format
+  toString() {
+    let str = this.cookieString();
+
+    if (this.expires != Infinity) {
+      if (this.expires instanceof Date) {
+        str += `; Expires=${formatDate(this.expires)}`;
+      } else {
+        str += `; Expires=${this.expires}`;
+      }
+    }
+
+    if (this.maxAge != null && this.maxAge != Infinity) {
+      str += `; Max-Age=${this.maxAge}`;
+    }
+
+    if (this.domain && !this.hostOnly) {
+      str += `; Domain=${this.domain}`;
+    }
+    if (this.path) {
+      str += `; Path=${this.path}`;
+    }
+
+    if (this.secure) {
+      str += "; Secure";
+    }
+    if (this.httpOnly) {
+      str += "; HttpOnly";
+    }
+    if (this.sameSite && this.sameSite !== "none") {
+      const ssCanon = Cookie.sameSiteCanonical[this.sameSite.toLowerCase()];
+      str += `; SameSite=${ssCanon ? ssCanon : this.sameSite}`;
+    }
+    if (this.extensions) {
+      this.extensions.forEach(ext => {
+        str += `; ${ext}`;
+      });
+    }
+
+    return str;
+  }
+
+  // TTL() partially replaces the "expiry-time" parts of S5.3 step 3 (setCookie()
+  // elsewhere)
+  // S5.3 says to give the "latest representable date" for which we use Infinity
+  // For "expired" we use 0
+  TTL(now) {
+    /* RFC6265 S4.1.2.2 If a cookie has both the Max-Age and the Expires
+     * attribute, the Max-Age attribute has precedence and controls the
+     * expiration date of the cookie.
+     * (Concurs with S5.3 step 3)
+     */
+    if (this.maxAge != null) {
+      return this.maxAge <= 0 ? 0 : this.maxAge * 1000;
+    }
+
+    let expires = this.expires;
+    if (expires != Infinity) {
+      if (!(expires instanceof Date)) {
+        expires = parseDate(expires) || Infinity;
+      }
+
+      if (expires == Infinity) {
+        return Infinity;
+      }
+
+      return expires.getTime() - (now || Date.now());
+    }
+
+    return Infinity;
+  }
+
+  // expiryTime() replaces the "expiry-time" parts of S5.3 step 3 (setCookie()
+  // elsewhere)
+  expiryTime(now) {
+    if (this.maxAge != null) {
+      const relativeTo = now || this.creation || new Date();
+      const age = this.maxAge <= 0 ? -Infinity : this.maxAge * 1000;
+      return relativeTo.getTime() + age;
+    }
+
+    if (this.expires == Infinity) {
+      return Infinity;
+    }
+    return this.expires.getTime();
+  }
+
+  // expiryDate() replaces the "expiry-time" parts of S5.3 step 3 (setCookie()
+  // elsewhere), except it returns a Date
+  expiryDate(now) {
+    const millisec = this.expiryTime(now);
+    if (millisec == Infinity) {
+      return new Date(MAX_TIME);
+    } else if (millisec == -Infinity) {
+      return new Date(MIN_TIME);
+    } else {
+      return new Date(millisec);
+    }
+  }
+
+  // This replaces the "persistent-flag" parts of S5.3 step 3
+  isPersistent() {
+    return this.maxAge != null || this.expires != Infinity;
+  }
+
+  // Mostly S5.1.2 and S5.2.3:
+  canonicalizedDomain() {
+    if (this.domain == null) {
+      return null;
+    }
+    return canonicalDomain(this.domain);
+  }
+
+  cdomain() {
+    return this.canonicalizedDomain();
+  }
+}
+
+Cookie.cookiesCreated = 0;
+Cookie.parse = parse;
+Cookie.fromJSON = fromJSON;
+Cookie.serializableProperties = Object.keys(cookieDefaults);
+Cookie.sameSiteLevel = {
+  strict: 3,
+  lax: 2,
+  none: 1
+};
+
+Cookie.sameSiteCanonical = {
+  strict: "Strict",
+  lax: "Lax"
+};
+
+function getNormalizedPrefixSecurity(prefixSecurity) {
+  if (prefixSecurity != null) {
+    const normalizedPrefixSecurity = prefixSecurity.toLowerCase();
+    /* The three supported options */
+    switch (normalizedPrefixSecurity) {
+      case PrefixSecurityEnum.STRICT:
+      case PrefixSecurityEnum.SILENT:
+      case PrefixSecurityEnum.DISABLED:
+        return normalizedPrefixSecurity;
+    }
+  }
+  /* Default is SILENT */
+  return PrefixSecurityEnum.SILENT;
+}
+
+class CookieJar {
+  constructor(store, options = { rejectPublicSuffixes: true }) {
+    if (typeof options === "boolean") {
+      options = { rejectPublicSuffixes: options };
+    }
+    this.rejectPublicSuffixes = options.rejectPublicSuffixes;
+    this.enableLooseMode = !!options.looseMode;
+    this.allowSpecialUseDomain = !!options.allowSpecialUseDomain;
+    this.store = store || new MemoryCookieStore();
+    this.prefixSecurity = getNormalizedPrefixSecurity(options.prefixSecurity);
+    this._cloneSync = syncWrap("clone");
+    this._importCookiesSync = syncWrap("_importCookies");
+    this.getCookiesSync = syncWrap("getCookies");
+    this.getCookieStringSync = syncWrap("getCookieString");
+    this.getSetCookieStringsSync = syncWrap("getSetCookieStrings");
+    this.removeAllCookiesSync = syncWrap("removeAllCookies");
+    this.setCookieSync = syncWrap("setCookie");
+    this.serializeSync = syncWrap("serialize");
+  }
+
+  setCookie(cookie, url, options, cb) {
+    let err;
+    const context = getCookieContext(url);
+    if (typeof options === "function") {
+      cb = options;
+      options = {};
+    }
+
+    const host = canonicalDomain(context.hostname);
+    const loose = options.loose || this.enableLooseMode;
+
+    let sameSiteContext = null;
+    if (options.sameSiteContext) {
+      sameSiteContext = checkSameSiteContext(options.sameSiteContext);
+      if (!sameSiteContext) {
+        return cb(new Error(SAME_SITE_CONTEXT_VAL_ERR));
+      }
+    }
+
+    // S5.3 step 1
+    if (typeof cookie === "string" || cookie instanceof String) {
+      cookie = Cookie.parse(cookie, { loose: loose });
+      if (!cookie) {
+        err = new Error("Cookie failed to parse");
+        return cb(options.ignoreError ? null : err);
+      }
+    } else if (!(cookie instanceof Cookie)) {
+      // If you're seeing this error, and are passing in a Cookie object,
+      // it *might* be a Cookie object from another loaded version of tough-cookie.
+      err = new Error(
+        "First argument to setCookie must be a Cookie object or string"
+      );
+      return cb(options.ignoreError ? null : err);
+    }
+
+    // S5.3 step 2
+    const now = options.now || new Date(); // will assign later to save effort in the face of errors
+
+    // S5.3 step 3: NOOP; persistent-flag and expiry-time is handled by getCookie()
+
+    // S5.3 step 4: NOOP; domain is null by default
+
+    // S5.3 step 5: public suffixes
+    if (this.rejectPublicSuffixes && cookie.domain) {
+      const suffix = pubsuffix.getPublicSuffix(cookie.cdomain());
+      if (suffix == null) {
+        // e.g. "com"
+        err = new Error("Cookie has domain set to a public suffix");
+        return cb(options.ignoreError ? null : err);
+      }
+    }
+
+    // S5.3 step 6:
+    if (cookie.domain) {
+      if (!domainMatch(host, cookie.cdomain(), false)) {
+        err = new Error(
+          `Cookie not in this host's domain. Cookie:${cookie.cdomain()} Request:${host}`
+        );
+        return cb(options.ignoreError ? null : err);
+      }
+
+      if (cookie.hostOnly == null) {
+        // don't reset if already set
+        cookie.hostOnly = false;
+      }
+    } else {
+      cookie.hostOnly = true;
+      cookie.domain = host;
+    }
+
+    //S5.2.4 If the attribute-value is empty or if the first character of the
+    //attribute-value is not %x2F ("/"):
+    //Let cookie-path be the default-path.
+    if (!cookie.path || cookie.path[0] !== "/") {
+      cookie.path = defaultPath(context.pathname);
+      cookie.pathIsDefault = true;
+    }
+
+    // S5.3 step 8: NOOP; secure attribute
+    // S5.3 step 9: NOOP; httpOnly attribute
+
+    // S5.3 step 10
+    if (options.http === false && cookie.httpOnly) {
+      err = new Error("Cookie is HttpOnly and this isn't an HTTP API");
+      return cb(options.ignoreError ? null : err);
+    }
+
+    // 6252bis-02 S5.4 Step 13 & 14:
+    if (cookie.sameSite !== "none" && sameSiteContext) {
+      // "If the cookie's "same-site-flag" is not "None", and the cookie
+      //  is being set from a context whose "site for cookies" is not an
+      //  exact match for request-uri's host's registered domain, then
+      //  abort these steps and ignore the newly created cookie entirely."
+      if (sameSiteContext === "none") {
+        err = new Error(
+          "Cookie is SameSite but this is a cross-origin request"
+        );
+        return cb(options.ignoreError ? null : err);
+      }
+    }
+
+    /* 6265bis-02 S5.4 Steps 15 & 16 */
+    const ignoreErrorForPrefixSecurity =
+      this.prefixSecurity === PrefixSecurityEnum.SILENT;
+    const prefixSecurityDisabled =
+      this.prefixSecurity === PrefixSecurityEnum.DISABLED;
+    /* If prefix checking is not disabled ...*/
+    if (!prefixSecurityDisabled) {
+      let errorFound = false;
+      let errorMsg;
+      /* Check secure prefix condition */
+      if (!isSecurePrefixConditionMet(cookie)) {
+        errorFound = true;
+        errorMsg = "Cookie has __Secure prefix but Secure attribute is not set";
+      } else if (!isHostPrefixConditionMet(cookie)) {
+        /* Check host prefix condition */
+        errorFound = true;
+        errorMsg =
+          "Cookie has __Host prefix but either Secure or HostOnly attribute is not set or Path is not '/'";
+      }
+      if (errorFound) {
+        return cb(
+          options.ignoreError || ignoreErrorForPrefixSecurity
+            ? null
+            : new Error(errorMsg)
+        );
+      }
+    }
+
+    const store = this.store;
+
+    if (!store.updateCookie) {
+      store.updateCookie = function(oldCookie, newCookie, cb) {
+        this.putCookie(newCookie, cb);
+      };
+    }
+
+    function withCookie(err, oldCookie) {
+      if (err) {
+        return cb(err);
+      }
+
+      const next = function(err) {
+        if (err) {
+          return cb(err);
+        } else {
+          cb(null, cookie);
+        }
+      };
+
+      if (oldCookie) {
+        // S5.3 step 11 - "If the cookie store contains a cookie with the same name,
+        // domain, and path as the newly created cookie:"
+        if (options.http === false && oldCookie.httpOnly) {
+          // step 11.2
+          err = new Error("old Cookie is HttpOnly and this isn't an HTTP API");
+          return cb(options.ignoreError ? null : err);
+        }
+        cookie.creation = oldCookie.creation; // step 11.3
+        cookie.creationIndex = oldCookie.creationIndex; // preserve tie-breaker
+        cookie.lastAccessed = now;
+        // Step 11.4 (delete cookie) is implied by just setting the new one:
+        store.updateCookie(oldCookie, cookie, next); // step 12
+      } else {
+        cookie.creation = cookie.lastAccessed = now;
+        store.putCookie(cookie, next); // step 12
+      }
+    }
+
+    store.findCookie(cookie.domain, cookie.path, cookie.key, withCookie);
+  }
+
+  // RFC6365 S5.4
+  getCookies(url, options, cb) {
+    const context = getCookieContext(url);
+    if (typeof options === "function") {
+      cb = options;
+      options = {};
+    }
+
+    const host = canonicalDomain(context.hostname);
+    const path = context.pathname || "/";
+
+    let secure = options.secure;
+    if (
+      secure == null &&
+      context.protocol &&
+      (context.protocol == "https:" || context.protocol == "wss:")
+    ) {
+      secure = true;
+    }
+
+    let sameSiteLevel = 0;
+    if (options.sameSiteContext) {
+      const sameSiteContext = checkSameSiteContext(options.sameSiteContext);
+      sameSiteLevel = Cookie.sameSiteLevel[sameSiteContext];
+      if (!sameSiteLevel) {
+        return cb(new Error(SAME_SITE_CONTEXT_VAL_ERR));
+      }
+    }
+
+    let http = options.http;
+    if (http == null) {
+      http = true;
+    }
+
+    const now = options.now || Date.now();
+    const expireCheck = options.expire !== false;
+    const allPaths = !!options.allPaths;
+    const store = this.store;
+
+    function matchingCookie(c) {
+      // "Either:
+      //   The cookie's host-only-flag is true and the canonicalized
+      //   request-host is identical to the cookie's domain.
+      // Or:
+      //   The cookie's host-only-flag is false and the canonicalized
+      //   request-host domain-matches the cookie's domain."
+      if (c.hostOnly) {
+        if (c.domain != host) {
+          return false;
+        }
+      } else {
+        if (!domainMatch(host, c.domain, false)) {
+          return false;
+        }
+      }
+
+      // "The request-uri's path path-matches the cookie's path."
+      if (!allPaths && !pathMatch(path, c.path)) {
+        return false;
+      }
+
+      // "If the cookie's secure-only-flag is true, then the request-uri's
+      // scheme must denote a "secure" protocol"
+      if (c.secure && !secure) {
+        return false;
+      }
+
+      // "If the cookie's http-only-flag is true, then exclude the cookie if the
+      // cookie-string is being generated for a "non-HTTP" API"
+      if (c.httpOnly && !http) {
+        return false;
+      }
+
+      // RFC6265bis-02 S5.3.7
+      if (sameSiteLevel) {
+        const cookieLevel = Cookie.sameSiteLevel[c.sameSite || "none"];
+        if (cookieLevel > sameSiteLevel) {
+          // only allow cookies at or below the request level
+          return false;
+        }
+      }
+
+      // deferred from S5.3
+      // non-RFC: allow retention of expired cookies by choice
+      if (expireCheck && c.expiryTime() <= now) {
+        store.removeCookie(c.domain, c.path, c.key, () => {}); // result ignored
+        return false;
+      }
+
+      return true;
+    }
+
+    store.findCookies(
+      host,
+      allPaths ? null : path,
+      this.allowSpecialUseDomain,
+      (err, cookies) => {
+        if (err) {
+          return cb(err);
+        }
+
+        cookies = cookies.filter(matchingCookie);
+
+        // sorting of S5.4 part 2
+        if (options.sort !== false) {
+          cookies = cookies.sort(cookieCompare);
+        }
+
+        // S5.4 part 3
+        const now = new Date();
+        for (const cookie of cookies) {
+          cookie.lastAccessed = now;
+        }
+        // TODO persist lastAccessed
+
+        cb(null, cookies);
+      }
+    );
+  }
+
+  getCookieString(...args) {
+    const cb = args.pop();
+    const next = function(err, cookies) {
+      if (err) {
+        cb(err);
+      } else {
+        cb(
+          null,
+          cookies
+            .sort(cookieCompare)
+            .map(c => c.cookieString())
+            .join("; ")
+        );
+      }
+    };
+    args.push(next);
+    this.getCookies.apply(this, args);
+  }
+
+  getSetCookieStrings(...args) {
+    const cb = args.pop();
+    const next = function(err, cookies) {
+      if (err) {
+        cb(err);
+      } else {
+        cb(
+          null,
+          cookies.map(c => {
+            return c.toString();
+          })
+        );
+      }
+    };
+    args.push(next);
+    this.getCookies.apply(this, args);
+  }
+
+  serialize(cb) {
+    let type = this.store.constructor.name;
+    if (type === "Object") {
+      type = null;
+    }
+
+    // update README.md "Serialization Format" if you change this, please!
+    const serialized = {
+      // The version of tough-cookie that serialized this jar. Generally a good
+      // practice since future versions can make data import decisions based on
+      // known past behavior. When/if this matters, use `semver`.
+      version: `tough-cookie@${VERSION}`,
+
+      // add the store type, to make humans happy:
+      storeType: type,
+
+      // CookieJar configuration:
+      rejectPublicSuffixes: !!this.rejectPublicSuffixes,
+
+      // this gets filled from getAllCookies:
+      cookies: []
+    };
+
+    if (
+      !(
+        this.store.getAllCookies &&
+        typeof this.store.getAllCookies === "function"
+      )
+    ) {
+      return cb(
+        new Error(
+          "store does not support getAllCookies and cannot be serialized"
+        )
+      );
+    }
+
+    this.store.getAllCookies((err, cookies) => {
+      if (err) {
+        return cb(err);
+      }
+
+      serialized.cookies = cookies.map(cookie => {
+        // convert to serialized 'raw' cookies
+        cookie = cookie instanceof Cookie ? cookie.toJSON() : cookie;
+
+        // Remove the index so new ones get assigned during deserialization
+        delete cookie.creationIndex;
+
+        return cookie;
+      });
+
+      return cb(null, serialized);
+    });
+  }
+
+  toJSON() {
+    return this.serializeSync();
+  }
+
+  // use the class method CookieJar.deserialize instead of calling this directly
+  _importCookies(serialized, cb) {
+    let cookies = serialized.cookies;
+    if (!cookies || !Array.isArray(cookies)) {
+      return cb(new Error("serialized jar has no cookies array"));
+    }
+    cookies = cookies.slice(); // do not modify the original
+
+    const putNext = err => {
+      if (err) {
+        return cb(err);
+      }
+
+      if (!cookies.length) {
+        return cb(err, this);
+      }
+
+      let cookie;
+      try {
+        cookie = fromJSON(cookies.shift());
+      } catch (e) {
+        return cb(e);
+      }
+
+      if (cookie === null) {
+        return putNext(null); // skip this cookie
+      }
+
+      this.store.putCookie(cookie, putNext);
+    };
+
+    putNext();
+  }
+
+  clone(newStore, cb) {
+    if (arguments.length === 1) {
+      cb = newStore;
+      newStore = null;
+    }
+
+    this.serialize((err, serialized) => {
+      if (err) {
+        return cb(err);
+      }
+      CookieJar.deserialize(serialized, newStore, cb);
+    });
+  }
+
+  cloneSync(newStore) {
+    if (arguments.length === 0) {
+      return this._cloneSync();
+    }
+    if (!newStore.synchronous) {
+      throw new Error(
+        "CookieJar clone destination store is not synchronous; use async API instead."
+      );
+    }
+    return this._cloneSync(newStore);
+  }
+
+  removeAllCookies(cb) {
+    const store = this.store;
+
+    // Check that the store implements its own removeAllCookies(). The default
+    // implementation in Store will immediately call the callback with a "not
+    // implemented" Error.
+    if (
+      typeof store.removeAllCookies === "function" &&
+      store.removeAllCookies !== Store.prototype.removeAllCookies
+    ) {
+      return store.removeAllCookies(cb);
+    }
+
+    store.getAllCookies((err, cookies) => {
+      if (err) {
+        return cb(err);
+      }
+
+      if (cookies.length === 0) {
+        return cb(null);
+      }
+
+      let completedCount = 0;
+      const removeErrors = [];
+
+      function removeCookieCb(removeErr) {
+        if (removeErr) {
+          removeErrors.push(removeErr);
+        }
+
+        completedCount++;
+
+        if (completedCount === cookies.length) {
+          return cb(removeErrors.length ? removeErrors[0] : null);
+        }
+      }
+
+      cookies.forEach(cookie => {
+        store.removeCookie(
+          cookie.domain,
+          cookie.path,
+          cookie.key,
+          removeCookieCb
+        );
+      });
+    });
+  }
+
+  static deserialize(strOrObj, store, cb) {
+    if (arguments.length !== 3) {
+      // store is optional
+      cb = store;
+      store = null;
+    }
+
+    let serialized;
+    if (typeof strOrObj === "string") {
+      serialized = jsonParse(strOrObj);
+      if (serialized instanceof Error) {
+        return cb(serialized);
+      }
+    } else {
+      serialized = strOrObj;
+    }
+
+    const jar = new CookieJar(store, serialized.rejectPublicSuffixes);
+    jar._importCookies(serialized, err => {
+      if (err) {
+        return cb(err);
+      }
+      cb(null, jar);
+    });
+  }
+
+  static deserializeSync(strOrObj, store) {
+    const serialized =
+      typeof strOrObj === "string" ? JSON.parse(strOrObj) : strOrObj;
+    const jar = new CookieJar(store, serialized.rejectPublicSuffixes);
+
+    // catch this mistake early:
+    if (!jar.store.synchronous) {
+      throw new Error(
+        "CookieJar store is not synchronous; use async API instead."
+      );
+    }
+
+    jar._importCookiesSync(serialized);
+    return jar;
+  }
+}
+CookieJar.fromJSON = CookieJar.deserializeSync;
+
+[
+  "_importCookies",
+  "clone",
+  "getCookies",
+  "getCookieString",
+  "getSetCookieStrings",
+  "removeAllCookies",
+  "serialize",
+  "setCookie"
+].forEach(name => {
+  CookieJar.prototype[name] = fromCallback(CookieJar.prototype[name]);
+});
+CookieJar.deserialize = fromCallback(CookieJar.deserialize);
+
+// Use a closure to provide a true imperative API for synchronous stores.
+function syncWrap(method) {
+  return function(...args) {
+    if (!this.store.synchronous) {
+      throw new Error(
+        "CookieJar store is not synchronous; use async API instead."
+      );
+    }
+
+    let syncErr, syncResult;
+    this[method](...args, (err, result) => {
+      syncErr = err;
+      syncResult = result;
+    });
+
+    if (syncErr) {
+      throw syncErr;
+    }
+    return syncResult;
+  };
+}
+
+exports.version = VERSION;
+exports.CookieJar = CookieJar;
+exports.Cookie = Cookie;
+exports.Store = Store;
+exports.MemoryCookieStore = MemoryCookieStore;
+exports.parseDate = parseDate;
+exports.formatDate = formatDate;
+exports.parse = parse;
+exports.fromJSON = fromJSON;
+exports.domainMatch = domainMatch;
+exports.defaultPath = defaultPath;
+exports.pathMatch = pathMatch;
+exports.getPublicSuffix = pubsuffix.getPublicSuffix;
+exports.cookieCompare = cookieCompare;
+exports.permuteDomain = __webpack_require__(258).permuteDomain;
+exports.permutePath = permutePath;
+exports.canonicalDomain = canonicalDomain;
+exports.PrefixSecurityEnum = PrefixSecurityEnum;
+
+
+/***/ }),
 /* 702 */,
 /* 703 */,
 /* 704 */,
@@ -46650,119 +45241,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /* 717 */,
 /* 718 */,
 /* 719 */,
-/* 720 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-/*
- * Copyright The OpenTelemetry Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSpanContext = exports.setSpanContext = exports.deleteSpan = exports.setSpan = exports.getSpan = void 0;
-var context_1 = __webpack_require__(132);
-var NonRecordingSpan_1 = __webpack_require__(437);
-/**
- * span key
- */
-var SPAN_KEY = context_1.createContextKey('OpenTelemetry Context Key SPAN');
-/**
- * Return the span if one exists
- *
- * @param context context to get span from
- */
-function getSpan(context) {
-    return context.getValue(SPAN_KEY) || undefined;
-}
-exports.getSpan = getSpan;
-/**
- * Set the span on a context
- *
- * @param context context to use as parent
- * @param span span to set active
- */
-function setSpan(context, span) {
-    return context.setValue(SPAN_KEY, span);
-}
-exports.setSpan = setSpan;
-/**
- * Remove current span stored in the context
- *
- * @param context context to delete span from
- */
-function deleteSpan(context) {
-    return context.deleteValue(SPAN_KEY);
-}
-exports.deleteSpan = deleteSpan;
-/**
- * Wrap span context in a NoopSpan and set as span in a new
- * context
- *
- * @param context context to set active span on
- * @param spanContext span context to be wrapped
- */
-function setSpanContext(context, spanContext) {
-    return setSpan(context, new NonRecordingSpan_1.NonRecordingSpan(spanContext));
-}
-exports.setSpanContext = setSpanContext;
-/**
- * Get the span context of the span if it exists.
- *
- * @param context context to get values from
- */
-function getSpanContext(context) {
-    var _a;
-    return (_a = getSpan(context)) === null || _a === void 0 ? void 0 : _a.spanContext();
-}
-exports.getSpanContext = getSpanContext;
-//# sourceMappingURL=context-utils.js.map
-
-/***/ }),
+/* 720 */,
 /* 721 */,
-/* 722 */
-/***/ (function(module) {
-
-/**
- * Convert array of 16 byte values to UUID string format of the form:
- * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
- */
-var byteToHex = [];
-for (var i = 0; i < 256; ++i) {
-  byteToHex[i] = (i + 0x100).toString(16).substr(1);
-}
-
-function bytesToUuid(buf, offset) {
-  var i = offset || 0;
-  var bth = byteToHex;
-  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([
-    bth[buf[i++]], bth[buf[i++]],
-    bth[buf[i++]], bth[buf[i++]], '-',
-    bth[buf[i++]], bth[buf[i++]], '-',
-    bth[buf[i++]], bth[buf[i++]], '-',
-    bth[buf[i++]], bth[buf[i++]], '-',
-    bth[buf[i++]], bth[buf[i++]],
-    bth[buf[i++]], bth[buf[i++]],
-    bth[buf[i++]], bth[buf[i++]]
-  ]).join('');
-}
-
-module.exports = bytesToUuid;
-
-
-/***/ }),
+/* 722 */,
 /* 723 */,
 /* 724 */
 /***/ (function(module) {
@@ -46819,25 +45300,38 @@ exports.SearchState = SearchState;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = rng;
+exports.default = void 0;
 
-var _crypto = _interopRequireDefault(__webpack_require__(417));
+var _rng = _interopRequireDefault(__webpack_require__(844));
+
+var _stringify = _interopRequireDefault(__webpack_require__(411));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const rnds8Pool = new Uint8Array(256); // # of random values to pre-allocate
+function v4(options, buf, offset) {
+  options = options || {};
 
-let poolPtr = rnds8Pool.length;
+  const rnds = options.random || (options.rng || _rng.default)(); // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
 
-function rng() {
-  if (poolPtr > rnds8Pool.length - 16) {
-    _crypto.default.randomFillSync(rnds8Pool);
 
-    poolPtr = 0;
+  rnds[6] = rnds[6] & 0x0f | 0x40;
+  rnds[8] = rnds[8] & 0x3f | 0x80; // Copy bytes to buffer, if provided
+
+  if (buf) {
+    offset = offset || 0;
+
+    for (let i = 0; i < 16; ++i) {
+      buf[offset + i] = rnds[i];
+    }
+
+    return buf;
   }
 
-  return rnds8Pool.slice(poolPtr, poolPtr += 16);
+  return (0, _stringify.default)(rnds);
 }
+
+var _default = v4;
+exports.default = _default;
 
 /***/ }),
 /* 734 */,
@@ -46852,7 +45346,7 @@ function rng() {
 
   isObject = __webpack_require__(582).isObject;
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   NodeType = __webpack_require__(683);
 
@@ -47046,7 +45540,7 @@ function rng() {
 
   isObject = __webpack_require__(582).isObject;
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   NodeType = __webpack_require__(683);
 
@@ -47875,7 +46369,20 @@ module.exports = function(dst, src) {
 /* 774 */,
 /* 775 */,
 /* 776 */,
-/* 777 */,
+/* 777 */
+/***/ (function(module, __unusedexports, __webpack_require__) {
+
+var v1 = __webpack_require__(189);
+var v4 = __webpack_require__(81);
+
+var uuid = v4;
+uuid.v1 = v1;
+uuid.v4 = v4;
+
+module.exports = uuid;
+
+
+/***/ }),
 /* 778 */
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -47909,9 +46416,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const cache = __importStar(__webpack_require__(692));
 const core = __importStar(__webpack_require__(470));
+const fs_1 = __importDefault(__webpack_require__(747));
 const constants_1 = __webpack_require__(196);
 const utils = __importStar(__webpack_require__(443));
 function run() {
@@ -47933,13 +46444,35 @@ function run() {
                 required: true
             });
             try {
-                const cacheKey = yield cache.restoreCache(cachePaths, primaryKey, restoreKeys);
+                const cacheKey = yield cache.restoreCache(["uuids.json"], primaryKey);
                 if (!cacheKey) {
-                    core.info(`Cache not found for input keys: ${[
-                        primaryKey,
-                        ...restoreKeys
-                    ].join(", ")}`);
+                    core.info(`Cache not found for input keys: ${[primaryKey, ...restoreKeys].join(", ")}`);
                     return;
+                }
+                if (!fs_1.default.existsSync("uuids.json")) {
+                    core.info("UUIDs File not found for cache");
+                    return;
+                }
+                const uuids = JSON.parse(fs_1.default.readFileSync("uuids.json", "utf8"));
+                for (const uuid of uuids) {
+                    try {
+                        const uuidCacheKey = yield cache.restoreCache(cachePaths, uuid, restoreKeys);
+                        if (!uuidCacheKey) {
+                            core.info(`Cache not found for input keys: ${[uuid, ...restoreKeys].join(", ")}`);
+                            continue;
+                        }
+                        core.info(`Cache restored with key: ${uuidCacheKey}`);
+                    }
+                    catch (e) {
+                        const error = e;
+                        if (error.name === cache.ValidationError.name) {
+                            throw error;
+                        }
+                        else {
+                            utils.logWarning(error.message);
+                            utils.setCacheHitOutput(false);
+                        }
+                    }
                 }
                 // Store the matched cache key
                 utils.setCacheState(cacheKey);
@@ -47947,7 +46480,8 @@ function run() {
                 utils.setCacheHitOutput(isExactKeyMatch);
                 core.info(`Cache restored from key: ${cacheKey}`);
             }
-            catch (error) {
+            catch (e) {
+                const error = e;
                 if (error.name === cache.ValidationError.name) {
                     throw error;
                 }
@@ -47957,7 +46491,8 @@ function run() {
                 }
             }
         }
-        catch (error) {
+        catch (e) {
+            const error = e;
             core.setFailed(error.message);
         }
     });
@@ -49002,7 +47537,7 @@ module.exports = require("stream");
 
   ref = __webpack_require__(582), isObject = ref.isObject, isFunction = ref.isFunction, getValue = ref.getValue;
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   NodeType = __webpack_require__(683);
 
@@ -49308,7 +47843,7 @@ module.exports = require("stream");
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   NodeType = __webpack_require__(683);
 
@@ -49361,7 +47896,35 @@ module.exports = require("stream");
 
 /***/ }),
 /* 802 */,
-/* 803 */,
+/* 803 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _crypto = _interopRequireDefault(__webpack_require__(417));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function md5(bytes) {
+  if (Array.isArray(bytes)) {
+    bytes = Buffer.from(bytes);
+  } else if (typeof bytes === 'string') {
+    bytes = Buffer.from(bytes, 'utf8');
+  }
+
+  return _crypto.default.createHash('md5').update(bytes).digest();
+}
+
+var _default = md5;
+exports.default = _default;
+
+/***/ }),
 /* 804 */,
 /* 805 */,
 /* 806 */,
@@ -49390,38 +47953,129 @@ module.exports = require("punycode");
 /* 824 */,
 /* 825 */,
 /* 826 */
-/***/ (function(module, __unusedexports, __webpack_require__) {
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
-var rng = __webpack_require__(139);
-var bytesToUuid = __webpack_require__(722);
+"use strict";
 
-function v4(options, buf, offset) {
-  var i = buf && offset || 0;
-
-  if (typeof(options) == 'string') {
-    buf = options === 'binary' ? new Array(16) : null;
-    options = null;
-  }
-  options = options || {};
-
-  var rnds = options.random || (options.rng || rng)();
-
-  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
-  rnds[6] = (rnds[6] & 0x0f) | 0x40;
-  rnds[8] = (rnds[8] & 0x3f) | 0x80;
-
-  // Copy bytes to buffer, if provided
-  if (buf) {
-    for (var ii = 0; ii < 16; ++ii) {
-      buf[i + ii] = rnds[ii];
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const core = __importStar(__webpack_require__(470));
+const http_client_1 = __webpack_require__(539);
+const constants_1 = __webpack_require__(931);
+function isSuccessStatusCode(statusCode) {
+    if (!statusCode) {
+        return false;
     }
-  }
-
-  return buf || bytesToUuid(rnds);
+    return statusCode >= 200 && statusCode < 300;
 }
-
-module.exports = v4;
-
+exports.isSuccessStatusCode = isSuccessStatusCode;
+function isServerErrorStatusCode(statusCode) {
+    if (!statusCode) {
+        return true;
+    }
+    return statusCode >= 500;
+}
+exports.isServerErrorStatusCode = isServerErrorStatusCode;
+function isRetryableStatusCode(statusCode) {
+    if (!statusCode) {
+        return false;
+    }
+    const retryableStatusCodes = [
+        http_client_1.HttpCodes.BadGateway,
+        http_client_1.HttpCodes.ServiceUnavailable,
+        http_client_1.HttpCodes.GatewayTimeout
+    ];
+    return retryableStatusCodes.includes(statusCode);
+}
+exports.isRetryableStatusCode = isRetryableStatusCode;
+function sleep(milliseconds) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise(resolve => setTimeout(resolve, milliseconds));
+    });
+}
+function retry(name, method, getStatusCode, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay, onError = undefined) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let errorMessage = '';
+        let attempt = 1;
+        while (attempt <= maxAttempts) {
+            let response = undefined;
+            let statusCode = undefined;
+            let isRetryable = false;
+            try {
+                response = yield method();
+            }
+            catch (error) {
+                if (onError) {
+                    response = onError(error);
+                }
+                isRetryable = true;
+                errorMessage = error.message;
+            }
+            if (response) {
+                statusCode = getStatusCode(response);
+                if (!isServerErrorStatusCode(statusCode)) {
+                    return response;
+                }
+            }
+            if (statusCode) {
+                isRetryable = isRetryableStatusCode(statusCode);
+                errorMessage = `Cache service responded with ${statusCode}`;
+            }
+            core.debug(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
+            if (!isRetryable) {
+                core.debug(`${name} - Error is not retryable`);
+                break;
+            }
+            yield sleep(delay);
+            attempt++;
+        }
+        throw Error(`${name} failed: ${errorMessage}`);
+    });
+}
+exports.retry = retry;
+function retryTypedResponse(name, method, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield retry(name, method, (response) => response.statusCode, maxAttempts, delay, 
+        // If the error object contains the statusCode property, extract it and return
+        // an ITypedResponse<T> so it can be processed by the retry logic.
+        (error) => {
+            if (error instanceof http_client_1.HttpClientError) {
+                return {
+                    statusCode: error.statusCode,
+                    result: null,
+                    headers: {},
+                    error
+                };
+            }
+            else {
+                return undefined;
+            }
+        });
+    });
+}
+exports.retryTypedResponse = retryTypedResponse;
+function retryHttpClientResponse(name, method, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield retry(name, method, (response) => response.message.statusCode, maxAttempts, delay);
+    });
+}
+exports.retryHttpClientResponse = retryHttpClientResponse;
+//# sourceMappingURL=requestUtils.js.map
 
 /***/ }),
 /* 827 */,
@@ -49472,7 +48126,36 @@ module.exports = require("url");
 /* 841 */,
 /* 842 */,
 /* 843 */,
-/* 844 */,
+/* 844 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = rng;
+
+var _crypto = _interopRequireDefault(__webpack_require__(417));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const rnds8Pool = new Uint8Array(256); // # of random values to pre-allocate
+
+let poolPtr = rnds8Pool.length;
+
+function rng() {
+  if (poolPtr > rnds8Pool.length - 16) {
+    _crypto.default.randomFillSync(rnds8Pool);
+
+    poolPtr = 0;
+  }
+
+  return rnds8Pool.slice(poolPtr, poolPtr += 16);
+}
+
+/***/ }),
 /* 845 */
 /***/ (function(__unusedmodule, exports) {
 
@@ -49509,6 +48192,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /*!
  * mime-db
  * Copyright(c) 2014 Jonathan Ong
+ * Copyright(c) 2015-2022 Douglas Christopher Wilson
  * MIT Licensed
  */
 
@@ -49523,48 +48207,794 @@ module.exports = __webpack_require__(512)
 /* 853 */,
 /* 854 */,
 /* 855 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
+/***/ (function(module, __unusedexports, __webpack_require__) {
 
-"use strict";
+// Generated by CoffeeScript 1.12.7
+(function() {
+  var DocumentPosition, NodeType, XMLCData, XMLComment, XMLDeclaration, XMLDocType, XMLDummy, XMLElement, XMLNamedNodeMap, XMLNode, XMLNodeList, XMLProcessingInstruction, XMLRaw, XMLText, getValue, isEmpty, isFunction, isObject, ref1,
+    hasProp = {}.hasOwnProperty;
 
+  ref1 = __webpack_require__(582), isObject = ref1.isObject, isFunction = ref1.isFunction, isEmpty = ref1.isEmpty, getValue = ref1.getValue;
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
+  XMLElement = null;
 
-var _validate = _interopRequireDefault(__webpack_require__(676));
+  XMLCData = null;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+  XMLComment = null;
 
-/**
- * Convert array of 16 byte values to UUID string format of the form:
- * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
- */
-const byteToHex = [];
+  XMLDeclaration = null;
 
-for (let i = 0; i < 256; ++i) {
-  byteToHex.push((i + 0x100).toString(16).substr(1));
-}
+  XMLDocType = null;
 
-function stringify(arr, offset = 0) {
-  // Note: Be careful editing this code!  It's been tuned for performance
-  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
-  // of the following:
-  // - One or more input array values don't map to a hex octet (leading to
-  // "undefined" in the uuid)
-  // - Invalid input values for the RFC `version` or `variant` fields
+  XMLRaw = null;
 
-  if (!(0, _validate.default)(uuid)) {
-    throw TypeError('Stringified UUID is invalid');
-  }
+  XMLText = null;
 
-  return uuid;
-}
+  XMLProcessingInstruction = null;
 
-var _default = stringify;
-exports.default = _default;
+  XMLDummy = null;
+
+  NodeType = null;
+
+  XMLNodeList = null;
+
+  XMLNamedNodeMap = null;
+
+  DocumentPosition = null;
+
+  module.exports = XMLNode = (function() {
+    function XMLNode(parent1) {
+      this.parent = parent1;
+      if (this.parent) {
+        this.options = this.parent.options;
+        this.stringify = this.parent.stringify;
+      }
+      this.value = null;
+      this.children = [];
+      this.baseURI = null;
+      if (!XMLElement) {
+        XMLElement = __webpack_require__(796);
+        XMLCData = __webpack_require__(657);
+        XMLComment = __webpack_require__(919);
+        XMLDeclaration = __webpack_require__(738);
+        XMLDocType = __webpack_require__(735);
+        XMLRaw = __webpack_require__(660);
+        XMLText = __webpack_require__(708);
+        XMLProcessingInstruction = __webpack_require__(491);
+        XMLDummy = __webpack_require__(956);
+        NodeType = __webpack_require__(683);
+        XMLNodeList = __webpack_require__(265);
+        XMLNamedNodeMap = __webpack_require__(451);
+        DocumentPosition = __webpack_require__(65);
+      }
+    }
+
+    Object.defineProperty(XMLNode.prototype, 'nodeName', {
+      get: function() {
+        return this.name;
+      }
+    });
+
+    Object.defineProperty(XMLNode.prototype, 'nodeType', {
+      get: function() {
+        return this.type;
+      }
+    });
+
+    Object.defineProperty(XMLNode.prototype, 'nodeValue', {
+      get: function() {
+        return this.value;
+      }
+    });
+
+    Object.defineProperty(XMLNode.prototype, 'parentNode', {
+      get: function() {
+        return this.parent;
+      }
+    });
+
+    Object.defineProperty(XMLNode.prototype, 'childNodes', {
+      get: function() {
+        if (!this.childNodeList || !this.childNodeList.nodes) {
+          this.childNodeList = new XMLNodeList(this.children);
+        }
+        return this.childNodeList;
+      }
+    });
+
+    Object.defineProperty(XMLNode.prototype, 'firstChild', {
+      get: function() {
+        return this.children[0] || null;
+      }
+    });
+
+    Object.defineProperty(XMLNode.prototype, 'lastChild', {
+      get: function() {
+        return this.children[this.children.length - 1] || null;
+      }
+    });
+
+    Object.defineProperty(XMLNode.prototype, 'previousSibling', {
+      get: function() {
+        var i;
+        i = this.parent.children.indexOf(this);
+        return this.parent.children[i - 1] || null;
+      }
+    });
+
+    Object.defineProperty(XMLNode.prototype, 'nextSibling', {
+      get: function() {
+        var i;
+        i = this.parent.children.indexOf(this);
+        return this.parent.children[i + 1] || null;
+      }
+    });
+
+    Object.defineProperty(XMLNode.prototype, 'ownerDocument', {
+      get: function() {
+        return this.document() || null;
+      }
+    });
+
+    Object.defineProperty(XMLNode.prototype, 'textContent', {
+      get: function() {
+        var child, j, len, ref2, str;
+        if (this.nodeType === NodeType.Element || this.nodeType === NodeType.DocumentFragment) {
+          str = '';
+          ref2 = this.children;
+          for (j = 0, len = ref2.length; j < len; j++) {
+            child = ref2[j];
+            if (child.textContent) {
+              str += child.textContent;
+            }
+          }
+          return str;
+        } else {
+          return null;
+        }
+      },
+      set: function(value) {
+        throw new Error("This DOM method is not implemented." + this.debugInfo());
+      }
+    });
+
+    XMLNode.prototype.setParent = function(parent) {
+      var child, j, len, ref2, results;
+      this.parent = parent;
+      if (parent) {
+        this.options = parent.options;
+        this.stringify = parent.stringify;
+      }
+      ref2 = this.children;
+      results = [];
+      for (j = 0, len = ref2.length; j < len; j++) {
+        child = ref2[j];
+        results.push(child.setParent(this));
+      }
+      return results;
+    };
+
+    XMLNode.prototype.element = function(name, attributes, text) {
+      var childNode, item, j, k, key, lastChild, len, len1, ref2, ref3, val;
+      lastChild = null;
+      if (attributes === null && (text == null)) {
+        ref2 = [{}, null], attributes = ref2[0], text = ref2[1];
+      }
+      if (attributes == null) {
+        attributes = {};
+      }
+      attributes = getValue(attributes);
+      if (!isObject(attributes)) {
+        ref3 = [attributes, text], text = ref3[0], attributes = ref3[1];
+      }
+      if (name != null) {
+        name = getValue(name);
+      }
+      if (Array.isArray(name)) {
+        for (j = 0, len = name.length; j < len; j++) {
+          item = name[j];
+          lastChild = this.element(item);
+        }
+      } else if (isFunction(name)) {
+        lastChild = this.element(name.apply());
+      } else if (isObject(name)) {
+        for (key in name) {
+          if (!hasProp.call(name, key)) continue;
+          val = name[key];
+          if (isFunction(val)) {
+            val = val.apply();
+          }
+          if (!this.options.ignoreDecorators && this.stringify.convertAttKey && key.indexOf(this.stringify.convertAttKey) === 0) {
+            lastChild = this.attribute(key.substr(this.stringify.convertAttKey.length), val);
+          } else if (!this.options.separateArrayItems && Array.isArray(val) && isEmpty(val)) {
+            lastChild = this.dummy();
+          } else if (isObject(val) && isEmpty(val)) {
+            lastChild = this.element(key);
+          } else if (!this.options.keepNullNodes && (val == null)) {
+            lastChild = this.dummy();
+          } else if (!this.options.separateArrayItems && Array.isArray(val)) {
+            for (k = 0, len1 = val.length; k < len1; k++) {
+              item = val[k];
+              childNode = {};
+              childNode[key] = item;
+              lastChild = this.element(childNode);
+            }
+          } else if (isObject(val)) {
+            if (!this.options.ignoreDecorators && this.stringify.convertTextKey && key.indexOf(this.stringify.convertTextKey) === 0) {
+              lastChild = this.element(val);
+            } else {
+              lastChild = this.element(key);
+              lastChild.element(val);
+            }
+          } else {
+            lastChild = this.element(key, val);
+          }
+        }
+      } else if (!this.options.keepNullNodes && text === null) {
+        lastChild = this.dummy();
+      } else {
+        if (!this.options.ignoreDecorators && this.stringify.convertTextKey && name.indexOf(this.stringify.convertTextKey) === 0) {
+          lastChild = this.text(text);
+        } else if (!this.options.ignoreDecorators && this.stringify.convertCDataKey && name.indexOf(this.stringify.convertCDataKey) === 0) {
+          lastChild = this.cdata(text);
+        } else if (!this.options.ignoreDecorators && this.stringify.convertCommentKey && name.indexOf(this.stringify.convertCommentKey) === 0) {
+          lastChild = this.comment(text);
+        } else if (!this.options.ignoreDecorators && this.stringify.convertRawKey && name.indexOf(this.stringify.convertRawKey) === 0) {
+          lastChild = this.raw(text);
+        } else if (!this.options.ignoreDecorators && this.stringify.convertPIKey && name.indexOf(this.stringify.convertPIKey) === 0) {
+          lastChild = this.instruction(name.substr(this.stringify.convertPIKey.length), text);
+        } else {
+          lastChild = this.node(name, attributes, text);
+        }
+      }
+      if (lastChild == null) {
+        throw new Error("Could not create any elements with: " + name + ". " + this.debugInfo());
+      }
+      return lastChild;
+    };
+
+    XMLNode.prototype.insertBefore = function(name, attributes, text) {
+      var child, i, newChild, refChild, removed;
+      if (name != null ? name.type : void 0) {
+        newChild = name;
+        refChild = attributes;
+        newChild.setParent(this);
+        if (refChild) {
+          i = children.indexOf(refChild);
+          removed = children.splice(i);
+          children.push(newChild);
+          Array.prototype.push.apply(children, removed);
+        } else {
+          children.push(newChild);
+        }
+        return newChild;
+      } else {
+        if (this.isRoot) {
+          throw new Error("Cannot insert elements at root level. " + this.debugInfo(name));
+        }
+        i = this.parent.children.indexOf(this);
+        removed = this.parent.children.splice(i);
+        child = this.parent.element(name, attributes, text);
+        Array.prototype.push.apply(this.parent.children, removed);
+        return child;
+      }
+    };
+
+    XMLNode.prototype.insertAfter = function(name, attributes, text) {
+      var child, i, removed;
+      if (this.isRoot) {
+        throw new Error("Cannot insert elements at root level. " + this.debugInfo(name));
+      }
+      i = this.parent.children.indexOf(this);
+      removed = this.parent.children.splice(i + 1);
+      child = this.parent.element(name, attributes, text);
+      Array.prototype.push.apply(this.parent.children, removed);
+      return child;
+    };
+
+    XMLNode.prototype.remove = function() {
+      var i, ref2;
+      if (this.isRoot) {
+        throw new Error("Cannot remove the root element. " + this.debugInfo());
+      }
+      i = this.parent.children.indexOf(this);
+      [].splice.apply(this.parent.children, [i, i - i + 1].concat(ref2 = [])), ref2;
+      return this.parent;
+    };
+
+    XMLNode.prototype.node = function(name, attributes, text) {
+      var child, ref2;
+      if (name != null) {
+        name = getValue(name);
+      }
+      attributes || (attributes = {});
+      attributes = getValue(attributes);
+      if (!isObject(attributes)) {
+        ref2 = [attributes, text], text = ref2[0], attributes = ref2[1];
+      }
+      child = new XMLElement(this, name, attributes);
+      if (text != null) {
+        child.text(text);
+      }
+      this.children.push(child);
+      return child;
+    };
+
+    XMLNode.prototype.text = function(value) {
+      var child;
+      if (isObject(value)) {
+        this.element(value);
+      }
+      child = new XMLText(this, value);
+      this.children.push(child);
+      return this;
+    };
+
+    XMLNode.prototype.cdata = function(value) {
+      var child;
+      child = new XMLCData(this, value);
+      this.children.push(child);
+      return this;
+    };
+
+    XMLNode.prototype.comment = function(value) {
+      var child;
+      child = new XMLComment(this, value);
+      this.children.push(child);
+      return this;
+    };
+
+    XMLNode.prototype.commentBefore = function(value) {
+      var child, i, removed;
+      i = this.parent.children.indexOf(this);
+      removed = this.parent.children.splice(i);
+      child = this.parent.comment(value);
+      Array.prototype.push.apply(this.parent.children, removed);
+      return this;
+    };
+
+    XMLNode.prototype.commentAfter = function(value) {
+      var child, i, removed;
+      i = this.parent.children.indexOf(this);
+      removed = this.parent.children.splice(i + 1);
+      child = this.parent.comment(value);
+      Array.prototype.push.apply(this.parent.children, removed);
+      return this;
+    };
+
+    XMLNode.prototype.raw = function(value) {
+      var child;
+      child = new XMLRaw(this, value);
+      this.children.push(child);
+      return this;
+    };
+
+    XMLNode.prototype.dummy = function() {
+      var child;
+      child = new XMLDummy(this);
+      return child;
+    };
+
+    XMLNode.prototype.instruction = function(target, value) {
+      var insTarget, insValue, instruction, j, len;
+      if (target != null) {
+        target = getValue(target);
+      }
+      if (value != null) {
+        value = getValue(value);
+      }
+      if (Array.isArray(target)) {
+        for (j = 0, len = target.length; j < len; j++) {
+          insTarget = target[j];
+          this.instruction(insTarget);
+        }
+      } else if (isObject(target)) {
+        for (insTarget in target) {
+          if (!hasProp.call(target, insTarget)) continue;
+          insValue = target[insTarget];
+          this.instruction(insTarget, insValue);
+        }
+      } else {
+        if (isFunction(value)) {
+          value = value.apply();
+        }
+        instruction = new XMLProcessingInstruction(this, target, value);
+        this.children.push(instruction);
+      }
+      return this;
+    };
+
+    XMLNode.prototype.instructionBefore = function(target, value) {
+      var child, i, removed;
+      i = this.parent.children.indexOf(this);
+      removed = this.parent.children.splice(i);
+      child = this.parent.instruction(target, value);
+      Array.prototype.push.apply(this.parent.children, removed);
+      return this;
+    };
+
+    XMLNode.prototype.instructionAfter = function(target, value) {
+      var child, i, removed;
+      i = this.parent.children.indexOf(this);
+      removed = this.parent.children.splice(i + 1);
+      child = this.parent.instruction(target, value);
+      Array.prototype.push.apply(this.parent.children, removed);
+      return this;
+    };
+
+    XMLNode.prototype.declaration = function(version, encoding, standalone) {
+      var doc, xmldec;
+      doc = this.document();
+      xmldec = new XMLDeclaration(doc, version, encoding, standalone);
+      if (doc.children.length === 0) {
+        doc.children.unshift(xmldec);
+      } else if (doc.children[0].type === NodeType.Declaration) {
+        doc.children[0] = xmldec;
+      } else {
+        doc.children.unshift(xmldec);
+      }
+      return doc.root() || doc;
+    };
+
+    XMLNode.prototype.dtd = function(pubID, sysID) {
+      var child, doc, doctype, i, j, k, len, len1, ref2, ref3;
+      doc = this.document();
+      doctype = new XMLDocType(doc, pubID, sysID);
+      ref2 = doc.children;
+      for (i = j = 0, len = ref2.length; j < len; i = ++j) {
+        child = ref2[i];
+        if (child.type === NodeType.DocType) {
+          doc.children[i] = doctype;
+          return doctype;
+        }
+      }
+      ref3 = doc.children;
+      for (i = k = 0, len1 = ref3.length; k < len1; i = ++k) {
+        child = ref3[i];
+        if (child.isRoot) {
+          doc.children.splice(i, 0, doctype);
+          return doctype;
+        }
+      }
+      doc.children.push(doctype);
+      return doctype;
+    };
+
+    XMLNode.prototype.up = function() {
+      if (this.isRoot) {
+        throw new Error("The root node has no parent. Use doc() if you need to get the document object.");
+      }
+      return this.parent;
+    };
+
+    XMLNode.prototype.root = function() {
+      var node;
+      node = this;
+      while (node) {
+        if (node.type === NodeType.Document) {
+          return node.rootObject;
+        } else if (node.isRoot) {
+          return node;
+        } else {
+          node = node.parent;
+        }
+      }
+    };
+
+    XMLNode.prototype.document = function() {
+      var node;
+      node = this;
+      while (node) {
+        if (node.type === NodeType.Document) {
+          return node;
+        } else {
+          node = node.parent;
+        }
+      }
+    };
+
+    XMLNode.prototype.end = function(options) {
+      return this.document().end(options);
+    };
+
+    XMLNode.prototype.prev = function() {
+      var i;
+      i = this.parent.children.indexOf(this);
+      if (i < 1) {
+        throw new Error("Already at the first node. " + this.debugInfo());
+      }
+      return this.parent.children[i - 1];
+    };
+
+    XMLNode.prototype.next = function() {
+      var i;
+      i = this.parent.children.indexOf(this);
+      if (i === -1 || i === this.parent.children.length - 1) {
+        throw new Error("Already at the last node. " + this.debugInfo());
+      }
+      return this.parent.children[i + 1];
+    };
+
+    XMLNode.prototype.importDocument = function(doc) {
+      var clonedRoot;
+      clonedRoot = doc.root().clone();
+      clonedRoot.parent = this;
+      clonedRoot.isRoot = false;
+      this.children.push(clonedRoot);
+      return this;
+    };
+
+    XMLNode.prototype.debugInfo = function(name) {
+      var ref2, ref3;
+      name = name || this.name;
+      if ((name == null) && !((ref2 = this.parent) != null ? ref2.name : void 0)) {
+        return "";
+      } else if (name == null) {
+        return "parent: <" + this.parent.name + ">";
+      } else if (!((ref3 = this.parent) != null ? ref3.name : void 0)) {
+        return "node: <" + name + ">";
+      } else {
+        return "node: <" + name + ">, parent: <" + this.parent.name + ">";
+      }
+    };
+
+    XMLNode.prototype.ele = function(name, attributes, text) {
+      return this.element(name, attributes, text);
+    };
+
+    XMLNode.prototype.nod = function(name, attributes, text) {
+      return this.node(name, attributes, text);
+    };
+
+    XMLNode.prototype.txt = function(value) {
+      return this.text(value);
+    };
+
+    XMLNode.prototype.dat = function(value) {
+      return this.cdata(value);
+    };
+
+    XMLNode.prototype.com = function(value) {
+      return this.comment(value);
+    };
+
+    XMLNode.prototype.ins = function(target, value) {
+      return this.instruction(target, value);
+    };
+
+    XMLNode.prototype.doc = function() {
+      return this.document();
+    };
+
+    XMLNode.prototype.dec = function(version, encoding, standalone) {
+      return this.declaration(version, encoding, standalone);
+    };
+
+    XMLNode.prototype.e = function(name, attributes, text) {
+      return this.element(name, attributes, text);
+    };
+
+    XMLNode.prototype.n = function(name, attributes, text) {
+      return this.node(name, attributes, text);
+    };
+
+    XMLNode.prototype.t = function(value) {
+      return this.text(value);
+    };
+
+    XMLNode.prototype.d = function(value) {
+      return this.cdata(value);
+    };
+
+    XMLNode.prototype.c = function(value) {
+      return this.comment(value);
+    };
+
+    XMLNode.prototype.r = function(value) {
+      return this.raw(value);
+    };
+
+    XMLNode.prototype.i = function(target, value) {
+      return this.instruction(target, value);
+    };
+
+    XMLNode.prototype.u = function() {
+      return this.up();
+    };
+
+    XMLNode.prototype.importXMLBuilder = function(doc) {
+      return this.importDocument(doc);
+    };
+
+    XMLNode.prototype.replaceChild = function(newChild, oldChild) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.removeChild = function(oldChild) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.appendChild = function(newChild) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.hasChildNodes = function() {
+      return this.children.length !== 0;
+    };
+
+    XMLNode.prototype.cloneNode = function(deep) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.normalize = function() {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.isSupported = function(feature, version) {
+      return true;
+    };
+
+    XMLNode.prototype.hasAttributes = function() {
+      return this.attribs.length !== 0;
+    };
+
+    XMLNode.prototype.compareDocumentPosition = function(other) {
+      var ref, res;
+      ref = this;
+      if (ref === other) {
+        return 0;
+      } else if (this.document() !== other.document()) {
+        res = DocumentPosition.Disconnected | DocumentPosition.ImplementationSpecific;
+        if (Math.random() < 0.5) {
+          res |= DocumentPosition.Preceding;
+        } else {
+          res |= DocumentPosition.Following;
+        }
+        return res;
+      } else if (ref.isAncestor(other)) {
+        return DocumentPosition.Contains | DocumentPosition.Preceding;
+      } else if (ref.isDescendant(other)) {
+        return DocumentPosition.Contains | DocumentPosition.Following;
+      } else if (ref.isPreceding(other)) {
+        return DocumentPosition.Preceding;
+      } else {
+        return DocumentPosition.Following;
+      }
+    };
+
+    XMLNode.prototype.isSameNode = function(other) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.lookupPrefix = function(namespaceURI) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.isDefaultNamespace = function(namespaceURI) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.lookupNamespaceURI = function(prefix) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.isEqualNode = function(node) {
+      var i, j, ref2;
+      if (node.nodeType !== this.nodeType) {
+        return false;
+      }
+      if (node.children.length !== this.children.length) {
+        return false;
+      }
+      for (i = j = 0, ref2 = this.children.length - 1; 0 <= ref2 ? j <= ref2 : j >= ref2; i = 0 <= ref2 ? ++j : --j) {
+        if (!this.children[i].isEqualNode(node.children[i])) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    XMLNode.prototype.getFeature = function(feature, version) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.setUserData = function(key, data, handler) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.getUserData = function(key) {
+      throw new Error("This DOM method is not implemented." + this.debugInfo());
+    };
+
+    XMLNode.prototype.contains = function(other) {
+      if (!other) {
+        return false;
+      }
+      return other === this || this.isDescendant(other);
+    };
+
+    XMLNode.prototype.isDescendant = function(node) {
+      var child, isDescendantChild, j, len, ref2;
+      ref2 = this.children;
+      for (j = 0, len = ref2.length; j < len; j++) {
+        child = ref2[j];
+        if (node === child) {
+          return true;
+        }
+        isDescendantChild = child.isDescendant(node);
+        if (isDescendantChild) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    XMLNode.prototype.isAncestor = function(node) {
+      return node.isDescendant(this);
+    };
+
+    XMLNode.prototype.isPreceding = function(node) {
+      var nodePos, thisPos;
+      nodePos = this.treePosition(node);
+      thisPos = this.treePosition(this);
+      if (nodePos === -1 || thisPos === -1) {
+        return false;
+      } else {
+        return nodePos < thisPos;
+      }
+    };
+
+    XMLNode.prototype.isFollowing = function(node) {
+      var nodePos, thisPos;
+      nodePos = this.treePosition(node);
+      thisPos = this.treePosition(this);
+      if (nodePos === -1 || thisPos === -1) {
+        return false;
+      } else {
+        return nodePos > thisPos;
+      }
+    };
+
+    XMLNode.prototype.treePosition = function(node) {
+      var found, pos;
+      pos = 0;
+      found = false;
+      this.foreachTreeNode(this.document(), function(childNode) {
+        pos++;
+        if (!found && childNode === node) {
+          return found = true;
+        }
+      });
+      if (found) {
+        return pos;
+      } else {
+        return -1;
+      }
+    };
+
+    XMLNode.prototype.foreachTreeNode = function(node, func) {
+      var child, j, len, ref2, res;
+      node || (node = this.document());
+      ref2 = node.children;
+      for (j = 0, len = ref2.length; j < len; j++) {
+        child = ref2[j];
+        if (res = func(child)) {
+          return res;
+        } else {
+          res = this.foreachTreeNode(child, func);
+          if (res) {
+            return res;
+          }
+        }
+      }
+    };
+
+    return XMLNode;
+
+  })();
+
+}).call(this);
+
 
 /***/ }),
 /* 856 */,
@@ -49577,315 +49007,83 @@ exports.default = _default;
 /* 863 */,
 /* 864 */,
 /* 865 */
-/***/ (function(module) {
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
 
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
+"use strict";
 
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global global, define, System, Reflect, Promise */
-var __extends;
-var __assign;
-var __rest;
-var __decorate;
-var __param;
-var __metadata;
-var __awaiter;
-var __generator;
-var __exportStar;
-var __values;
-var __read;
-var __spread;
-var __spreadArrays;
-var __spreadArray;
-var __await;
-var __asyncGenerator;
-var __asyncDelegator;
-var __asyncValues;
-var __makeTemplateObject;
-var __importStar;
-var __importDefault;
-var __classPrivateFieldGet;
-var __classPrivateFieldSet;
-var __createBinding;
-(function (factory) {
-    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
-    if (typeof define === "function" && define.amd) {
-        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
-    }
-    else if ( true && typeof module.exports === "object") {
-        factory(createExporter(root, createExporter(module.exports)));
-    }
-    else {
-        factory(createExporter(root));
-    }
-    function createExporter(exports, previous) {
-        if (exports !== root) {
-            if (typeof Object.create === "function") {
-                Object.defineProperty(exports, "__esModule", { value: true });
-            }
-            else {
-                exports.__esModule = true;
-            }
-        }
-        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
-    }
-})
-(function (exporter) {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-
-    __extends = function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-
-    __assign = Object.assign || function (t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-
-    __rest = function (s, e) {
-        var t = {};
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-            t[p] = s[p];
-        if (s != null && typeof Object.getOwnPropertySymbols === "function")
-            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                    t[p[i]] = s[p[i]];
-            }
-        return t;
-    };
-
-    __decorate = function (decorators, target, key, desc) {
-        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-        return c > 3 && r && Object.defineProperty(target, key, r), r;
-    };
-
-    __param = function (paramIndex, decorator) {
-        return function (target, key) { decorator(target, key, paramIndex); }
-    };
-
-    __metadata = function (metadataKey, metadataValue) {
-        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
-    };
-
-    __awaiter = function (thisArg, _arguments, P, generator) {
-        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-        return new (P || (P = Promise))(function (resolve, reject) {
-            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-            step((generator = generator.apply(thisArg, _arguments || [])).next());
-        });
-    };
-
-    __generator = function (thisArg, body) {
-        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-        return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-        function verb(n) { return function (v) { return step([n, v]); }; }
-        function step(op) {
-            if (f) throw new TypeError("Generator is already executing.");
-            while (_) try {
-                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-                if (y = 0, t) op = [op[0] & 2, t.value];
-                switch (op[0]) {
-                    case 0: case 1: t = op; break;
-                    case 4: _.label++; return { value: op[1], done: false };
-                    case 5: _.label++; y = op[1]; op = [0]; continue;
-                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                    default:
-                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                        if (t[2]) _.ops.pop();
-                        _.trys.pop(); continue;
-                }
-                op = body.call(thisArg, _);
-            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-        }
-    };
-
-    __exportStar = function(m, o) {
-        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
-    };
-
-    __createBinding = Object.create ? (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-    }) : (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-    });
-
-    __values = function (o) {
-        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-        if (m) return m.call(o);
-        if (o && typeof o.length === "number") return {
-            next: function () {
-                if (o && i >= o.length) o = void 0;
-                return { value: o && o[i++], done: !o };
-            }
-        };
-        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-    };
-
-    __read = function (o, n) {
-        var m = typeof Symbol === "function" && o[Symbol.iterator];
-        if (!m) return o;
-        var i = m.call(o), r, ar = [], e;
-        try {
-            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-        }
-        catch (error) { e = { error: error }; }
-        finally {
-            try {
-                if (r && !r.done && (m = i["return"])) m.call(i);
-            }
-            finally { if (e) throw e.error; }
-        }
-        return ar;
-    };
-
-    /** @deprecated */
-    __spread = function () {
-        for (var ar = [], i = 0; i < arguments.length; i++)
-            ar = ar.concat(__read(arguments[i]));
-        return ar;
-    };
-
-    /** @deprecated */
-    __spreadArrays = function () {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-        for (var r = Array(s), k = 0, i = 0; i < il; i++)
-            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-                r[k] = a[j];
-        return r;
-    };
-
-    __spreadArray = function (to, from, pack) {
-        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-            if (ar || !(i in from)) {
-                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-                ar[i] = from[i];
-            }
-        }
-        return to.concat(ar || Array.prototype.slice.call(from));
-    };
-
-    __await = function (v) {
-        return this instanceof __await ? (this.v = v, this) : new __await(v);
-    };
-
-    __asyncGenerator = function (thisArg, _arguments, generator) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var g = generator.apply(thisArg, _arguments || []), i, q = [];
-        return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
-        function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
-        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
-        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r);  }
-        function fulfill(value) { resume("next", value); }
-        function reject(value) { resume("throw", value); }
-        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
-    };
-
-    __asyncDelegator = function (o) {
-        var i, p;
-        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
-        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
-    };
-
-    __asyncValues = function (o) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var m = o[Symbol.asyncIterator], i;
-        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-    };
-
-    __makeTemplateObject = function (cooked, raw) {
-        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
-        return cooked;
-    };
-
-    var __setModuleDefault = Object.create ? (function(o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-    }) : function(o, v) {
-        o["default"] = v;
-    };
-
-    __importStar = function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-
-    __importDefault = function (mod) {
-        return (mod && mod.__esModule) ? mod : { "default": mod };
-    };
-
-    __classPrivateFieldGet = function (receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-    };
-
-    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
-        if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-    };
-
-    exporter("__extends", __extends);
-    exporter("__assign", __assign);
-    exporter("__rest", __rest);
-    exporter("__decorate", __decorate);
-    exporter("__param", __param);
-    exporter("__metadata", __metadata);
-    exporter("__awaiter", __awaiter);
-    exporter("__generator", __generator);
-    exporter("__exportStar", __exportStar);
-    exporter("__createBinding", __createBinding);
-    exporter("__values", __values);
-    exporter("__read", __read);
-    exporter("__spread", __spread);
-    exporter("__spreadArrays", __spreadArrays);
-    exporter("__spreadArray", __spreadArray);
-    exporter("__await", __await);
-    exporter("__asyncGenerator", __asyncGenerator);
-    exporter("__asyncDelegator", __asyncDelegator);
-    exporter("__asyncValues", __asyncValues);
-    exporter("__makeTemplateObject", __makeTemplateObject);
-    exporter("__importStar", __importStar);
-    exporter("__importDefault", __importDefault);
-    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
-    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
-});
-
+/*
+ * Copyright The OpenTelemetry Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getSpanContext = exports.setSpanContext = exports.deleteSpan = exports.setSpan = exports.getSpan = void 0;
+var context_1 = __webpack_require__(132);
+var NonRecordingSpan_1 = __webpack_require__(437);
+/**
+ * span key
+ */
+var SPAN_KEY = context_1.createContextKey('OpenTelemetry Context Key SPAN');
+/**
+ * Return the span if one exists
+ *
+ * @param context context to get span from
+ */
+function getSpan(context) {
+    return context.getValue(SPAN_KEY) || undefined;
+}
+exports.getSpan = getSpan;
+/**
+ * Set the span on a context
+ *
+ * @param context context to use as parent
+ * @param span span to set active
+ */
+function setSpan(context, span) {
+    return context.setValue(SPAN_KEY, span);
+}
+exports.setSpan = setSpan;
+/**
+ * Remove current span stored in the context
+ *
+ * @param context context to delete span from
+ */
+function deleteSpan(context) {
+    return context.deleteValue(SPAN_KEY);
+}
+exports.deleteSpan = deleteSpan;
+/**
+ * Wrap span context in a NoopSpan and set as span in a new
+ * context
+ *
+ * @param context context to set active span on
+ * @param spanContext span context to be wrapped
+ */
+function setSpanContext(context, spanContext) {
+    return setSpan(context, new NonRecordingSpan_1.NonRecordingSpan(spanContext));
+}
+exports.setSpanContext = setSpanContext;
+/**
+ * Get the span context of the span if it exists.
+ *
+ * @param context context to get values from
+ */
+function getSpanContext(context) {
+    var _a;
+    return (_a = getSpan(context)) === null || _a === void 0 ? void 0 : _a.spanContext();
+}
+exports.getSpanContext = getSpanContext;
+//# sourceMappingURL=context-utils.js.map
 
 /***/ }),
 /* 866 */,
@@ -49893,7 +49091,20 @@ var __createBinding;
 /* 868 */,
 /* 869 */,
 /* 870 */,
-/* 871 */,
+/* 871 */
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _default = '00000000-0000-0000-0000-000000000000';
+exports.default = _default;
+
+/***/ }),
 /* 872 */,
 /* 873 */,
 /* 874 */,
@@ -49922,7 +49133,7 @@ exports.TraceAPI = void 0;
 var global_utils_1 = __webpack_require__(525);
 var ProxyTracerProvider_1 = __webpack_require__(394);
 var spancontext_utils_1 = __webpack_require__(629);
-var context_utils_1 = __webpack_require__(720);
+var context_utils_1 = __webpack_require__(865);
 var diag_1 = __webpack_require__(118);
 var API_NAME = 'trace';
 /**
@@ -50068,7 +49279,7 @@ exports.defaultTextMapSetter = {
 
   NodeType = __webpack_require__(683);
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   module.exports = XMLAttribute = (function() {
     function XMLAttribute(parent, name, value) {
@@ -51327,7 +50538,7 @@ exports.PollerStoppedError = PollerStoppedError;
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
 var iterate    = __webpack_require__(157)
-  , initState  = __webpack_require__(903)
+  , initState  = __webpack_require__(147)
   , terminator = __webpack_require__(939)
   ;
 
@@ -51409,35 +50620,112 @@ function descending(a, b)
 
 "use strict";
 
-/*
- * Copyright The OpenTelemetry Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-__exportStar(__webpack_require__(237), exports);
-__exportStar(__webpack_require__(545), exports);
-//# sourceMappingURL=index.js.map
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _rng = _interopRequireDefault(__webpack_require__(844));
+
+var _stringify = _interopRequireDefault(__webpack_require__(411));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+let _nodeId;
+
+let _clockseq; // Previous uuid creation time
+
+
+let _lastMSecs = 0;
+let _lastNSecs = 0; // See https://github.com/uuidjs/uuid for API details
+
+function v1(options, buf, offset) {
+  let i = buf && offset || 0;
+  const b = buf || new Array(16);
+  options = options || {};
+  let node = options.node || _nodeId;
+  let clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq; // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+
+  if (node == null || clockseq == null) {
+    const seedBytes = options.random || (options.rng || _rng.default)();
+
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [seedBytes[0] | 0x01, seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]];
+    }
+
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  } // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+
+
+  let msecs = options.msecs !== undefined ? options.msecs : Date.now(); // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+
+  let nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1; // Time since last uuid creation (in msecs)
+
+  const dt = msecs - _lastMSecs + (nsecs - _lastNSecs) / 10000; // Per 4.2.1.2, Bump clockseq on clock regression
+
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  } // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+
+
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  } // Per 4.2.1.2 Throw error if too many uuids are requested
+
+
+  if (nsecs >= 10000) {
+    throw new Error("uuid.v1(): Can't create more than 10M uuids/sec");
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq; // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+
+  msecs += 12219292800000; // `time_low`
+
+  const tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff; // `time_mid`
+
+  const tmh = msecs / 0x100000000 * 10000 & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff; // `time_high_and_version`
+
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+
+  b[i++] = tmh >>> 16 & 0xff; // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+
+  b[i++] = clockseq >>> 8 | 0x80; // `clock_seq_low`
+
+  b[i++] = clockseq & 0xff; // `node`
+
+  for (let n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf || (0, _stringify.default)(b);
+}
+
+var _default = v1;
+exports.default = _default;
 
 /***/ }),
 /* 894 */,
@@ -51462,192 +50750,12 @@ var isArray = Array.isArray || function (xs) {
 
 /***/ }),
 /* 897 */,
-/* 898 */
-/***/ (function(module, __unusedexports, __webpack_require__) {
-
-var v1 = __webpack_require__(86);
-var v4 = __webpack_require__(826);
-
-var uuid = v4;
-uuid.v1 = v1;
-uuid.v4 = v4;
-
-module.exports = uuid;
-
-
-/***/ }),
-/* 899 */
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const core = __importStar(__webpack_require__(470));
-const http_client_1 = __webpack_require__(539);
-const constants_1 = __webpack_require__(931);
-function isSuccessStatusCode(statusCode) {
-    if (!statusCode) {
-        return false;
-    }
-    return statusCode >= 200 && statusCode < 300;
-}
-exports.isSuccessStatusCode = isSuccessStatusCode;
-function isServerErrorStatusCode(statusCode) {
-    if (!statusCode) {
-        return true;
-    }
-    return statusCode >= 500;
-}
-exports.isServerErrorStatusCode = isServerErrorStatusCode;
-function isRetryableStatusCode(statusCode) {
-    if (!statusCode) {
-        return false;
-    }
-    const retryableStatusCodes = [
-        http_client_1.HttpCodes.BadGateway,
-        http_client_1.HttpCodes.ServiceUnavailable,
-        http_client_1.HttpCodes.GatewayTimeout
-    ];
-    return retryableStatusCodes.includes(statusCode);
-}
-exports.isRetryableStatusCode = isRetryableStatusCode;
-function sleep(milliseconds) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise(resolve => setTimeout(resolve, milliseconds));
-    });
-}
-function retry(name, method, getStatusCode, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay, onError = undefined) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let errorMessage = '';
-        let attempt = 1;
-        while (attempt <= maxAttempts) {
-            let response = undefined;
-            let statusCode = undefined;
-            let isRetryable = false;
-            try {
-                response = yield method();
-            }
-            catch (error) {
-                if (onError) {
-                    response = onError(error);
-                }
-                isRetryable = true;
-                errorMessage = error.message;
-            }
-            if (response) {
-                statusCode = getStatusCode(response);
-                if (!isServerErrorStatusCode(statusCode)) {
-                    return response;
-                }
-            }
-            if (statusCode) {
-                isRetryable = isRetryableStatusCode(statusCode);
-                errorMessage = `Cache service responded with ${statusCode}`;
-            }
-            core.debug(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
-            if (!isRetryable) {
-                core.debug(`${name} - Error is not retryable`);
-                break;
-            }
-            yield sleep(delay);
-            attempt++;
-        }
-        throw Error(`${name} failed: ${errorMessage}`);
-    });
-}
-exports.retry = retry;
-function retryTypedResponse(name, method, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return yield retry(name, method, (response) => response.statusCode, maxAttempts, delay, 
-        // If the error object contains the statusCode property, extract it and return
-        // an ITypedResponse<T> so it can be processed by the retry logic.
-        (error) => {
-            if (error instanceof http_client_1.HttpClientError) {
-                return {
-                    statusCode: error.statusCode,
-                    result: null,
-                    headers: {},
-                    error
-                };
-            }
-            else {
-                return undefined;
-            }
-        });
-    });
-}
-exports.retryTypedResponse = retryTypedResponse;
-function retryHttpClientResponse(name, method, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return yield retry(name, method, (response) => response.message.statusCode, maxAttempts, delay);
-    });
-}
-exports.retryHttpClientResponse = retryHttpClientResponse;
-//# sourceMappingURL=requestUtils.js.map
-
-/***/ }),
+/* 898 */,
+/* 899 */,
 /* 900 */,
 /* 901 */,
 /* 902 */,
-/* 903 */
-/***/ (function(module) {
-
-// API
-module.exports = state;
-
-/**
- * Creates initial state object
- * for iteration over list
- *
- * @param   {array|object} list - list to iterate over
- * @param   {function|null} sortMethod - function to use for keys sort,
- *                                     or `null` to keep them as is
- * @returns {object} - initial state object
- */
-function state(list, sortMethod)
-{
-  var isNamedList = !Array.isArray(list)
-    , initState =
-    {
-      index    : 0,
-      keyedList: isNamedList || sortMethod ? Object.keys(list) : null,
-      jobs     : {},
-      results  : isNamedList ? {} : [],
-      size     : isNamedList ? Object.keys(list).length : list.length
-    }
-    ;
-
-  if (sortMethod)
-  {
-    // sort array keys based on it's values
-    // sort object's keys just on own merit
-    initState.keyedList.sort(isNamedList ? sortMethod : function(a, b)
-    {
-      return sortMethod(list[a], list[b]);
-    });
-  }
-
-  return initState;
-}
-
-
-/***/ }),
+/* 903 */,
 /* 904 */,
 /* 905 */,
 /* 906 */
@@ -53782,7 +52890,7 @@ exports.checkBypass = checkBypass;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(257);
+  XMLNode = __webpack_require__(855);
 
   NodeType = __webpack_require__(683);
 
@@ -54263,7 +53371,30 @@ module.exports.PROCESSING_OPTIONS = PROCESSING_OPTIONS;
 
 
 /***/ }),
-/* 977 */,
+/* 977 */
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+/*
+ * Copyright The OpenTelemetry Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+//# sourceMappingURL=tracer.js.map
+
+/***/ }),
 /* 978 */,
 /* 979 */,
 /* 980 */,
@@ -54572,9 +53703,9 @@ exports.isCompatible = _makeCompatibilityCheck(version_1.VERSION);
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var uuid = __webpack_require__(585);
+var uuid = __webpack_require__(62);
 var util = __webpack_require__(669);
-var tslib = __webpack_require__(865);
+var tslib = __webpack_require__(422);
 var xml2js = __webpack_require__(992);
 var abortController = __webpack_require__(106);
 var logger$1 = __webpack_require__(928);
@@ -54582,7 +53713,7 @@ var coreAuth = __webpack_require__(229);
 var os = __webpack_require__(87);
 var http = __webpack_require__(605);
 var https = __webpack_require__(211);
-var tough = __webpack_require__(393);
+var tough = __webpack_require__(701);
 var tunnel = __webpack_require__(413);
 var stream = __webpack_require__(794);
 var FormData = __webpack_require__(790);
