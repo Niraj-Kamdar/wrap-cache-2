@@ -30,7 +30,7 @@ fi
 # Verify file content
 content="$(cat $file)"
 echo "File content:\n$content"
-if [ -z "$(echo $content | grep "1234-567-89")" ]; then
+if [ -z "$(echo $content | grep --fixed-strings "["1234-567-89"]")" ]; then
   echo "Unexpected file content"
   exit 1
 fi
