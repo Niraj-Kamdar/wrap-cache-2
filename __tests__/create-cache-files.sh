@@ -15,3 +15,4 @@ fi
 
 mkdir -p $path
 echo "$prefix $GITHUB_RUN_ID" > $path/test-file.txt
+echo "1234-567-89" > $path/uuid

@@ -20,6 +20,38 @@ if [ -z "$GITHUB_RUN_ID" ]; then
 fi
 
 # Verify file exists
+file="uuids.json"
+echo "Checking for $file"
+if [ ! -e $file ]; then
+  echo "File does not exist"
+  exit 1
+fi
+
+# Verify file content
+content="$(cat $file)"
+echo "File content:\n$content"
+if [ -z "$(echo $content | grep --fixed-strings "1234-567-89")" ]; then
+  echo "Unexpected file content"
+  exit 1
+fi
+
+# Verify file exists
+file="$path/uuid"
+echo "Checking for $file"
+if [ ! -e $file ]; then
+  echo "File does not exist"
+  exit 1
+fi
+
+# Verify file content
+content="$(cat $file)"
+echo "File content:\n$content"
+if [ -z "$(echo $content | grep --fixed-strings "1234-567-89")" ]; then
+  echo "Unexpected file content"
+  exit 1
+fi
+
+# Verify file exists
 file="$path/test-file.txt"
 echo "Checking for $file"
 if [ ! -e $file ]; then
